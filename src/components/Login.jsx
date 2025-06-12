@@ -7,7 +7,8 @@ const Login = ({ onLogin }) => {
 
   const handleLogin = async () => {
     try {
-      const response = await fetch('http://localhost:3001/api/login', {
+      // 使用全局配置的 API_BASE_URL
+      const response = await fetch(`${window.API_BASE_URL}/api/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

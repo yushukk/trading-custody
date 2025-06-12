@@ -7,21 +7,33 @@ const jwt = require('jsonwebtoken'); // 引入 jsonwebtoken 库
 const app = express();
 const PORT = 3001;
 
-// 创建内存数据库
-const db = new sqlite3.Database(':memory:');
+// 数据库文件路径
+const dbPath = path.join(__dirname, 'database.db');
 
-// 初始化数据
-db.serialize(() => {
-  db.run("CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, email TEXT, password TEXT, role TEXT)");
-  const stmt = db.prepare("INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, ?)");
-  [
-    ["Alice", "alice@example.com", "user", "user"],
-    ["Bob", "bob@example.com", "user", "user"],
-    ["Charlie", "charlie@example.com", "user", "user"],
-    ["admin", "admin@example.com", "admin", "admin"]
-  ].forEach(([name, email, password, role]) => stmt.run(name, email, password, role));
-  stmt.finalize();
-});
+// 检查数据库文件是否存在
+const fs = require('fs');
+if (!fs.existsSync(dbPath)) {
+  // 创建数据库文件
+  const db = new sqlite3.Database(dbPath);
+
+  // 初始化数据
+  db.serialize(() => {
+    db.run("CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, email TEXT, password TEXT, role TEXT)");
+    const stmt = db.prepare("INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, ?)");
+    [
+      ["Alice", "alice@example.com", "user", "user"],
+      ["Bob", "bob@example.com", "user", "user"],
+      ["Charlie", "charlie@example.com", "user", "user"],
+      ["admin", "admin@example.com", "admin", "admin"]
+    ].forEach(([name, email, password, role]) => stmt.run(name, email, password, role));
+    stmt.finalize();
+  });
+
+  db.close();
+}
+
+// 使用已存在的数据库文件
+const db = new sqlite3.Database(dbPath);
 
 app.use(cors());
 app.use(express.json());
