@@ -2,7 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
-const jwt = require('jsonwebtoken'); // 引入 jsonwebtoken 库
+const jwt = require('jsonwebtoken');
 
 const app = express();
 const PORT = 3001;
@@ -64,6 +64,51 @@ app.put('/api/update-password', (req, res) => {
       return;
     }
     res.json({ message: 'Password updated successfully' });
+  });
+});
+
+// 新增 API 路由
+app.get('/api/users', (req, res) => {
+  db.all("SELECT * FROM users", [], (err, rows) => {
+    if (err) {
+      res.status(500).json({ error: err.message });
+      return;
+    }
+    res.json(rows);
+  });
+});
+
+app.post('/api/users', (req, res) => {
+  const { name, email, password, role } = req.body;
+  db.run("INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, ?)", [name, email, password, role], function(err) {
+    if (err) {
+      res.status(500).json({ error: err.message });
+      return;
+    }
+    res.json({ id: this.lastID, name, email, password, role });
+  });
+});
+
+app.put('/api/users/:id/password', (req, res) => {
+  const { id } = req.params;
+  const { newPassword } = req.body;
+  db.run("UPDATE users SET password = ? WHERE id = ?", [newPassword, id], (err) => {
+    if (err) {
+      res.status(500).json({ error: err.message });
+      return;
+    }
+    res.json({ message: 'Password updated successfully' });
+  });
+});
+
+app.delete('/api/users/:id', (req, res) => {
+  const { id } = req.params;
+  db.run("DELETE FROM users WHERE id = ?", [id], (err) => {
+    if (err) {
+      res.status(500).json({ error: err.message });
+      return;
+    }
+    res.json({ message: 'User deleted successfully' });
   });
 });
 

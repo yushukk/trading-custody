@@ -21,7 +21,7 @@ const Login = ({ onLogin }) => {
       }
 
       const data = await response.json();
-      onLogin(data.token, data.role); // 传递 token 和 role 给父组件
+      onLogin(data.token, data.role, username); // 传递 token、role 和 username 给父组件
     } catch (error) {
       alert(error.message);
     }
@@ -29,7 +29,7 @@ const Login = ({ onLogin }) => {
 
   return (
     <div className="login-container">
-      <h1>资产托管</h1>
+      <h1>DEMO</h1>
       <input
         type="text"
         placeholder="用户名"

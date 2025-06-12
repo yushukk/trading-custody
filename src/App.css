@@ -11,3 +11,14 @@ h1 {
   margin-bottom: 20px;
 }
 
+@media (max-width: 768px) {
+  .ant-card-body {
+    padding: 10px !important;
+  }
+
+  .ant-input,
+  .ant-select,
+  .ant-btn {
+    font-size: 14px !important;
+  }
+}

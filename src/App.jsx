@@ -1,78 +1,83 @@
 import React, { useState, useEffect } from 'react';
 import './App.css';
-import Login from './components/Login'; // 导入 Login 组件
+import Login from './components/Login';
+import AdminDashboard from './components/AdminDashboard';
+import UserDashboard from './components/UserDashboard';
+import ChangePassword from './components/ChangePassword';
+import UserManagement from './components/UserManagement'; // 新增用户管理组件
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [username, setUsername] = useState('');
-  const [newPassword, setNewPassword] = useState('');
+  const [view, setView] = useState('login'); // 默认视图设置为登录页面
+  const [userManagementView, setUserManagementView] = useState(false); // 新增用户管理页面状态
 
   useEffect(() => {
     // 检查是否已登录
     const token = localStorage.getItem('authToken');
     if (token) {
       setIsLoggedIn(true);
-      setIsAdmin(token === 'admin');
+      // 从 localStorage 中获取用户角色和用户名
+      const role = localStorage.getItem('userRole');
+      const storedUsername = localStorage.getItem('username'); // 获取用户名
+      setIsAdmin(role === 'admin');
+      setUsername(storedUsername || token); // 如果没有用户名，则回退到 token
+      setView('dashboard'); // 登录后跳转到仪表盘
     }
   }, []);
 
-  const handleLogin = (token, role) => {
+  const handleLogin = (token, role, username) => {
     localStorage.setItem('authToken', token);
+    localStorage.setItem('userRole', role); // 存储用户角色到 localStorage
+    localStorage.setItem('username', username); // 存储用户名到 localStorage
     setIsLoggedIn(true);
     setIsAdmin(role === 'admin');
+    setUsername(username); // 设置用户名
+    setView('dashboard'); // 登录后跳转到仪表盘
   };
 
   const handleLogout = () => {
     localStorage.removeItem('authToken');
+    localStorage.removeItem('userRole'); // 移除用户角色
+    localStorage.removeItem('username'); // 秒速用户名
     setIsLoggedIn(false);
     setIsAdmin(false);
-  };
-
-  const handleUpdatePassword = async () => {
-    try {
-      const response = await fetch('http://localhost:3001/api/update-password', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ username, newPassword }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to update password');
-      }
-
-      const data = await response.json();
-      alert(data.message);
-    } catch (error) {
-      alert(error.message);
-    }
+    setUsername('');
+    setView('login'); // 登出后跳转到登录页面
   };
 
   return (
-    <div className="App">
-      {!isLoggedIn ? (
-        <Login onLogin={handleLogin} />
-      ) : isAdmin ? (
-        <div>
-          <h1>Admin Dashboard</h1>
-          <input
-            type="password"
-            placeholder="New Password"
-            value={newPassword}
-            onChange={(e) => setNewPassword(e.target.value)}
-          />
-          <button onClick={handleUpdatePassword}>Update Password</button>
-          <button onClick={handleLogout}>Logout</button>
-        </div>
-      ) : (
-        <div>
-          <h1>User Dashboard</h1>
-          <button onClick={handleLogout}>Logout</button>
-        </div>
-      )}
-    </div>
+    <Router>
+      <div className="App">
+        <Routes>
+          <Route path="/login" element={<Login onLogin={handleLogin} />} />
+          <Route path="/user-management" element={
+            isLoggedIn ? (
+              <UserManagement />
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          } />
+          <Route path="/" element={
+            view === 'dashboard' ? (
+              isAdmin ? (
+                <AdminDashboard username={username} onLogout={handleLogout} onNavigate={setView} onOpenUserManagement={() => setView('user-management')} />
+              ) : (
+                <UserDashboard username={username} onLogout={handleLogout} onNavigate={setView} />
+              )
+            ) : view === 'change-password' ? (
+              <ChangePassword username={username} onBack={() => setView('dashboard')} />
+            ) : (
+              <Login onLogin={handleLogin} />
+            )
+          } />
+          {/* 添加重定向规则，确保未登录时跳转到登录页面 */}
+          <Route path="*" element={<Navigate to="/login" replace />} />
+        </Routes>
+      </div>
+    </Router>
   );
 }
 
