@@ -78,17 +78,7 @@ const FundManagement = () => {
       <Button type="default" block onClick={() => navigate('/')} style={{ marginBottom: '10px' }}>返回仪表盘</Button>
       
       <Card style={{ width: '100%', margin: '0 0 20px', padding: '10px' }}>
-        <Select
-          placeholder="选择用户"
-          onChange={handleUserSelect}
-          style={{ width: '100%', marginBottom: '15px' }}
-        >
-          {users.map(user => (
-            <Option key={user.id} value={user.id}>
-              {`${user.name} (${user.email})`}
-            </Option>
-          ))}
-        </Select>
+        <UserSelect users={users} onSelect={handleUserSelect} />
 
         {selectedUserId && (
           <>
@@ -141,3 +131,18 @@ const FundManagement = () => {
 };
 
 export default FundManagement;
+
+// 将用户选择组件抽象为独立组件
+const UserSelect = ({ users, onSelect }) => (
+  <Select
+    placeholder="选择用户"
+    onChange={onSelect}
+    style={{ width: '100%', marginBottom: '15px' }}
+  >
+    {users.map(user => (
+      <Option key={user.id} value={user.id}>
+        {`${user.name} (${user.email})`}
+      </Option>
+    ))}
+  </Select>
+);

@@ -7,14 +7,17 @@ import ChangePassword from './components/ChangePassword';
 import UserManagement from './components/UserManagement'; // 新增用户管理组件
 import FundManagement from './components/FundManagement'; // 新增资金管理组件
 import PositionManagement from './components/PositionManagement'; // 新增持仓管理组件
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import UserFundPosition from './components/UserFundPosition'; // 新增资金持仓页面组件
 
-function App() {
+import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
+
+// 包裹App内容并使用useNavigate
+function AppContent() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [username, setUsername] = useState('');
   const [view, setView] = useState('login'); // 默认视图设置为登录页面
-  const [userManagementView, setUserManagementView] = useState(false); // 新增用户管理页面状态
+  const navigate = useNavigate(); // 使用useNavigate进行导航
 
   useEffect(() => {
     // 检查是否已登录
@@ -32,12 +35,13 @@ function App() {
 
   const handleLogin = (token, role, username) => {
     localStorage.setItem('authToken', token);
-    localStorage.setItem('userRole', role); // 存储用户角色到 localStorage
-    localStorage.setItem('username', username); // 存储用户名到 localStorage
+    localStorage.setItem('userRole', role);
+    localStorage.setItem('username', username); // 确保username正确存储
     setIsLoggedIn(true);
     setIsAdmin(role === 'admin');
     setUsername(username); // 设置用户名
-    setView('dashboard'); // 登录后跳转到仪表盘
+    setView('dashboard'); // 设置视图为仪表盘
+    navigate('/'); // 强制导航到根路径
   };
 
   const handleLogout = () => {
@@ -51,51 +55,62 @@ function App() {
   };
 
   return (
+    <Routes>
+      <Route path="/login" element={<Login onLogin={handleLogin} />} />
+      {/* 使用统一的ProtectedRoute组件 */}
+      <Route path="/user-management" element={
+        <ProtectedRoute>
+          <UserManagement />
+        </ProtectedRoute>
+      } />
+      <Route path="/fund-management" element={
+        <ProtectedRoute>
+          <FundManagement />
+        </ProtectedRoute>
+      } />
+      <Route path="/position-management" element={
+        <ProtectedRoute>
+          <PositionManagement />
+        </ProtectedRoute>
+      } />
+      {/* 添加用户资金持仓页面路由 */}
+      <Route path="/user-fund-position" element={
+        <ProtectedRoute>
+          <UserFundPosition />
+        </ProtectedRoute>
+      } />
+      
+      {/* 修改仪表盘路由定义 */}
+      <Route path="/" element={
+        view === 'dashboard' ? (
+          isAdmin ? (
+            <AdminDashboard username={username} onLogout={handleLogout} onNavigate={setView} onOpenUserManagement={() => setView('user-management')} />
+          ) : (
+            <UserDashboard username={username} onLogout={handleLogout} onNavigate={setView} />
+          )
+        ) : view === 'change-password' ? (
+          <ChangePassword username={username} onBack={() => setView('dashboard')} />
+        ) : (
+          <Login onLogin={handleLogin} />
+        )
+      } />
+    </Routes>
+  );
+}
+
+// 创建受保护路由高阶组件
+const ProtectedRoute = ({ children, redirectPath = '/login' }) => {
+  const isLoggedIn = !!localStorage.getItem('authToken');
+  return isLoggedIn ? children : <Navigate to={redirectPath} replace />;
+};
+
+// 主App组件包裹Router
+export default function App() {
+  return (
     <Router>
       <div className="App">
-        <Routes>
-          <Route path="/login" element={<Login onLogin={handleLogin} />} />
-          <Route path="/user-management" element={
-            isLoggedIn ? (
-              <UserManagement />
-            ) : (
-              <Navigate to="/login" replace />
-            )
-          } />
-          <Route path="/fund-management" element={
-            isLoggedIn ? (
-              <FundManagement />
-            ) : (
-              <Navigate to="/login" replace />
-            )
-          } />
-          <Route path="/position-management" element={
-            isLoggedIn ? (
-              <PositionManagement />
-            ) : (
-              <Navigate to="/login" replace />
-            )
-          } />
-          {/* 修改：仪表盘路由添加重定向到仪表盘 */}
-          <Route path="/" element={
-            view === 'dashboard' ? (
-              isAdmin ? (
-                <AdminDashboard username={username} onLogout={handleLogout} onNavigate={setView} onOpenUserManagement={() => setView('user-management')} />
-              ) : (
-                <UserDashboard username={username} onLogout={handleLogout} onNavigate={setView} />
-              )
-            ) : view === 'change-password' ? (
-              <ChangePassword username={username} onBack={() => setView('dashboard')} />
-            ) : (
-              <Login onLogin={handleLogin} />
-            )
-          } />
-          {/* 添加重定向规则，确保未登录时跳转到登录页面 */}
-          <Route path="*" element={<Navigate to="/login" replace />} />
-        </Routes>
+        <AppContent />
       </div>
     </Router>
   );
 }
-
-export default App;

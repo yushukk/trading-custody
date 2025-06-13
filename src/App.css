@@ -11,6 +11,7 @@ h1 {
   margin-bottom: 20px;
 }
 
+/* 删除了未使用的.mobile-card类 */
 @media (max-width: 768px) {
   .ant-card-body {
     padding: 10px !important;

@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 
 const { Option } = Select;
 
+// 与FundManagement类似，提取公共组件
 const PositionManagement = () => {
   const [users, setUsers] = useState([]);
   const [selectedUserId, setSelectedUserId] = useState(null);
@@ -74,18 +75,7 @@ const PositionManagement = () => {
       <Button type="default" block onClick={() => navigate('/')} style={{ marginBottom: '10px' }}>返回仪表盘</Button>
       
       <Card style={{ width: '100%', margin: '0 0 20px', padding: '10px' }}>
-        <Select 
-          placeholder="选择用户"
-          onChange={handleUserSelect}
-          style={{ width: '100%', marginBottom: '15px' }}
-        >
-          {users.map(user => (
-            <Option key={user.id} value={user.id}>
-              {`${user.name} (${user.email})`}
-            </Option>
-          ))}
-        </Select>
-
+        <UserSelect users={users} onSelect={handleUserSelect} />
         {selectedUserId && (
           <>
             <Form form={form} onFinish={onFinish} layout="vertical">
