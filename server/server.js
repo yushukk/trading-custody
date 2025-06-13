@@ -38,6 +38,20 @@ const db = new sqlite3.Database(dbPath);
 app.use(cors());
 app.use(express.json());
 
+// 新增资金管理数据库初始化
+db.serialize(() => {
+  // 创建资金余额表
+  db.run("CREATE TABLE IF NOT EXISTS funds (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER UNIQUE, balance REAL DEFAULT 0, FOREIGN KEY(user_id) REFERENCES users(id))");
+  
+  // 创建资金流水表
+  db.run("CREATE TABLE IF NOT EXISTS fund_logs (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, type TEXT, amount REAL, timestamp DATETIME DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY(user_id) REFERENCES users(id))");
+});
+
+// 新增持仓管理数据库初始化
+db.serialize(() => {
+  db.run("CREATE TABLE IF NOT EXISTS positions (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, asset_type TEXT, code TEXT, name TEXT, operation TEXT, price REAL, quantity INTEGER, timestamp DATETIME DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY(user_id) REFERENCES users(id))");
+});
+
 // API路由
 app.post('/api/login', (req, res) => {
   const { username, password } = req.body;
@@ -109,6 +123,133 @@ app.delete('/api/users/:id', (req, res) => {
       return;
     }
     res.json({ message: 'User deleted successfully' });
+  });
+});
+
+// 新增资金管理API接口
+
+// 获取用户资金余额
+app.get('/api/funds/:userId', (req, res) => {
+  const { userId } = req.params;
+  db.get("SELECT * FROM funds WHERE user_id = ?", [userId], (err, row) => {
+    if (err) {
+      res.status(500).json({ error: err.message });
+      return;
+    }
+    res.json(row || { user_id: userId, balance: 0 });
+  });
+});
+
+// 获取资金流水
+app.get('/api/funds/:userId/logs', (req, res) => {
+  const { userId } = req.params;
+  db.all("SELECT * FROM fund_logs WHERE user_id = ? ORDER BY timestamp DESC", [userId], (err, rows) => {
+    if (err) {
+      res.status(500).json({ error: err.message });
+      return;
+    }
+    res.json(rows || []);
+  });
+});
+
+// 处理资金操作
+app.post('/api/funds/:userId/:type', (req, res) => {
+  const { userId, type } = req.params;
+  const { amount } = req.body;
+  
+  // 验证操作类型
+  if (!['initial', 'deposit', 'withdraw'].includes(type)) {
+    return res.status(400).json({ error: '无效的操作类型' });
+  }
+  
+  // 验证金额
+  if (typeof amount !== 'number' || amount <= 0) {
+    return res.status(400).json({ error: '金额必须为正数' });
+  }
+  
+  db.serialize(() => {
+    // 获取当前余额
+    db.get("SELECT * FROM funds WHERE user_id = ?", [userId], (err, row) => {
+      if (err) {
+        res.status(500).json({ error: err.message });
+        return;
+      }
+      
+      let currentBalance = row?.balance || 0;
+      let newBalance = currentBalance;
+      
+      // 根据操作类型更新余额
+      if (type === 'initial') {
+        newBalance = amount;
+      } else if (type === 'deposit') {
+        newBalance += amount;
+      } else if (type === 'withdraw') {
+        if (currentBalance < amount) {
+          res.status(400).json({ error: '余额不足' });
+          return;
+        }
+        newBalance -= amount;
+      }
+      
+      // 更新资金余额
+      if (row) {
+        db.run("UPDATE funds SET balance = ? WHERE user_id = ?", [newBalance, userId]);
+      } else {
+        db.run("INSERT INTO funds (user_id, balance) VALUES (?, ?)", [userId, newBalance]);
+      }
+      
+      // 记录资金流水
+      db.run("INSERT INTO fund_logs (user_id, type, amount) VALUES (?, ?, ?)", [userId, type, amount]);
+      
+      res.json({ message: '操作成功', balance: newBalance });
+    });
+  });
+});
+
+// 新增持仓管理API接口
+// 获取用户持仓
+app.get('/api/positions/:userId', (req, res) => {
+  const { userId } = req.params;
+  db.all("SELECT * FROM positions WHERE user_id = ? ORDER BY timestamp DESC", [userId], (err, rows) => {
+    if (err) {
+      res.status(500).json({ error: err.message });
+      return;
+    }
+    res.json(rows || []);
+  });
+});
+
+// 添加持仓操作
+app.post('/api/positions/:userId', (req, res) => {
+  const { userId } = req.params;
+  const { assetType, code, name, operation, price, quantity, timestamp } = req.body;
+  
+  // 参数验证
+  if (!['stock', 'future', 'fund'].includes(assetType)) {
+    return res.status(400).json({ error: '无效的资产类型' });
+  }
+  if (!operation || !['buy', 'sell'].includes(operation)) {
+    return res.status(400).json({ error: '无效的操作类型' });
+  }
+  
+  // 将字符串转换为数字，如果转换后不是有效数字则返回错误
+  const parsedPrice = parseFloat(price);
+  const parsedQuantity = parseFloat(quantity);
+  
+  if (isNaN(parsedPrice) || parsedPrice <= 0) {
+    return res.status(400).json({ error: '价格必须为正数' });
+  }
+  if (isNaN(parsedQuantity) || parsedQuantity <= 0) {
+    return res.status(400).json({ error: '数量必须为正数' });
+  }
+  
+  // 使用事务确保数据一致性
+  db.serialize(() => {
+    // 插入持仓记录
+    db.run("INSERT INTO positions (user_id, asset_type, code, name, operation, price, quantity, timestamp) VALUES (?, ?, ?, ?, ?, ?, ?, ?)", 
+      [userId, assetType, code, name, operation, price, quantity, timestamp || new Date().toISOString()]);
+    
+    res.json({ message: '操作成功' });
   });
 });
 

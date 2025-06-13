@@ -5,6 +5,8 @@ import AdminDashboard from './components/AdminDashboard';
 import UserDashboard from './components/UserDashboard';
 import ChangePassword from './components/ChangePassword';
 import UserManagement from './components/UserManagement'; // 新增用户管理组件
+import FundManagement from './components/FundManagement'; // 新增资金管理组件
+import PositionManagement from './components/PositionManagement'; // 新增持仓管理组件
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 
 function App() {
@@ -60,6 +62,21 @@ function App() {
               <Navigate to="/login" replace />
             )
           } />
+          <Route path="/fund-management" element={
+            isLoggedIn ? (
+              <FundManagement />
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          } />
+          <Route path="/position-management" element={
+            isLoggedIn ? (
+              <PositionManagement />
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          } />
+          {/* 修改：仪表盘路由添加重定向到仪表盘 */}
           <Route path="/" element={
             view === 'dashboard' ? (
               isAdmin ? (

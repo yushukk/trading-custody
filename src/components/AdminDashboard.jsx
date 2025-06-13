@@ -26,6 +26,18 @@ const AdminDashboard = ({ username, onLogout, onNavigate, onOpenUserManagement }
       >
         用户管理
       </button>
+      <button
+        style={{ padding: '10px 20px', backgroundColor: '#007bff', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', marginRight: '10px' }}
+        onClick={() => navigate('/position-management')} // 新增：持仓管理跳转按钮
+      >
+        持仓管理
+      </button>
+      <button
+        style={{ padding: '10px 20px', backgroundColor: '#007bff', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', marginRight: '10px' }}
+        onClick={() => navigate('/fund-management')} // 新增：资金管理跳转按钮
+      >
+        资金管理
+      </button>
       <button style={{ padding: '10px 20px', backgroundColor: '#007bff', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
         管理功能
       </button>
