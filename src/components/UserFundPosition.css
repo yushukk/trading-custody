@@ -1,6 +1,66 @@
-.fund-overview-card,
-.position-overview-card {
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-  margin-bottom: 24px;
+/* 现代化移动端样式优化 */
+.fund-overview-card .ant-card-body {
+  padding: 16px; /* 减少内边距 */
+}
+
+.position-card {
+  margin: 0 0 12px; /* 减少外边距 */
+  padding: 12px; /* 减少内边距 */
+}
+
+/* 响应式布局优化 */
+@media (max-width: 768px) {
+  .ant-card {
+    margin: 0;
+    padding: 0;
+    border-radius: 12px; /* 减少圆角半径 */
+  }
+  
+  .ant-row {
+    flex-direction: column;
+  }
+  
+  .ant-col {
+    width: 100%;
+    padding: 8px;
+    margin-bottom: 12px;
+  }
+
+  /* 表头优化 */
+  .ant-row[style*="borderBottom"] .ant-col {
+    font-size: 14px;
+    color: #555;
+  }
+
+  /* 持仓详情优化 */
+  .position-detail {
+    padding: 10px; /* 减少内边距 */
+  }
+  
+  /* 移动端字体适配 */
+  h2 {
+    font-size: 22px; /* 调整字体大小 */
+  }
+  
+  /* 新增：调整移动端表格字体大小 */
+  .ant-table-tbody > tr > td {
+    font-size: 13px; /* 调整字体大小 */
+  }
+}
+
+/* 新增加载动画样式 */
+.loading-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+}
+
+/* 优化Toast提示 */
+.toast-message {
+  font-size: 14px; /* 调整字体大小 */
+  padding: 10px 14px; /* 减少内边距 */
+  border-radius: 10px; /* 减少圆角半径 */
+  background-color: rgba(0, 0, 0, 0.8);
+  color: #fff;
 }

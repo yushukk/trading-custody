@@ -1,47 +1,36 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Button } from 'antd-mobile'; // 替换按钮组件
 
 const UserDashboard = ({ username, onLogout, onNavigate }) => {
   const navigate = useNavigate();
 
   return (
-    <div style={{ textAlign: 'center', padding: '50px', backgroundColor: '#f5f5f5' }}>
-      <h1>欢迎用户 {username}</h1>
-      <p>这里是普通用户视角的主页面。</p>
-      <button
-        style={{ padding: '10px 20px', backgroundColor: '#007bff', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', marginRight: '10px' }}
+    <div style={{ textAlign: 'center', padding: '20px', backgroundColor: '#f5f5f5' }}>
+      <h1 style={{ marginBottom: '16px' }}>欢迎用户 {username}</h1>
+      <Button 
+        block 
+        color="primary" 
         onClick={() => onLogout()}
+        style={{ marginBottom: '12px' }}
       >
         退出登录
-      </button>
-      <button
-        style={{ padding: '10px 20px', backgroundColor: '#007bff', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', marginRight: '10px' }}
+      </Button>
+      <Button 
+        block 
+        color="primary"
         onClick={() => onNavigate('change-password')}
+        style={{ marginBottom: '12px' }}
       >
         修改密码
-      </button>
-      {/* 新增：持仓管理按钮 */}
-      <button
-        style={{ padding: '10px 20px', backgroundColor: '#007bff', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
-        onClick={() => navigate('/position-management')}
-      >
-        持仓管理
-      </button>
-      {/* 新增：资金持仓管理按钮 */}
-      <button
-        style={{ 
-          padding: '10px 20px', 
-          backgroundColor: '#28a745', 
-          color: 'white', 
-          border: 'none', 
-          borderRadius: '4px', 
-          cursor: 'pointer',
-          marginLeft: '10px'
-        }}
+      </Button>
+      <Button 
+        block 
+        color="success"
         onClick={() => navigate('/user-fund-position')}
       >
         我的资金持仓
-      </button>
+      </Button>
     </div>
   );
 };

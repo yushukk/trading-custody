@@ -10,16 +10,3 @@ h1 {
   color: #333;
   margin-bottom: 20px;
 }
-
-/* 删除了未使用的.mobile-card类 */
-@media (max-width: 768px) {
-  .ant-card-body {
-    padding: 10px !important;
-  }
-
-  .ant-input,
-  .ant-select,
-  .ant-btn {
-    font-size: 14px !important;
-  }
-}

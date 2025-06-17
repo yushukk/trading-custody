@@ -16,42 +16,46 @@ function AppContent() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [username, setUsername] = useState('');
-  const [view, setView] = useState('login'); // 默认视图设置为登录页面
-  const navigate = useNavigate(); // 使用useNavigate进行导航
+  const [userId, setUserId] = useState(''); // 新增：存储用户ID
+  const [view, setView] = useState('login');
+  const navigate = useNavigate();
 
   useEffect(() => {
-    // 检查是否已登录
     const token = localStorage.getItem('authToken');
     if (token) {
       setIsLoggedIn(true);
-      // 从 localStorage 中获取用户角色和用户名
       const role = localStorage.getItem('userRole');
-      const storedUsername = localStorage.getItem('username'); // 获取用户名
+      const storedUsername = localStorage.getItem('username');
+      const storedUserId = localStorage.getItem('userId'); // 获取用户ID
       setIsAdmin(role === 'admin');
-      setUsername(storedUsername || token); // 如果没有用户名，则回退到 token
-      setView('dashboard'); // 登录后跳转到仪表盘
+      setUsername(storedUsername || token);
+      setUserId(storedUserId || ''); // 设置用户ID
+      setView('dashboard');
     }
   }, []);
 
-  const handleLogin = (token, role, username) => {
+  const handleLogin = (token, role, username, userId) => { // 修改：添加userId参数
     localStorage.setItem('authToken', token);
     localStorage.setItem('userRole', role);
-    localStorage.setItem('username', username); // 确保username正确存储
+    localStorage.setItem('username', username);
+    localStorage.setItem('userId', userId); // 存储用户ID
     setIsLoggedIn(true);
     setIsAdmin(role === 'admin');
-    setUsername(username); // 设置用户名
-    setView('dashboard'); // 设置视图为仪表盘
-    navigate('/'); // 强制导航到根路径
+    setUsername(username);
+    setUserId(userId); // 设置用户ID
+    setView('dashboard');
+    navigate('/');
   };
 
   const handleLogout = () => {
     localStorage.removeItem('authToken');
-    localStorage.removeItem('userRole'); // 移除用户角色
-    localStorage.removeItem('username'); // 秒速用户名
+    localStorage.removeItem('userRole');
+    localStorage.removeItem('username');
+    localStorage.removeItem('userId'); // 秒速用户名
     setIsLoggedIn(false);
     setIsAdmin(false);
     setUsername('');
-    setView('login'); // 登出后跳转到登录页面
+    setView('login');
   };
 
   return (

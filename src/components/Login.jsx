@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import './Login.css'; // 确保路径正确
+import './Login.css';
+import { Input, Button } from 'antd-mobile'; // 替换输入组件
 
 const Login = ({ onLogin }) => {
   const [username, setUsername] = useState('');
@@ -7,7 +8,6 @@ const Login = ({ onLogin }) => {
 
   const handleLogin = async () => {
     try {
-      // 使用全局配置的 API_BASE_URL
       const response = await fetch(`${window.API_BASE_URL}/api/login`, {
         method: 'POST',
         headers: {
@@ -21,7 +21,7 @@ const Login = ({ onLogin }) => {
       }
 
       const data = await response.json();
-      onLogin(data.token, data.role, username); // 传递 token、role 和 username 给父组件
+      onLogin(data.token, data.role, username, data.id); // 从登录接口获取用户ID
     } catch (error) {
       alert(error.message);
     }
@@ -30,23 +30,29 @@ const Login = ({ onLogin }) => {
   return (
     <div className="login-container">
       <h1>DEMO</h1>
-      <input
-        type="text"
+      <Input
         placeholder="用户名"
         value={username}
-        onChange={(e) => setUsername(e.target.value)}
+        onChange={setUsername}
         className="login-input"
       />
-      <input
+      <Input
         type="password"
         placeholder="密码"
         value={password}
-        onChange={(e) => setPassword(e.target.value)}
+        onChange={setPassword}
         className="login-input"
       />
-      <button onClick={handleLogin} className="login-button">登录</button>
+      <Button 
+        block 
+        color="primary" 
+        onClick={handleLogin}
+        className="login-button"
+      >
+        登录
+      </Button>
     </div>
   );
-}
+};
 
 export default Login;

@@ -60,9 +60,9 @@ app.post('/api/login', (req, res) => {
       return;
     }
     if (row) {
-      // 使用 jsonwebtoken 生成 token
+      // 使用 jsonwebtoken 生成 token，并返回用户ID
       const token = jwt.sign({ username: row.name, role: row.role }, 'your-secret-key', { expiresIn: '1h' });
-      res.json({ token, role: row.role });
+      res.json({ token, role: row.role, id: row.id }); // 添加用户ID返回
     } else {
       res.status(401).json({ error: 'Invalid credentials' });
     }
@@ -246,9 +246,14 @@ app.post('/api/positions/:userId', (req, res) => {
   db.serialize(() => {
     // 插入持仓记录
     db.run("INSERT INTO positions (user_id, asset_type, code, name, operation, price, quantity, timestamp) VALUES (?, ?, ?, ?, ?, ?, ?, ?)", 
-      [userId, assetType, code, name, operation, price, quantity, timestamp || new Date().toISOString()]);
-    
-    res.json({ message: '操作成功' });
+      [userId, assetType, code, name, operation, price, quantity, timestamp || new Date().toISOString()],
+      function(err) {
+        if (err) {
+          res.status(500).json({ error: err.message });
+          return;
+        }
+        res.json({ message: '操作成功', id: this.lastID });
+      });
   });
 });
 
