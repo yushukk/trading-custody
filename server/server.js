@@ -257,6 +257,113 @@ app.post('/api/positions/:userId', (req, res) => {
   });
 });
 
+app.get('/api/positions/profit/:userId', (req, res) => {
+  const { userId } = req.params;
+  
+  // 模拟获取最新价格的函数（实际应调用第三方API）
+  const getLatestPrice = (code) => {
+    // 示例数据：返回固定示例价格
+    return {
+      'PVC主连': 4902,
+      '300001': 18.2,
+      '000001': 12.8
+    }[code] || 10.0;
+  };
+  
+  // 查询用户所有持仓记录
+  db.all("SELECT * FROM positions WHERE user_id = ? ORDER BY timestamp ASC", [userId], (err, rows) => {
+    if (err) {
+      res.status(500).json({ error: err.message });
+      return;
+    }
+    
+    // 按股票代码分组处理
+    const positionsMap = {};
+    rows.forEach(row => {
+      if (!positionsMap[row.code]) {
+        positionsMap[row.code] = [];
+      }
+      positionsMap[row.code].push(row);
+    });
+    
+    const results = [];
+    
+    // 处理每个股票代码
+    Object.entries(positionsMap).forEach(([code, transactions]) => {
+      let realizedPnL = 0;
+      const queue = []; // FIFO队列存储买入记录 {quantity, price}
+      
+      // 处理每笔交易
+      transactions.forEach(tx => {
+        const quantity = tx.quantity;
+        const price = tx.price;
+        
+        if (tx.operation === 'buy') {
+          queue.push({ quantity, price });
+        } else if (tx.operation === 'sell') {
+          let remaining = quantity;
+          
+          // 从队列头部开始匹配卖出
+          while (remaining > 0 && queue.length > 0) {
+            const head = queue[0];
+            
+            if (head.quantity <= remaining) {
+              // 完全卖出当前批次
+              realizedPnL += head.quantity * (price - head.price);
+              remaining -= head.quantity;
+              queue.shift(); // 移除已完全卖出的批次
+            } else {
+              // 部分卖出当前批次
+              realizedPnL += remaining * (price - head.price);
+              head.quantity -= remaining;
+              remaining = 0;
+            }
+          }
+        }
+      });
+      
+      // 计算当前持仓数量
+      const currentQuantity = queue.reduce((sum, item) => sum + item.quantity, 0);
+      
+      // 计算未实现收益
+      let unrealizedPnL = 0;
+      let latestPrice = 0;
+      
+      if (currentQuantity > 0) {
+        latestPrice = getLatestPrice(code);
+        const averageCost = queue.reduce((sum, item) => sum + item.price * item.quantity, 0) / currentQuantity;
+        unrealizedPnL = currentQuantity * (latestPrice - averageCost);
+      }
+      
+      // 添加结果
+      results.push({
+        code,
+        name: transactions[0].name,
+        quantity: currentQuantity,
+        totalPnL: realizedPnL + unrealizedPnL,
+        realizedPnL,
+        unrealizedPnL,
+        latestPrice
+      });
+    });
+    
+    res.json(results);
+  });
+});
+
+// 在API路由部分新增DELETE接口
+app.get('/api/positions/delete/:userId', (req, res) => {
+  const { userId } = req.params;
+  
+  db.run("DELETE FROM positions WHERE user_id = ?", [userId], function(err) {
+    if (err) {
+      res.status(500).json({ error: err.message });
+      return;
+    }
+    res.json({ message: `成功清除用户${userId}的${this.changes}条交易记录` });
+  });
+});
+
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
 });

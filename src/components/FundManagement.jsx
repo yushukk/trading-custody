@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Button, Input, Select, Row, Col, message } from 'antd';
+import { Card, Button, Input, Selector, Toast } from 'antd-mobile';
 import { useNavigate } from 'react-router-dom';
-
-const { Option } = Select;
+import UserSelect from './UserSelect';
 
 const FundManagement = () => {
   const [users, setUsers] = useState([]);
@@ -24,7 +23,7 @@ const FundManagement = () => {
       const data = await response.json();
       setUsers(data);
     } catch (error) {
-      message.error(error.message);
+      Toast.show({ content: error.message, duration: 2000 });
     }
   };
 
@@ -41,7 +40,7 @@ const FundManagement = () => {
       setBalance(balanceData.balance || 0);
       setLogs(logsData);
     } catch (error) {
-      message.error(error.message);
+      Toast.show({ content: error.message, duration: 2000 });
     }
   };
 
@@ -52,7 +51,7 @@ const FundManagement = () => {
 
   const handleFundOperation = async () => {
     if (!selectedUserId || !amount || amount <= 0) {
-      message.error('请选择用户并输入有效金额');
+      Toast.show({ content: '请选择用户并输入有效金额', duration: 2000 });
       return;
     }
 
@@ -65,17 +64,17 @@ const FundManagement = () => {
 
       if (!response.ok) throw new Error('资金操作失败');
       
-      message.success('操作成功');
+      Toast.show({ content: '操作成功', duration: 1000 });
       fetchFundInfo(selectedUserId);
     } catch (error) {
-      message.error(error.message);
+      Toast.show({ content: error.message, duration: 2000 });
     }
   };
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', padding: '10px', backgroundColor: '#f5f5f5', minHeight: '100vh' }}>
       <h1 style={{ textAlign: 'center' }}>资金管理</h1>
-      <Button type="default" block onClick={() => navigate('/')} style={{ marginBottom: '10px' }}>返回仪表盘</Button>
+      <Button block onClick={() => navigate('/')} style={{ marginBottom: '10px' }}>返回仪表盘</Button>
       
       <Card style={{ width: '100%', margin: '0 0 20px', padding: '10px' }}>
         <UserSelect users={users} onSelect={handleUserSelect} />
@@ -86,15 +85,16 @@ const FundManagement = () => {
               <p>当前余额：￥{balance.toFixed(2)}</p>
             </div>
 
-            <Select
+            <Selector
+              options={[
+                { label: '设置初始资金', value: 'initial' },
+                { label: '追加资金', value: 'deposit' },
+                { label: '取出资金', value: 'withdraw' }
+              ]}
               value={operationType}
-              onChange={setOperationType}
+              onChange={val => setOperationType(val)}
               style={{ width: '100%', marginBottom: '10px' }}
-            >
-              <Option value="initial">设置初始资金</Option>
-              <Option value="deposit">追加资金</Option>
-              <Option value="withdraw">取出资金</Option>
-            </Select>
+            />
 
             <Input
               type="number"
@@ -114,14 +114,14 @@ const FundManagement = () => {
       {selectedUserId && (
         <Card title="资金流水" style={{ width: '100%', margin: '10px 0' }}>
           {logs.length === 0 ? (
-            <p>暂无资金流水</p>
+            <div style={{ textAlign: 'center', padding: '12px', color: '#888' }}>暂无资金流水</div>
           ) : (
             logs.map(log => (
-              <Row key={log.id} style={{ marginBottom: '10px' }}>
-                <Col span={8}>{new Date(log.timestamp).toLocaleString()}</Col>
-                <Col span={8}>{log.type === 'initial' ? '初始资金' : log.type === 'deposit' ? '追加资金' : '取出资金'}</Col>
-                <Col span={8}>￥{log.amount.toFixed(2)}</Col>
-              </Row>
+              <div key={log.id} style={{ marginBottom: '10px', borderBottom: '1px solid #e8e8e8', paddingBottom: '10px' }}>
+                <div style={{ fontSize: '14px', color: '#666' }}>{new Date(log.timestamp).toLocaleString()}</div>
+                <div style={{ fontSize: '14px', color: '#333' }}>{log.type === 'initial' ? '初始资金' : log.type === 'deposit' ? '追加资金' : '取出资金'}</div>
+                <div style={{ fontSize: '14px', color: '#1a73e8' }}>￥{log.amount.toFixed(2)}</div>
+              </div>
             ))
           )}
         </Card>
@@ -131,18 +131,3 @@ const FundManagement = () => {
 };
 
 export default FundManagement;
-
-// 将用户选择组件抽象为独立组件
-const UserSelect = ({ users, onSelect }) => (
-  <Select
-    placeholder="选择用户"
-    onChange={onSelect}
-    style={{ width: '100%', marginBottom: '15px' }}
-  >
-    {users.map(user => (
-      <Option key={user.id} value={user.id}>
-        {`${user.name} (${user.email})`}
-      </Option>
-    ))}
-  </Select>
-);

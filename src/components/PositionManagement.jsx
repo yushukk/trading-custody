@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Button, Input, Select, Row, Col, message, Form, DatePicker } from 'antd';
+import { Card, Button, Input, Selector, Form, DatePicker,Toast } from 'antd-mobile';
 import { useNavigate } from 'react-router-dom';
+import UserSelect from './UserSelect';
+import moment from 'moment';
 
-const { Option } = Select;
+const { Option } = Selector;
 
 // 与FundManagement类似，提取公共组件
 const PositionManagement = () => {
@@ -11,6 +13,7 @@ const PositionManagement = () => {
   const [positions, setPositions] = useState([]);
   const [form] = Form.useForm();
   const navigate = useNavigate();
+  const [visible, setVisible] = useState(false);
 
   useEffect(() => {
     fetchUsers();
@@ -44,15 +47,16 @@ const PositionManagement = () => {
   };
 
   const onFinish = async (values) => {
+    debugger
     try {
       const response = await fetch(`${window.API_BASE_URL}/api/positions/${selectedUserId}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          assetType: values.assetType,
+          assetType: values.assetType[0],
           code: values.code,
           name: values.name,
-          operation: values.operation,
+          operation: values.operation[0],
           price: values.price,
           quantity: values.quantity,
           timestamp: values.timestamp ? values.timestamp.toISOString() : undefined
@@ -60,66 +64,90 @@ const PositionManagement = () => {
       });
 
       if (!response.ok) throw new Error('持仓操作失败');
-      
-      message.success('操作成功');
+
+      Toast.show({ content: '操作成功', duration: 2000 });
       form.resetFields();
       fetchPositions(selectedUserId);
     } catch (error) {
-      message.error(error.message);
+        Toast.show({ content: error.message, duration: 2000 });
     }
   };
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', padding: '10px', backgroundColor: '#f5f5f5', minHeight: '100vh' }}>
       <h1 style={{ textAlign: 'center' }}>持仓管理</h1>
-      <Button type="default" block onClick={() => navigate('/')} style={{ marginBottom: '10px' }}>返回仪表盘</Button>
-      
+      <Button block onClick={() => navigate('/')}>返回仪表盘</Button>
+
       <Card style={{ width: '100%', margin: '0 0 20px', padding: '10px' }}>
         <UserSelect users={users} onSelect={handleUserSelect} />
         {selectedUserId && (
           <>
-            <Form form={form} onFinish={onFinish} layout="vertical">
-              <Form.Item label="资产类型" name="assetType" rules={[{ required: true }]}>
-                <Select placeholder="选择资产类型">
-                  <Option value="stock">股票</Option>
-                  <Option value="future">期货</Option>
-                  <Option value="fund">基金</Option>
-                </Select>
+            <Form form={form}
+              initialValues={{
+                assetType: 'stock',
+                code: 'PVC主连',
+                name: 'PVC主连',
+                operation: ['buy'],
+                price: 100,
+                quantity: 1
+              }}
+              onFinish={onFinish} layout="vertical">
+              <Form.Item label="资产类型" name="assetType" >
+                <Selector options={[
+                { value: 'stock', label: '股票' },
+                { value: 'future', label: '期货' },
+                { value: 'fund', label: '基金' }
+              ]} placeholder="选择资产类型"
+              />
               </Form.Item>
-              
-              <Form.Item label="代码" name="code" rules={[{ required: true }]}>
-                <Input placeholder="请输入代码" />
+
+              <Form.Item label="代码" name="code" >
+                <Input placeholder="请输入代码" style={{ width: '100%' }} />
               </Form.Item>
-              
-              <Form.Item label="名称" name="name" rules={[{ required: true }]}>
-                <Input placeholder="请输入名称" />
+
+              <Form.Item label="名称" name="name" >
+                <Input placeholder="请输入名称" style={{ width: '100%' }} />
               </Form.Item>
-              
-              <Form.Item label="操作类型" name="operation" rules={[{ required: true }]}>
-                <Select placeholder="选择操作类型">
-                  <Option value="buy">买入</Option>
-                  <Option value="sell">卖出</Option>
-                </Select>
+
+              <Form.Item label="操作类型" name="operation" >
+                <Selector options={[
+                { value: 'buy', label: '买入' },
+                { value: 'sell', label: '卖出' }
+              ]} placeholder="选择操作类型"
+              />
               </Form.Item>
-              
-              <Form.Item label="价格" name="price" rules={[
-                { required: true, message: '请输入价格' }
-              ]}>
-                <Input type="number" placeholder="请输入价格" />
-              </Form.Item>
-              
-              <Form.Item label="数量" name="quantity" rules={[
-                { required: true, message: '请输入数量' }
-              ]}>
-                <Input type="number" placeholder="请输入数量" />
-              </Form.Item>
-              
-              <Form.Item label="时间" name="timestamp">
-                <DatePicker showTime style={{ width: '100%' }} />
-              </Form.Item>
-              
+
+              <Form.Item label="价格" name="price" >
+                <Input type="number" placeholder="请输入价格" style={{ width: '100%' }} />
+                </Form.Item>
+
+              <Form.Item label="数量" name="quantity" >
+                <Input type="number" placeholder="请输入数量" style={{ width: '100%' }} />
+                </Form.Item>
+
+              <Form.Item
+              label="交易时间"
+              name="tradeTime"
+            >
+              <div onClick={() => setVisible(true)}>
+                  {form.getFieldValue('tradeTime') || '选择时间'}
+                </div>
+              <DatePicker
+                visible={visible}
+                onClose={() => setVisible(false)}
+                onConfirm={(value) => {
+                  const formattedTime = value ? moment(value).format('YYYY-MM-DD HH:mm') : '';
+                  form.setFieldsValue({ tradeTime: formattedTime });
+                }}
+              >
+                
+              </DatePicker>
+            </Form.Item>
+
               <Form.Item>
-                <Button type="primary" block htmlType="submit">提交</Button>
+                <Button type="submit" block color="primary">
+                  提交
+                </Button>
               </Form.Item>
             </Form>
           </>
@@ -132,16 +160,20 @@ const PositionManagement = () => {
             <p>暂无持仓记录</p>
           ) : (
             positions.map(position => (
-              <Row key={position.id} style={{ marginBottom: '10px', borderBottom: '1px solid #e8e8e8', paddingBottom: '10px' }}>
-                <Col span={6}>{new Date(position.timestamp).toLocaleString()}</Col>
-                <Col span={4}>{position.asset_type === 'stock' ? '股票' : position.asset_type === 'future' ? '期货' : '基金'}</Col>
-                <Col span={4}>{position.code}</Col>
-                <Col span={4}>{position.name}</Col>
-                <Col span={4}>{position.operation === 'buy' ? '买入' : '卖出'}</Col>
-                <Col span={6}>
-                  ￥{position.price.toFixed(2)} x {position.quantity} = ￥{(position.price * position.quantity).toFixed(2)}
-                </Col>
-              </Row>
+              <div key={position.id} style={{ marginBottom: '10px', borderBottom: '1px solid #e8e8e8', paddingBottom: '10px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '5px' }}>
+                  <span>{new Date(position.timestamp).toLocaleString()}</span>
+                  <span>{position.asset_type === 'stock' ? '股票' : position.asset_type === 'future' ? '期货' : '基金'}</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '5px' }}>
+                  <span>{position.code}</span>
+                  <span>{position.name}</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '5px' }}>
+                  <span>{position.operation === 'buy' ? '买入' : '卖出'}</span>
+                  <span>￥{position.price.toFixed(2)} x {position.quantity} = ￥{(position.price * position.quantity).toFixed(2)}</span>
+                </div>
+              </div>
             ))
           )}
         </Card>
