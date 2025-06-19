@@ -264,8 +264,8 @@ app.get('/api/positions/profit/:userId', (req, res) => {
   const getLatestPrice = (code) => {
     // 示例数据：返回固定示例价格
     return {
-      'PVC主连': 4902,
-      '300001': 18.2,
+      'PVC主连': 4900,
+      '300750': 242.1,
       '000001': 12.8
     }[code] || 10.0;
   };
@@ -339,6 +339,7 @@ app.get('/api/positions/profit/:userId', (req, res) => {
       results.push({
         code,
         name: transactions[0].name,
+        assetType: transactions[0].asset_type,
         quantity: currentQuantity,
         totalPnL: realizedPnL + unrealizedPnL,
         realizedPnL,

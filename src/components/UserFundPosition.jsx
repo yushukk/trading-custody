@@ -39,10 +39,10 @@ const UserFundPosition = () => {
 
   const fetchPositions = async (userId) => {
     try {
-      const response = await fetch(`${window.API_BASE_URL}/api/positions/${userId}`);
+      const response = await fetch(`${window.API_BASE_URL}/api/positions/profit/${userId}`);
       if (!response.ok) throw new Error('Failed to fetch positions');
       const data = await response.json();
-      setPositions(data.slice(0, 5));
+      setPositions(data);
     } catch (error) {
       message.error(error.message);
     }
@@ -50,44 +50,22 @@ const UserFundPosition = () => {
 
   useEffect(() => {
     if (positions.length === 0) return;
-    
-    const consolidated = {};
-    
-    positions.forEach(pos => {
-      const key = `${pos.asset_type}-${pos.code}`;
-      
-      if (!consolidated[key]) {
-        consolidated[key] = {
-          ...pos,
-          quantity: 0,
-          costBasis: 0,
-          marketValue: 0,
-          unrealizedPnL: 0
-        };
-      }
-      
-      const transactionValue = pos.price * pos.quantity;
-      
-      consolidated[key].quantity += pos.operation === 'buy' ? pos.quantity : -pos.quantity;
-      
-      if (pos.operation === 'buy') {
-        consolidated[key].costBasis = ((consolidated[key].costBasis * consolidated[key].quantity) + transactionValue) 
-          / (consolidated[key].quantity + pos.quantity);
-      }
-    });
 
-    const filtered = Object.values(consolidated).filter(p => p.quantity > 0);
-    
-    filtered.forEach(p => {
-      p.marketValue = p.price * p.quantity; 
-      p.unrealizedPnL = p.marketValue - (p.costBasis * p.quantity);
-    });
-    
-    setConsolidatedPositions(filtered);
+    // 使用接口返回的现成持仓数据，仅做格式适配
+    const adaptedPositions = positions.map(pos => ({
+      ...pos,
+      asset_type: pos.assetType, // 固定资产类型为股票
+      price: pos.latestPrice ?? 0, // 显式赋值 price 字段
+      costBasis: (pos.latestPrice ?? 0) - ((pos.totalPnL ?? 0) / (pos.quantity ?? 1)), // 避免除以0
+      quantity: pos.quantity ?? 0,
+      unrealizedPnL: pos.unrealizedPnL ?? 0
+    }));
+
+    setConsolidatedPositions(adaptedPositions);
   }, [positions]);
 
   const totalPnL = useMemo(() => {
-    return consolidatedPositions.reduce((sum, pos) => sum + pos.unrealizedPnL, 0);
+    return consolidatedPositions.reduce((sum, pos) => sum + pos.totalPnL, 0);
   }, [consolidatedPositions]);
 
   const getOperationColor = (type) => {
@@ -276,7 +254,7 @@ const UserFundPosition = () => {
                             color: position.unrealizedPnL >= 0 ? '#2e7d32' : '#d32f2f',
                             fontWeight: 600
                           }}>
-                            {position.unrealizedPnL.toFixed(2)}
+                            {position.totalPnL.toFixed(2)}
                           </span>
                         </td>
                       </tr>
