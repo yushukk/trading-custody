@@ -3,9 +3,12 @@ const cors = require('cors');
 const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
 const jwt = require('jsonwebtoken');
+const schedule = require('node-schedule'); // 新增定时任务模块
+const http = require('http'); // 替换为http模块支持
 
 const app = express();
 const PORT = 3001;
+const CRON_EXPRESSION = '*/5 * * * * *'; // 原为每天下午5点：'0 17 * * *'
 
 // 数据库文件路径
 const dbPath = path.join(__dirname, 'database.db');
@@ -49,7 +52,97 @@ db.serialize(() => {
   
   // 持仓相关表
   db.run("CREATE TABLE IF NOT EXISTS positions (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, asset_type TEXT, code TEXT, name TEXT, operation TEXT, price REAL, quantity INTEGER, timestamp DATETIME DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY(user_id) REFERENCES users(id))");
+  
+  // 新增价格信息表
+  db.run("CREATE TABLE IF NOT EXISTS price_data (code TEXT, asset_type TEXT, current_price REAL, timestamp DATETIME DEFAULT CURRENT_TIMESTAMP, PRIMARY KEY(code, asset_type))");
 });
+
+// 修改getLatestPrice函数，增加详细日志和错误处理
+async function getLatestPrice(code, asset_type) {
+  let apiUrl;
+  
+  // 计算最近10天日期范围
+  const endDate = new Date();
+  const startDate = new Date();
+  startDate.setDate(endDate.getDate() - 10);
+  
+  // 格式化日期为YYYYMMDD
+  const formatDate = (date) => {
+    return date.getFullYear() + 
+      String(date.getMonth()+1).padStart(2, '0') + 
+      String(date.getDate()).padStart(2, '0');
+  };
+  
+  // 根据资产类型构建API URL
+  if (asset_type === 'stock') {
+    apiUrl = `http://23.95.205.223:18201/api/public/stock_zh_a_hist?symbol=${code}&period=daily&start_date=${formatDate(startDate)}&end_date=${formatDate(endDate)}`;
+  } else if (asset_type === 'future') {
+    const encodedCode = encodeURIComponent(code);
+    apiUrl = `http://23.95.205.223:18201/api/public/futures_hist_em?symbol=${encodedCode}&period=daily&start_date=${formatDate(startDate)}&end_date=${formatDate(endDate)}`;
+  } else {
+    return 0.0; // 不支持的资产类型返回默认值
+  }
+
+  try {
+    // 使用Promise封装http请求
+    const data = await new Promise((resolve, reject) => {
+      http.get(apiUrl, (res) => {
+        let body = '';
+        res.on('data', chunk => body += chunk);
+        res.on('end', () => {
+          try {
+            const jsonData = JSON.parse(body);
+            console.log(`API响应数据 ${code}(${asset_type}):`, jsonData);
+            resolve(jsonData);
+          } catch (err) {
+            console.error(`JSON解析失败 ${code}(${asset_type}):`, err.message);
+            reject(err);
+          }
+        });
+      }).on('error', err => {
+        console.error(`HTTP请求错误 ${code}(${asset_type}):`, err.message);
+        reject(err);
+      });
+    });
+
+    if (!Array.isArray(data) || data.length === 0) {
+      console.warn(`空数据返回 ${code}(${asset_type})`);
+      return 0.0;
+    }
+    
+    // 新增数据结构验证
+    console.log(`原始数据示例 ${code}:`, data[0]);
+    
+    const latestRecord = data.reduce((latest, current) => {
+      // 增加字段存在性检查 - 同时支持股票(日期)和期货(时间)格式
+      const currentField = current.日期 ? '日期' : '时间';
+      const latestField = latest.日期 ? '日期' : '时间';
+      
+      if (!current[currentField] || !latest[latestField]) {
+        console.warn(`缺少时间字段 ${code}:`, current);
+        return latest;
+      }
+      
+      // 统一转换为时间戳进行比较
+      return new Date(current[currentField]).getTime() > new Date(latest[latestField]).getTime() ? current : latest;
+    }, data[0]);
+    
+    // 新增收盘价字段检查
+    if (!latestRecord['收盘']) {
+      console.error(`缺少收盘价字段 ${code}(${asset_type}):`, latestRecord);
+      return 0.0;
+    }
+    
+    const price = parseFloat(latestRecord['收盘']) || 0.0;
+    console.log(`解析成功 ${code}(${asset_type}): ${price}`); // 新增调试日志
+    return price;
+    
+  } catch (error) {
+    console.error(`价格获取失败 ${code}(${asset_type}):`, error.message); // 新增错误详情
+    console.error('错误堆栈:', error.stack); // 新增堆栈跟踪
+    return 0.0; // 统一返回0.0并记录详细错误
+  }
+}
 
 // API路由
 app.post('/api/login', (req, res) => {
@@ -260,16 +353,6 @@ app.post('/api/positions/:userId', (req, res) => {
 app.get('/api/positions/profit/:userId', (req, res) => {
   const { userId } = req.params;
   
-  // 模拟获取最新价格的函数（实际应调用第三方API）
-  const getLatestPrice = (code) => {
-    // 示例数据：返回固定示例价格
-    return {
-      'PVC主连': 4900,
-      '300750': 242.1,
-      '000001': 12.8
-    }[code] || 10.0;
-  };
-  
   // 查询用户所有持仓记录
   db.all("SELECT * FROM positions WHERE user_id = ? ORDER BY timestamp ASC", [userId], (err, rows) => {
     if (err) {
@@ -362,6 +445,43 @@ app.get('/api/positions/delete/:userId', (req, res) => {
       return;
     }
     res.json({ message: `成功清除用户${userId}的${this.changes}条交易记录` });
+  });
+});
+
+// 新增定时任务逻辑（在数据库初始化完成后添加）
+schedule.scheduleJob(CRON_EXPRESSION, async () => {
+  console.log('开始同步最新价格数据...');
+  
+  db.all("SELECT DISTINCT code, asset_type FROM positions", [], async (err, rows) => {
+    if (err) {
+      console.error('数据库查询错误:', err);
+      return;
+    }
+    
+    for (const row of rows) {
+      try {
+        console.log(`正在获取 ${row.code}(${row.asset_type}) 的最新价格...`); // 新增开始日志
+        const latestPrice = await getLatestPrice(row.code, row.asset_type);
+        
+        if (latestPrice <= 0) {
+          console.warn(`无效价格跳过更新 ${row.code}: ${latestPrice}`); // 新增警告
+          continue;
+        }
+        
+        db.run("INSERT OR REPLACE INTO price_data (code, asset_type, current_price) VALUES (?, ?, ?)", 
+          [row.code, row.asset_type, latestPrice],
+          function(err) {
+            if (err) {
+              console.error(`价格更新失败 ${row.code}(${row.asset_type}):`, err.message); // 新增详细错误
+            } else {
+              console.log(`价格更新成功 ${row.code}: ${latestPrice}`); // 新增成功日志
+            }
+          }
+        );
+      } catch (error) {
+        console.error(`处理异常 ${row.code}(${row.asset_type}):`, error.message); // 新增错误处理
+      }
+    }
   });
 });
 
