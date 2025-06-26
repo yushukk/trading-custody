@@ -8,7 +8,7 @@ const http = require('http'); // 替换为http模块支持
 
 const app = express();
 const PORT = 3001;
-const CRON_EXPRESSION = '*/5 * * * * *'; // 原为每天下午5点：'0 17 * * *'
+const CRON_EXPRESSION = '0 17 * * *'; 
 
 // 数据库文件路径
 const dbPath = path.join(__dirname, 'database.db');
@@ -56,6 +56,24 @@ db.serialize(() => {
   // 新增价格信息表
   db.run("CREATE TABLE IF NOT EXISTS price_data (code TEXT, asset_type TEXT, current_price REAL, timestamp DATETIME DEFAULT CURRENT_TIMESTAMP, PRIMARY KEY(code, asset_type))");
 });
+
+// 修改 getDbLatestPrice 为返回 Promise
+function getDbLatestPrice(code, asset_type) {
+  return new Promise((resolve, reject) => {
+    db.get(
+      "SELECT current_price FROM price_data WHERE code = ? AND asset_type = ?",
+      [code, asset_type],
+      (err, row) => {
+        if (err) {
+          console.error(`数据库查询失败 ${code}(${asset_type}):`, err.message);
+          resolve(0); // 出错时返回 0
+        } else {
+          resolve(parseFloat(row?.current_price) || 0);
+        }
+      }
+    );
+  });
+}
 
 // 修改getLatestPrice函数，增加详细日志和错误处理
 async function getLatestPrice(code, asset_type) {
@@ -352,15 +370,13 @@ app.post('/api/positions/:userId', (req, res) => {
 
 app.get('/api/positions/profit/:userId', (req, res) => {
   const { userId } = req.params;
-  
-  // 查询用户所有持仓记录
-  db.all("SELECT * FROM positions WHERE user_id = ? ORDER BY timestamp ASC", [userId], (err, rows) => {
+
+  db.all("SELECT * FROM positions WHERE user_id = ? ORDER BY timestamp ASC", [userId], async (err, rows) => {
     if (err) {
       res.status(500).json({ error: err.message });
       return;
     }
-    
-    // 按股票代码分组处理
+
     const positionsMap = {};
     rows.forEach(row => {
       if (!positionsMap[row.code]) {
@@ -368,35 +384,30 @@ app.get('/api/positions/profit/:userId', (req, res) => {
       }
       positionsMap[row.code].push(row);
     });
-    
+
     const results = [];
-    
-    // 处理每个股票代码
-    Object.entries(positionsMap).forEach(([code, transactions]) => {
+
+    for (const [code, transactions] of Object.entries(positionsMap)) {
       let realizedPnL = 0;
-      const queue = []; // FIFO队列存储买入记录 {quantity, price}
-      
-      // 处理每笔交易
+      const queue = [];
+
       transactions.forEach(tx => {
         const quantity = tx.quantity;
         const price = tx.price;
-        
+
         if (tx.operation === 'buy') {
           queue.push({ quantity, price });
         } else if (tx.operation === 'sell') {
           let remaining = quantity;
-          
-          // 从队列头部开始匹配卖出
+
           while (remaining > 0 && queue.length > 0) {
             const head = queue[0];
-            
+
             if (head.quantity <= remaining) {
-              // 完全卖出当前批次
               realizedPnL += head.quantity * (price - head.price);
               remaining -= head.quantity;
-              queue.shift(); // 移除已完全卖出的批次
+              queue.shift();
             } else {
-              // 部分卖出当前批次
               realizedPnL += remaining * (price - head.price);
               head.quantity -= remaining;
               remaining = 0;
@@ -404,21 +415,17 @@ app.get('/api/positions/profit/:userId', (req, res) => {
           }
         }
       });
-      
-      // 计算当前持仓数量
+
       const currentQuantity = queue.reduce((sum, item) => sum + item.quantity, 0);
-      
-      // 计算未实现收益
-      let unrealizedPnL = 0;
       let latestPrice = 0;
-      
+      let unrealizedPnL = 0;
+
       if (currentQuantity > 0) {
-        latestPrice = getLatestPrice(code);
+        latestPrice = await getDbLatestPrice(code, transactions[0].asset_type);
         const averageCost = queue.reduce((sum, item) => sum + item.price * item.quantity, 0) / currentQuantity;
         unrealizedPnL = currentQuantity * (latestPrice - averageCost);
       }
-      
-      // 添加结果
+
       results.push({
         code,
         name: transactions[0].name,
@@ -429,8 +436,8 @@ app.get('/api/positions/profit/:userId', (req, res) => {
         unrealizedPnL,
         latestPrice
       });
-    });
-    
+    }
+
     res.json(results);
   });
 });
@@ -448,8 +455,17 @@ app.get('/api/positions/delete/:userId', (req, res) => {
   });
 });
 
+app.get('/api/syncPriceData', (req, res) => {
+  syncPriceData();
+  res.json({ message: '价格数据同步任务已触发' });
+});
+
 // 新增定时任务逻辑（在数据库初始化完成后添加）
 schedule.scheduleJob(CRON_EXPRESSION, async () => {
+  syncPriceData();
+});
+
+function syncPriceData() {
   console.log('开始同步最新价格数据...');
   
   db.all("SELECT DISTINCT code, asset_type FROM positions", [], async (err, rows) => {
@@ -483,7 +499,7 @@ schedule.scheduleJob(CRON_EXPRESSION, async () => {
       }
     }
   });
-});
+}
 
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
