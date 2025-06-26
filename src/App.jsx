@@ -83,7 +83,12 @@ function AppContent() {
           <UserFundPosition />
         </ProtectedRoute>
       } />
-      
+      {/* 新增修改密码页面的独立路由 */}
+      <Route path="/change-password" element={
+        <ProtectedRoute>
+          <ChangePassword username={username} onLogout={handleLogout} onBack={() => navigate('/')} />
+        </ProtectedRoute>
+      } />
       {/* 修改仪表盘路由定义 */}
       <Route path="/" element={
         view === 'dashboard' ? (
@@ -92,9 +97,7 @@ function AppContent() {
           ) : (
             <UserDashboard username={username} onLogout={handleLogout} onNavigate={setView} />
           )
-        ) : view === 'change-password' ? (
-          <ChangePassword username={username} onBack={() => setView('dashboard')} />
-        ) : (
+        ) :  (
           <Login onLogin={handleLogin} />
         )
       } />

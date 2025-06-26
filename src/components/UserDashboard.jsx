@@ -2,8 +2,8 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from 'antd-mobile'; // 替换按钮组件
 
-const UserDashboard = ({ username, onLogout, onNavigate }) => {
-  const navigate = useNavigate();
+const UserDashboard = ({ username, onLogout }) => {
+  const navigate = useNavigate(); // 初始化navigate函数
 
   return (
     <div style={{ textAlign: 'center', padding: '20px', backgroundColor: '#f5f5f5' }}>
@@ -16,10 +16,11 @@ const UserDashboard = ({ username, onLogout, onNavigate }) => {
       >
         退出登录
       </Button>
+      {/* 修复：使用useNavigate直接跳转，避免onNavigate参数可能导致的路由错误 */}
       <Button 
         block 
         color="primary"
-        onClick={() => onNavigate('change-password')}
+        onClick={() => navigate('/change-password')}
         style={{ marginBottom: '12px' }}
       >
         修改密码

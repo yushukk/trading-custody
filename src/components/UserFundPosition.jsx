@@ -1,13 +1,12 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Card, Badge, Toast } from 'antd-mobile';
+import { Card, Badge, Toast, Button } from 'antd-mobile'; // 导入Button组件
 import { useNavigate } from 'react-router-dom';
 
 const UserFundPosition = () => {
+  const navigate = useNavigate(); // 初始化navigate函数
   const [fundInfo, setFundInfo] = useState({ balance: 0, logs: [] });
   const [positions, setPositions] = useState([]);
   const [loading, setLoading] = useState(true);
-  const navigate = useNavigate();
-
   const [consolidatedPositions, setConsolidatedPositions] = useState([]);
 
   useEffect(() => {
@@ -117,13 +116,32 @@ const UserFundPosition = () => {
           {/* 资金概览卡片 */}
           <Card 
             style={{ 
-              marginBottom: '6px', // 减小卡片间距
-              borderRadius: '10px', // 减小圆角
-              boxShadow: '0 1px 8px rgba(0,0,0,0.06)', // 减小阴影
+              marginBottom: '6px', 
+              borderRadius: '10px', 
+              boxShadow: '0 1px 8px rgba(0,0,0,0.06)', 
               backgroundColor: '#ffffff',
-              overflow: 'hidden'
+              overflow: 'hidden',
+              position: 'relative' // 新增定位基准
             }}
           >
+            {/* 新增：右上角按钮 */}
+            <Button 
+              style={{ 
+                position: 'absolute',
+                top: '8px',
+                right: '8px',
+                backgroundColor: '#f0f0f0',
+                color: '#333',
+                border: '1px solid #ccc',
+                padding: '4px 8px',
+                fontSize: '12px',
+                borderRadius: '4px'
+              }}
+              onClick={() => navigate('/change-password')}
+            >
+              修改密码
+            </Button>
+            
             <div style={{ padding: '8px' }}> 
               <div style={{ 
                 fontSize: '18px', 
