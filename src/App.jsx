@@ -90,7 +90,7 @@ function AppContent() {
       {/* 新增修改密码页面的独立路由 */}
       <Route path="/change-password" element={
         <ProtectedRoute>
-          <ChangePassword username={username} onLogout={handleLogout} onBack={() => setView('dashboard')} />
+          <ChangePassword username={username} onLogout={handleLogout} onBack={() => navigate('/')} />
         </ProtectedRoute>
       } />
       {/* 修改仪表盘路由定义 */}

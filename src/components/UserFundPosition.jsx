@@ -124,24 +124,6 @@ const UserFundPosition = () => {
               position: 'relative' // 新增定位基准
             }}
           >
-            {/* 新增：右上角按钮 */}
-            <Button 
-              style={{ 
-                position: 'absolute',
-                top: '8px',
-                right: '8px',
-                backgroundColor: '#f0f0f0',
-                color: '#333',
-                border: '1px solid #ccc',
-                padding: '4px 8px',
-                fontSize: '12px',
-                borderRadius: '4px'
-              }}
-              onClick={() => navigate('/change-password')}
-            >
-              修改密码
-            </Button>
-            
             <div style={{ padding: '8px' }}> 
               <div style={{ 
                 fontSize: '18px', 
@@ -284,6 +266,45 @@ const UserFundPosition = () => {
           </Card>
         </>
       )}
+      {/* 修改：将退出登录和修改密码按钮并列排列 */}
+      <div style={{ display: 'flex', justifyContent: 'center', gap: '12px', margin: '10px auto' }}>
+        <Button 
+          style={{ 
+            backgroundColor: '#e0e0e0',
+            color: '#333',
+            border: '1px solid #ccc',
+            padding: '6px 12px',
+            fontSize: '12px',
+            width: '40%',
+            maxWidth: '160px',
+            borderRadius: '4px'
+          }}
+          onClick={() => {
+            localStorage.removeItem('authToken');
+            localStorage.removeItem('userRole');
+            localStorage.removeItem('username');
+            localStorage.removeItem('userId');
+            navigate('/login');
+          }}
+        >
+          退出登录
+        </Button>
+        <Button 
+          style={{ 
+            backgroundColor: '#4caf50',
+            color: 'white',
+            border: 'none',
+            padding: '6px 12px',
+            fontSize: '12px',
+            width: '40%',
+            maxWidth: '160px',
+            borderRadius: '4px'
+          }}
+          onClick={() => navigate('/change-password')}
+        >
+          修改密码
+        </Button>
+      </div>
     </div>
   );
 };
