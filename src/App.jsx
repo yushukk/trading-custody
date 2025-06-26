@@ -43,8 +43,12 @@ function AppContent() {
     setIsAdmin(role === 'admin');
     setUsername(username);
     setUserId(userId); // 设置用户ID
-    setView('dashboard');
-    navigate('/');
+    // 修改：根据角色跳转不同路径
+    if (role === 'admin') {
+      navigate('/');
+    } else {
+      navigate('/user-fund-position');
+    }
   };
 
   const handleLogout = () => {
@@ -86,7 +90,7 @@ function AppContent() {
       {/* 新增修改密码页面的独立路由 */}
       <Route path="/change-password" element={
         <ProtectedRoute>
-          <ChangePassword username={username} onLogout={handleLogout} onBack={() => navigate('/')} />
+          <ChangePassword username={username} onLogout={handleLogout} onBack={() => setView('dashboard')} />
         </ProtectedRoute>
       } />
       {/* 修改仪表盘路由定义 */}
