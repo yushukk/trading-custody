@@ -143,7 +143,7 @@ const UserFundPosition = () => {
                 </div>
                 <div style={{ textAlign: 'right', flex: 1 }}>
                   <div style={{ fontSize: '12px', color: '#666', marginBottom: '2px' }}>总盈亏</div> 
-                  <div style={{ fontSize: '14px', color: totalPnL >= 0 ? '#2e7d32' : '#d32f2f' }}>￥{totalPnL.toFixed(2)}</div>
+                  <div style={{ fontSize: '14px', color: totalPnL >= 0 ? '#d32f2f' : '#2e7d32' }}>￥{totalPnL.toFixed(2)}</div>
                 </div>
               </div>
             </div>
@@ -251,7 +251,7 @@ const UserFundPosition = () => {
                           verticalAlign: 'top'
                         }}> 
                           <span style={{ 
-                            color: position.unrealizedPnL >= 0 ? '#2e7d32' : '#d32f2f',
+                            color: position.unrealizedPnL >= 0 ? '#d32f2f' : '#2e7d32',
                             fontWeight: 600
                           }}>
                             {position.totalPnL.toFixed(2)}
