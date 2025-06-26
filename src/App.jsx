@@ -4,7 +4,7 @@ import Login from './components/Login';
 import AdminDashboard from './components/AdminDashboard';
 import UserDashboard from './components/UserDashboard';
 import ChangePassword from './components/ChangePassword';
-import UserManagement from './components/UserManagement'; // 新增用户管理组件
+import UserManagement from './components/UserManagement'; // 确保路径正确且组件已导出
 import FundManagement from './components/FundManagement'; // 新增资金管理组件
 import PositionManagement from './components/PositionManagement'; // 新增持仓管理组件
 import UserFundPosition from './components/UserFundPosition'; // 新增资金持仓页面组件
@@ -45,7 +45,7 @@ function AppContent() {
     setUserId(userId); // 设置用户ID
     // 修改：根据角色跳转不同路径
     if (role === 'admin') {
-      navigate('/');
+      setView('dashboard');
     } else {
       navigate('/user-fund-position');
     }

@@ -22,11 +22,10 @@ const AdminDashboard = ({ username, onLogout, onNavigate, onOpenUserManagement }
       <p>这里是管理员视角的主页面。</p>
       {/* 使用统一样式 */}
       <button style={buttonStyle} onClick={() => onLogout()}>退出登录</button>
-      <button style={buttonStyle} onClick={() => onNavigate('change-password')}>修改密码</button>
+      <button style={buttonStyle} onClick={() => navigate('/change-password')}>修改密码</button>
       <button style={buttonStyle} onClick={() => navigate('/user-management')}>用户管理</button>
       <button style={buttonStyle} onClick={() => navigate('/position-management')}>持仓管理</button>
       <button style={buttonStyle} onClick={() => navigate('/fund-management')}>资金管理</button>
-      <button style={buttonStyle}>管理功能</button>
     </div>
   );
 };

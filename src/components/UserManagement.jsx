@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Button, Input, Select, Row, Col, message } from 'antd';
+import { Card, Button, Input, Selector, Toast } from 'antd-mobile';
 import { useNavigate } from 'react-router-dom';
 
 const UserManagement = () => {
@@ -15,9 +15,7 @@ const UserManagement = () => {
   const fetchUsers = async () => {
     try {
       const response = await fetch(`${window.API_BASE_URL}/api/users`);
-      if (!response.ok) {
-        throw new Error('Failed to fetch users');
-      }
+      if (!response.ok) throw new Error('Failed to fetch users');
       const data = await response.json();
       setUsers(data);
     } catch (error) {
@@ -35,21 +33,19 @@ const UserManagement = () => {
         body: JSON.stringify(newUser),
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to add user');
-      }
+      if (!response.ok) throw new Error('Failed to add user');
 
       fetchUsers();
       setNewUser({ name: '', email: '', password: '', role: 'user' });
-      message.success('添加用户成功');
+      Toast.show({ content: '添加用户成功', duration: 1000 });
     } catch (error) {
-      setError(error.message);
+      Toast.show({ content: error.message, duration: 2000, color: 'danger' });
     }
   };
 
   const handleUpdatePassword = async (userId, newPassword) => {
     if (!newPassword) {
-      message.error('请输入新密码');
+      Toast.show({ content: '请输入新密码', duration: 1500, color: 'warning' });
       return;
     }
 
@@ -62,99 +58,131 @@ const UserManagement = () => {
         body: JSON.stringify({ newPassword }),
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to update password');
-      }
+      if (!response.ok) throw new Error('Failed to update password');
 
       fetchUsers();
-      message.success('密码更新成功');
+      Toast.show({ content: '密码更新成功', duration: 1000 });
     } catch (error) {
-      message.error(error.message);
+      Toast.show({ content: error.message, duration: 2000, color: 'danger' });
     }
   };
 
-  // 新增：删除用户功能
   const handleDeleteUser = async (userId) => {
     try {
       const response = await fetch(`${window.API_BASE_URL}/api/users/${userId}`, {
         method: 'DELETE',
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to delete user');
-      }
+      if (!response.ok) throw new Error('Failed to delete user');
 
       fetchUsers();
-      message.success('用户删除成功');
+      Toast.show({ content: '用户删除成功', duration: 1000 });
     } catch (error) {
-      message.error(error.message);
+      Toast.show({ content: error.message, duration: 2000, color: 'danger' });
     }
   };
 
   return (
-    <div style={{ padding: '20px', backgroundColor: '#f5f5f5', height: '100%', overflowY: 'auto' }}>
-      <h1 style={{ textAlign: 'center' }}>用户管理</h1>
-      <Button type="primary" style={{ display: 'block', margin: '20px auto' }} onClick={() => navigate(-1)}>
+    <div>
+      <h1 style={{ textAlign: 'center', marginBottom: '16px' }}>用户管理</h1>
+      
+      <Button 
+        block 
+        color="primary" 
+        onClick={() => navigate(-1)}
+        style={{ marginBottom: '16px' }}
+      >
         返回
       </Button>
-      <Card title="添加新用户" style={{ width: '100%', maxWidth: '600px', margin: '0 auto' }}>
+
+      {/* 添加用户卡片 */}
+      <Card 
+        title="添加新用户"
+        style={{ marginBottom: '16px' }}
+      >
         <Input
           placeholder="用户名"
           value={newUser.name}
-          onChange={(e) => setNewUser({ ...newUser, name: e.target.value })}
-          style={{ marginBottom: '10px', width: '100%' }}
+          onChange={(val) => setNewUser({ ...newUser, name: val })}
+          style={{ marginBottom: '12px' }}
         />
         <Input
           placeholder="邮箱"
           value={newUser.email}
-          onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
-          style={{ marginBottom: '10px', width: '100%' }}
+          onChange={(val) => setNewUser({ ...newUser, email: val })}
+          style={{ marginBottom: '12px' }}
         />
-        <Input.Password
+        <Input
           placeholder="密码"
-          value={newUser.password}
-          onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
-          style={{ marginBottom: '10px', width: '100%' }}
+          type="password"
+          onChange={(val) => setNewUser({ ...newUser, password: val })}
+          style={{ marginBottom: '12px' }}
         />
-        <Select
+        <Selector
+          options={[
+            { label: '普通用户', value: 'user' },
+            { label: '管理员', value: 'admin' }
+          ]}
           value={newUser.role}
-          onChange={(value) => setNewUser({ ...newUser, role: value })}
-          style={{ marginBottom: '10px', width: '100%' }}
+          onChange={(val) => setNewUser({ ...newUser, role: val[0] })}
+          style={{ marginBottom: '12px' }}
+        />
+        <Button 
+          block 
+          color="primary" 
+          onClick={handleAddUser}
         >
-          <Select.Option value="user">普通用户</Select.Option>
-          <Select.Option value="admin">管理员</Select.Option>
-        </Select>
-        <Button type="primary" block onClick={handleAddUser}>
           添加用户
         </Button>
       </Card>
-      <Card title="用户列表" style={{ width: '100%', margin: '20px auto' }}>
+
+      {/* 用户列表卡片 */}
+      <Card title="用户列表">
         {error && <p style={{ color: 'red', textAlign: 'center' }}>{error}</p>}
-        <Row gutter={[16, 16]}>
+        
+        <div>
           {users.map((user) => (
-            <Col key={user.id} span={8} xs={24} sm={12} md={8}>
-              <Card style={{ marginBottom: '10px' }}>
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+            <Card key={user.id}>
+              <div style={{ padding: '12px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                   <p><strong>用户名:</strong> {user.name}</p>
                   <p><strong>邮箱:</strong> {user.email}</p>
-                  <p><strong>角色:</strong> {user.role}</p>
-                  <Input.Password
-                    placeholder="新密码"
-                    onChange={(e) => handleUpdatePassword(user.id, e.target.value)}
-                    style={{ marginBottom: '10px', width: '100%' }}
-                  />
-                  <Button type="primary" block onClick={() => handleUpdatePassword(user.id, prompt('请输入新密码'))}>
+                </div>
+                <p><strong>角色:</strong> {user.role}</p>
+                
+                <Input
+                  placeholder="新密码"
+                  type="password"
+                  onChange={(val) => setPasswordInput(val)}
+                  style={{ marginBottom: '12px' }}
+                />
+                
+                <div style={{ display: 'flex', flexDirection: 'row', gap: '8px', width: '100%' }}>
+                  <Button 
+                    color="primary"
+                    style={{ flex: 1 }}
+                    onClick={() => {
+                      if (!passwordInput) {
+                        Toast.show({ content: '请输入新密码', duration: 1500, color: 'warning' });
+                        return;
+                      }
+                      handleUpdatePassword(user.id, passwordInput);
+                    }}
+                  >
                     修改密码
                   </Button>
-                  {/* 新增：删除用户按钮 */}
-                  <Button type="danger" block onClick={() => handleDeleteUser(user.id)} style={{ marginTop: '10px' }}>
+                  <Button 
+                    color="danger"
+                    style={{ flex: 1 }}
+                    onClick={() => handleDeleteUser(user.id)}
+                  >
                     删除用户
                   </Button>
                 </div>
-              </Card>
-            </Col>
+              </div>
+            </Card>
           ))}
-        </Row>
+        </div>
       </Card>
     </div>
   );
