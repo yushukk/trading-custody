@@ -34,20 +34,20 @@ const Login = ({ onLogin }) => {
         placeholder="用户名"
         value={username}
         onChange={setUsername}
-        className="login-input"
+        className="login-input" // 应用新的类名
       />
       <Input
         type="password"
         placeholder="密码"
         value={password}
         onChange={setPassword}
-        className="login-input"
+        className="login-input" // 应用新的类名
       />
       <Button 
         block 
         color="primary" 
         onClick={handleLogin}
-        className="login-button"
+        className="login-button" // 应用新的类名
       >
         登录
       </Button>

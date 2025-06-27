@@ -13,26 +13,10 @@
 }
 
 .login-input {
-  margin: 10px 0;
-  padding: 12px 16px;
-  width: 100%; /* 让输入框充满容器宽度 */
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  font-size: 16px;
-}
-
-.login-button {
-  margin-top: 20px;
-  padding: 12px 24px;
-  width: 100%; /* 让按钮充满容器宽度 */
-  background-color: #007bff;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 16px;
-}
-
-.login-button:hover {
-  background-color: #0056b3;
+  margin: 10px 0; /* 增加输入框之间的垂直间距 */
+  padding: 10px 5px;
+  font-size: 16px; /* 增大字体大小 */
+  border: 1px solid #ccc; /* 更粗的边框 */
+  border-radius: 1px; /* 圆角边框 */
+  width: 95% !important; /* 确保输入框宽度适应容器 */
 }
