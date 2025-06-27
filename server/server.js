@@ -3,20 +3,20 @@ const cors = require('cors');
 const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
 const jwt = require('jsonwebtoken');
-const schedule = require('node-schedule'); // 新增定时任务模块
-const http = require('http'); // 替换为http模块支持
+const schedule = require('node-schedule');
+const http = require('http');
+const fs = require('fs');
+const config = require('./config'); // 引入配置文件
 
 const app = express();
-const PORT = 3001;
-const CRON_EXPRESSION = '0 17 * * *'; 
+const PORT = config.PORT;
+const CRON_EXPRESSION = config.CRON_SCHEDULE.price_sync;
 
 // 数据库文件路径
-const dbPath = path.join(__dirname, 'database.db');
+const dbPath = config.DATABASE_PATH;
 
 // 检查数据库文件是否存在
-const fs = require('fs');
 if (!fs.existsSync(dbPath)) {
-  // 创建数据库文件
   const db = new sqlite3.Database(dbPath);
 
   // 初始化数据
@@ -75,7 +75,7 @@ function getDbLatestPrice(code, asset_type) {
   });
 }
 
-// 修改getLatestPrice函数，增加详细日志和错误处理
+// 修改getLatestPrice函数使用配置
 async function getLatestPrice(code, asset_type) {
   let apiUrl;
   
@@ -93,14 +93,14 @@ async function getLatestPrice(code, asset_type) {
   
   // 根据资产类型构建API URL
   if (asset_type === 'stock') {
-    apiUrl = `http://23.95.205.223:18201/api/public/stock_zh_a_hist?symbol=${code}&period=daily&start_date=${formatDate(startDate)}&end_date=${formatDate(endDate)}`;
+    apiUrl = `${config.EXTERNAL_APIS.stock.zh_a_hist}?symbol=${code}&period=daily&start_date=${formatDate(startDate)}&end_date=${formatDate(endDate)}`;
   } else if (asset_type === 'future') {
     const encodedCode = encodeURIComponent(code);
-    apiUrl = `http://23.95.205.223:18201/api/public/futures_hist_em?symbol=${encodedCode}&period=daily&start_date=${formatDate(startDate)}&end_date=${formatDate(endDate)}`;
+    apiUrl = `${config.EXTERNAL_APIS.future.hist_em}?symbol=${encodedCode}&period=daily&start_date=${formatDate(startDate)}&end_date=${formatDate(endDate)}`;
   } else {
     return 0.0; // 不支持的资产类型返回默认值
   }
-
+  
   try {
     // 使用Promise封装http请求
     const data = await new Promise((resolve, reject) => {
