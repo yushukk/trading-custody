@@ -1,7 +1,8 @@
 #!/bin/bash
 
 # 配置部分 - 请根据实际情况修改
-GITHUB_REPO="https://github.com/yourusername/yourrepo/archive/refs/heads/main.zip"
+
+GITHUB_REPO="https://codeload.github.com/yushukk/trading-custody/zip/refs/heads/login"
 APP_DIR="/opt/trading_custody"
 PORT=3000
 
@@ -19,7 +20,7 @@ sudo unzip -q /tmp/trading_custody.zip -d /opt/
 
 # 重命名解压目录（注意这里修正了目录名）
 echo "重命名解压目录..."
-sudo mv /opt/trading_custody-main $APP_DIR
+sudo mv /opt/trading_custody-login $APP_DIR
 
 # 安装依赖
 echo "安装依赖..."
