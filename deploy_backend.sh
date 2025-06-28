@@ -4,7 +4,7 @@
 
 GITHUB_REPO="https://codeload.github.com/yushukk/trading-custody/zip/refs/heads/login"
 APP_DIR="/opt/trading_custody"
-PORT=3000
+PORT=3001
 
 # 创建工作目录
 echo "创建工作目录..."
