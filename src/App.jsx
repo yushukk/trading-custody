@@ -2,14 +2,13 @@ import React, { useState, useEffect } from 'react';
 import './App.css';
 import Login from './components/Login';
 import AdminDashboard from './components/AdminDashboard';
-import UserDashboard from './components/UserDashboard';
 import ChangePassword from './components/ChangePassword';
 import UserManagement from './components/UserManagement'; // 确保路径正确且组件已导出
 import FundManagement from './components/FundManagement'; // 新增资金管理组件
 import PositionManagement from './components/PositionManagement'; // 新增持仓管理组件
 import UserFundPosition from './components/UserFundPosition'; // 新增资金持仓页面组件
 
-import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 
 // 包裹App内容并使用useNavigate
 function AppContent() {
@@ -30,7 +29,6 @@ function AppContent() {
       setIsAdmin(role === 'admin');
       setUsername(storedUsername || token);
       setUserId(storedUserId || ''); // 设置用户ID
-      setView('dashboard');
     }
   }, []);
 
@@ -45,7 +43,7 @@ function AppContent() {
     setUserId(userId); // 设置用户ID
     // 修改：根据角色跳转不同路径
     if (role === 'admin') {
-      setView('dashboard');
+      navigate('/'); // 管理员跳转到仪表盘
     } else {
       navigate('/user-fund-position');
     }
@@ -59,7 +57,7 @@ function AppContent() {
     setIsLoggedIn(false);
     setIsAdmin(false);
     setUsername('');
-    setView('login');
+    navigate('/login'); // 登出后跳转到登录页
   };
 
   return (
@@ -95,24 +93,37 @@ function AppContent() {
       } />
       {/* 修改仪表盘路由定义 */}
       <Route path="/" element={
-        view === 'dashboard' ? (
-          isAdmin ? (
-            <AdminDashboard username={username} onLogout={handleLogout} onNavigate={setView} onOpenUserManagement={() => setView('user-management')} />
-          ) : (
-            <UserDashboard username={username} onLogout={handleLogout} onNavigate={setView} />
-          )
-        ) :  (
-          <Login onLogin={handleLogin} />
-        )
+        <ProtectedRoute>
+          <AdminDashboard username={username} onLogout={handleLogout} onNavigate={setView} onOpenUserManagement={() => setView('user-management')} />
+        </ProtectedRoute>
       } />
     </Routes>
   );
 }
 
 // 创建受保护路由高阶组件
-const ProtectedRoute = ({ children, redirectPath = '/login' }) => {
+const ProtectedRoute = ({ children }) => {
   const isLoggedIn = !!localStorage.getItem('authToken');
-  return isLoggedIn ? children : <Navigate to={redirectPath} replace />;
+  const isAdmin = localStorage.getItem('userRole') === 'admin';
+  const location = useLocation();
+  
+  // 如果未登录，重定向到登录页
+  if (!isLoggedIn) {
+    return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+  
+  // 对于管理员专用路由的处理
+  if (location.pathname.startsWith('/user-management') || 
+      location.pathname.startsWith('/fund-management') || 
+      location.pathname.startsWith('/position-management')) {
+    if (!isAdmin) {
+      // 非管理员用户重定向到资金持仓页面
+      return <Navigate to="/user-fund-position" replace />;
+    }
+  }
+  
+  // 允许访问
+  return children;
 };
 
 // 主App组件包裹Router

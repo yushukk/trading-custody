@@ -47,7 +47,6 @@ const PositionManagement = () => {
   };
 
   const onFinish = async (values) => {
-    debugger
     try {
       const response = await fetch(`${window.API_BASE_URL}/api/positions/${selectedUserId}`, {
         method: 'POST',
@@ -59,6 +58,7 @@ const PositionManagement = () => {
           operation: values.operation[0],
           price: values.price,
           quantity: values.quantity,
+          fee: values.fee,
           timestamp: values.timestamp ? values.timestamp.toISOString() : undefined
         })
       });
@@ -126,8 +126,8 @@ const PositionManagement = () => {
                 <Input type="number" placeholder="请输入数量" style={{ width: '100%' }} />
                 </Form.Item>
 
-              <Form.Item label="费用" name="fee" >
-                <Input type="number" placeholder="请输入费用" style={{ width: '100%' }} />
+              <Form.Item label="交易费用" name="fee" >
+                <Input type="number" placeholder="请输入交易费用" style={{ width: '100%' }} />
               </Form.Item>
 
               <Form.Item
@@ -177,7 +177,7 @@ const PositionManagement = () => {
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '5px' }}>
                   <span>{position.operation === 'buy' ? '买入' : '卖出'}</span>
                   <span>￥{position.price.toFixed(2)} x {position.quantity} = ￥{(position.price * position.quantity).toFixed(2)}</span>
-                  <span>费用: ￥{position.fee.toFixed(2)}</span>
+                  <span>交易费用: ￥{position.fee.toFixed(2)}</span>
                 </div>
               </div>
             ))
