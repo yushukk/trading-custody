@@ -48,7 +48,7 @@ db.serialize(() => {
   
   // 资金相关表
   db.run("CREATE TABLE IF NOT EXISTS funds (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER UNIQUE, balance REAL DEFAULT 0, FOREIGN KEY(user_id) REFERENCES users(id))");
-  db.run("CREATE TABLE IF NOT EXISTS fund_logs (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, type TEXT, amount REAL, timestamp DATETIME DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY(user_id) REFERENCES users(id))");
+  db.run("CREATE TABLE IF NOT EXISTS fund_logs (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, type TEXT, amount REAL, remark TEXT, timestamp DATETIME DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY(user_id) REFERENCES users(id))");
   
   // 持仓相关表
   db.run("CREATE TABLE IF NOT EXISTS positions (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, asset_type TEXT, code TEXT, name TEXT, operation TEXT, price REAL, quantity INTEGER, timestamp DATETIME DEFAULT CURRENT_TIMESTAMP, fee REAL DEFAULT 0)");
@@ -265,7 +265,7 @@ app.get('/api/funds/:userId/logs', (req, res) => {
 // 处理资金操作
 app.post('/api/funds/:userId/:type', (req, res) => {
   const { userId, type } = req.params;
-  const { amount } = req.body;
+  const { amount, remark } = req.body; // 保留remark解构用于日志
   
   // 验证操作类型
   if (!['initial', 'deposit', 'withdraw'].includes(type)) {
@@ -301,15 +301,15 @@ app.post('/api/funds/:userId/:type', (req, res) => {
         newBalance -= amount;
       }
       
-      // 更新资金余额
+      // 更新资金余额（不再包含remark）
       if (row) {
         db.run("UPDATE funds SET balance = ? WHERE user_id = ?", [newBalance, userId]);
       } else {
         db.run("INSERT INTO funds (user_id, balance) VALUES (?, ?)", [userId, newBalance]);
       }
       
-      // 记录资金流水
-      db.run("INSERT INTO fund_logs (user_id, type, amount) VALUES (?, ?, ?)", [userId, type, amount]);
+      // 记录资金流水（保留remark）
+      db.run("INSERT INTO fund_logs (user_id, type, amount, remark) VALUES (?, ?, ?, ?)", [userId, type, amount, remark || '']);
       
       res.json({ message: '操作成功', balance: newBalance });
     });

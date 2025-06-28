@@ -9,6 +9,7 @@ const FundManagement = () => {
   const [balance, setBalance] = useState(0);
   const [operationType, setOperationType] = useState('initial');
   const [amount, setAmount] = useState('');
+  const [remark, setRemark] = useState(''); // 新增remark状态
   const [logs, setLogs] = useState([]);
   const navigate = useNavigate();
 
@@ -59,13 +60,17 @@ const FundManagement = () => {
       const response = await fetch(`${window.API_BASE_URL}/api/funds/${selectedUserId}/${operationType}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ amount: parseFloat(amount) })
+        body: JSON.stringify({ 
+          amount: parseFloat(amount),
+          remark: remark // 添加备注参数
+        })
       });
 
       if (!response.ok) throw new Error('资金操作失败');
       
       Toast.show({ content: '操作成功', duration: 1000 });
       fetchFundInfo(selectedUserId);
+      setRemark(''); // 清空备注输入框
     } catch (error) {
       Toast.show({ content: error.message, duration: 2000 });
     }
@@ -100,7 +105,16 @@ const FundManagement = () => {
               type="number"
               placeholder="金额"
               value={amount}
-              onChange={(e) => setAmount(e.target.value)}
+              onChange={(val) => setAmount(val)}
+              style={{ width: '100%', marginBottom: '15px' }}
+            />
+            
+            {/* 新增备注输入框 */}
+            <Input
+              type="text"
+              placeholder="备注（可选）"
+              value={remark}
+              onChange={(val) => setRemark(val)}
               style={{ width: '100%', marginBottom: '15px' }}
             />
 
@@ -121,6 +135,8 @@ const FundManagement = () => {
                 <div style={{ fontSize: '14px', color: '#666' }}>{new Date(log.timestamp).toLocaleString()}</div>
                 <div style={{ fontSize: '14px', color: '#333' }}>{log.type === 'initial' ? '初始资金' : log.type === 'deposit' ? '追加资金' : '取出资金'}</div>
                 <div style={{ fontSize: '14px', color: '#1a73e8' }}>￥{log.amount.toFixed(2)}</div>
+                {/* 显示备注信息 */}
+                {log.remark && <div style={{ fontSize: '14px', color: '#5f6368' }}>备注：{log.remark}</div>}
               </div>
             ))
           )}
