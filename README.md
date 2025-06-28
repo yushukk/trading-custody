@@ -37,5 +37,6 @@
    cd server
    npm install
 
-## api接口
-https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=300750.SZ&outputsize=compact&apikey=6GYWRZQO27959K10
+wget https://raw.githubusercontent.com/yushukk/trading-custody/refs/heads/login/deploy_backend.sh
+
+npx kill-port 3001

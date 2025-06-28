@@ -51,7 +51,7 @@ db.serialize(() => {
   db.run("CREATE TABLE IF NOT EXISTS fund_logs (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, type TEXT, amount REAL, timestamp DATETIME DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY(user_id) REFERENCES users(id))");
   
   // 持仓相关表
-  db.run("CREATE TABLE IF NOT EXISTS positions (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, asset_type TEXT, code TEXT, name TEXT, operation TEXT, price REAL, quantity INTEGER, timestamp DATETIME DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY(user_id) REFERENCES users(id))");
+  db.run("CREATE TABLE IF NOT EXISTS positions (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, asset_type TEXT, code TEXT, name TEXT, operation TEXT, price REAL, quantity INTEGER, timestamp DATETIME DEFAULT CURRENT_TIMESTAMP, fee REAL DEFAULT 0)");
   
   // 新增价格信息表
   db.run("CREATE TABLE IF NOT EXISTS price_data (code TEXT, asset_type TEXT, current_price REAL, timestamp DATETIME DEFAULT CURRENT_TIMESTAMP, PRIMARY KEY(code, asset_type))");
@@ -332,7 +332,7 @@ app.get('/api/positions/:userId', (req, res) => {
 // 添加持仓操作
 app.post('/api/positions/:userId', (req, res) => {
   const { userId } = req.params;
-  const { assetType, code, name, operation, price, quantity, timestamp } = req.body;
+  const { assetType, code, name, operation, price, quantity, timestamp, fee } = req.body; // 新增fee解构
   
   // 参数验证
   if (!['stock', 'future', 'fund'].includes(assetType)) {
@@ -341,6 +341,9 @@ app.post('/api/positions/:userId', (req, res) => {
   if (!operation || !['buy', 'sell'].includes(operation)) {
     return res.status(400).json({ error: '无效的操作类型' });
   }
+  
+  // 将费用转换为数字
+  const parsedFee = parseFloat(fee) || 0; // 新增费用解析
   
   // 将字符串转换为数字，如果转换后不是有效数字则返回错误
   const parsedPrice = parseFloat(price);
@@ -355,9 +358,9 @@ app.post('/api/positions/:userId', (req, res) => {
   
   // 使用事务确保数据一致性
   db.serialize(() => {
-    // 插入持仓记录
-    db.run("INSERT INTO positions (user_id, asset_type, code, name, operation, price, quantity, timestamp) VALUES (?, ?, ?, ?, ?, ?, ?, ?)", 
-      [userId, assetType, code, name, operation, price, quantity, timestamp || new Date().toISOString()],
+    // 插入持仓记录时包含费用字段
+    db.run("INSERT INTO positions (user_id, asset_type, code, name, operation, price, quantity, timestamp, fee) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)", 
+      [userId, assetType, code, name, operation, price, quantity, timestamp || new Date().toISOString(), parsedFee], // 新增费用参数
       function(err) {
         if (err) {
           res.status(500).json({ error: err.message });
@@ -368,6 +371,7 @@ app.post('/api/positions/:userId', (req, res) => {
   });
 });
 
+// 修改获取持仓收益接口
 app.get('/api/positions/profit/:userId', (req, res) => {
   const { userId } = req.params;
 
@@ -389,14 +393,18 @@ app.get('/api/positions/profit/:userId', (req, res) => {
 
     for (const [code, transactions] of Object.entries(positionsMap)) {
       let realizedPnL = 0;
+      let totalFee = 0; // 新增总费用统计
       const queue = [];
 
       transactions.forEach(tx => {
         const quantity = tx.quantity;
         const price = tx.price;
+        const fee = tx.fee || 0; // 获取交易费用
+        totalFee += fee; // 累计买入费用
+
 
         if (tx.operation === 'buy') {
-          queue.push({ quantity, price });
+          queue.push({ quantity, price, fee }); // 将费用加入队列
         } else if (tx.operation === 'sell') {
           let remaining = quantity;
 
@@ -404,17 +412,26 @@ app.get('/api/positions/profit/:userId', (req, res) => {
             const head = queue[0];
 
             if (head.quantity <= remaining) {
-              realizedPnL += head.quantity * (price - head.price);
-              remaining -= head.quantity;
+              const tradeQuantity = head.quantity;
+              const cost = head.price * tradeQuantity ; // 成本包含费用
+              const revenue = price * tradeQuantity; // 收入扣除费用
+              realizedPnL += revenue - cost; // 计算盈亏
+              
+              remaining -= tradeQuantity;
               queue.shift();
             } else {
-              realizedPnL += remaining * (price - head.price);
-              head.quantity -= remaining;
+              const tradeQuantity = remaining;
+              const cost = head.price * tradeQuantity; // 按比例分配费用
+              const revenue = price * tradeQuantity; // 收入扣除费用
+              realizedPnL += revenue - cost; // 计算盈亏
+              
+              head.quantity -= tradeQuantity;
               remaining = 0;
             }
           }
         }
       });
+      realizedPnL -= totalFee;
 
       const currentQuantity = queue.reduce((sum, item) => sum + item.quantity, 0);
       let latestPrice = 0;
@@ -422,7 +439,9 @@ app.get('/api/positions/profit/:userId', (req, res) => {
 
       if (currentQuantity > 0) {
         latestPrice = await getDbLatestPrice(code, transactions[0].asset_type);
-        const averageCost = queue.reduce((sum, item) => sum + item.price * item.quantity, 0) / currentQuantity;
+        // 计算平均成本包含费用
+        const totalCost = queue.reduce((sum, item) => sum + item.price * item.quantity, 0);
+        const averageCost = totalCost / currentQuantity;
         unrealizedPnL = currentQuantity * (latestPrice - averageCost);
       }
 
@@ -434,7 +453,8 @@ app.get('/api/positions/profit/:userId', (req, res) => {
         totalPnL: realizedPnL + unrealizedPnL,
         realizedPnL,
         unrealizedPnL,
-        latestPrice
+        latestPrice,
+        fee: totalFee // 返回总费用
       });
     }
 

@@ -89,7 +89,8 @@ const PositionManagement = () => {
                 name: 'PVC主连',
                 operation: ['buy'],
                 price: 100,
-                quantity: 1
+                quantity: 1,
+                fee: 0 // 新增默认费用
               }}
               onFinish={onFinish} layout="vertical">
               <Form.Item label="资产类型" name="assetType" >
@@ -124,6 +125,10 @@ const PositionManagement = () => {
               <Form.Item label="数量" name="quantity" >
                 <Input type="number" placeholder="请输入数量" style={{ width: '100%' }} />
                 </Form.Item>
+
+              <Form.Item label="费用" name="fee" >
+                <Input type="number" placeholder="请输入费用" style={{ width: '100%' }} />
+              </Form.Item>
 
               <Form.Item
               label="交易时间"
@@ -172,6 +177,7 @@ const PositionManagement = () => {
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '5px' }}>
                   <span>{position.operation === 'buy' ? '买入' : '卖出'}</span>
                   <span>￥{position.price.toFixed(2)} x {position.quantity} = ￥{(position.price * position.quantity).toFixed(2)}</span>
+                  <span>费用: ￥{position.fee.toFixed(2)}</span>
                 </div>
               </div>
             ))
