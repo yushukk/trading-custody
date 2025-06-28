@@ -20,7 +20,7 @@ sudo unzip -q /tmp/trading_custody.zip -d /opt/
 
 # 重命名解压目录（注意这里修正了目录名）
 echo "重命名解压目录..."
-sudo mv /opt/trading_custody-login $APP_DIR
+sudo mv /opt/trading-custody-login $APP_DIR
 
 # 安装依赖
 echo "安装依赖..."
