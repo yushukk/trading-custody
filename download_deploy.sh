@@ -5,6 +5,11 @@ check_serve() {
     echo "未检测到 serve，正在安装..."
     npm install -g serve
   fi
+  # 检查 react-scripts 是否安装
+  if ! command -v react-scripts &> /dev/null; then
+    echo "未检测到 react-scripts，正在安装..."
+    npm install -g react-scripts
+  fi
 }
 
 APP_DIR=${1:-"/Users/erik/cdapp"}
