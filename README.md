@@ -41,5 +41,6 @@ wget https://raw.githubusercontent.com/yushukk/trading-custody/refs/heads/login/
 
 bash <(wget https://raw.githubusercontent.com/yushukk/trading-custody/refs/heads/login/deploy.sh)
 
+bash -c "$(curl -fsSL https://raw.githubusercontent.com/yushukk/trading-custody/refs/heads/main/download_deploy.sh)"
 
 npx kill-port 3001
