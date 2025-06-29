@@ -5,7 +5,8 @@
     "start": "node server/server.js",
     "server": "nodemon server/server.js",
     "client": "react-scripts start",
-    "dev": "concurrently \"npm run server\" \"npm run client\""
+    "dev": "concurrently \"npm run server\" \"npm run client\"",
+    "build": "react-scripts build"
   },
   "dependencies": {
     "cors": "^2.8.5",
