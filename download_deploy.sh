@@ -12,7 +12,7 @@ check_serve() {
   fi
 }
 
-APP_DIR=${1:-"/Users/erik/cdapp"}
+APP_DIR=${1:-"/erik/cdapp"}
 APP_CODE=${2:-"https://github.com/yushukk/trading-custody/archive/refs/tags/v1.0.0.zip"}
 APP_VERSION=${3:-"1.0.0"}
 
@@ -76,7 +76,7 @@ sudo pkill -f "serve -s build -p $FRONTEND_PORT"
 echo "安装依赖..."
 cd $APP_DIR/trading-custody
 #sudo tnpm install -d
-tnpm install -d
+npm install -d
 
 
 # 部署后端
@@ -94,7 +94,7 @@ check_serve
 
 # 构建前端
 echo "构建前端..."
-tnpm run build
+npm run build
 
 # 启动静态服务器
 echo "启动前端服务..."
