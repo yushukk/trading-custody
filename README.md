@@ -37,6 +37,9 @@
    cd server
    npm install
 
-wget https://raw.githubusercontent.com/yushukk/trading-custody/refs/heads/login/deploy_backend.sh
+wget https://raw.githubusercontent.com/yushukk/trading-custody/refs/heads/login/deploy.sh
+
+bash <(wget https://raw.githubusercontent.com/yushukk/trading-custody/refs/heads/login/deploy.sh)
+
 
 npx kill-port 3001

@@ -29,6 +29,9 @@ function AppContent() {
       setIsAdmin(role === 'admin');
       setUsername(storedUsername || token);
       setUserId(storedUserId || ''); // 设置用户ID
+      if (role != 'admin') {
+        navigate('/user-fund-position');
+      }
     }
   }, []);
 
