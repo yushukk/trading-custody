@@ -76,7 +76,7 @@ sudo pkill -f "serve -s build -p $FRONTEND_PORT"
 echo "安装依赖..."
 cd $APP_DIR/trading-custody
 #sudo tnpm install -d
-npm install -d
+tnpm install -d
 
 
 # 部署后端
@@ -94,7 +94,7 @@ check_serve
 
 # 构建前端
 echo "构建前端..."
-npm run build
+tnpm run build
 
 # 启动静态服务器
 echo "启动前端服务..."

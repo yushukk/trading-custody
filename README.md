@@ -44,3 +44,5 @@ bash <(wget https://raw.githubusercontent.com/yushukk/trading-custody/refs/heads
 bash -c "$(curl -fsSL https://raw.githubusercontent.com/yushukk/trading-custody/refs/heads/main/download_deploy.sh)"
 
 npx kill-port 3001
+
+npm install tnpm -g --registry=https://registry.anpm.alibaba-inc.com
