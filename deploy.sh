@@ -7,7 +7,7 @@ APP_DIR="/opt/trading_custody"
 BACKEND_PORT=3001
 
 # 前端配置
-FRONTEND_PORT=80
+FRONTEND_PORT=3000
 
 # 公共函数
 check_serve() {
@@ -19,11 +19,11 @@ check_serve() {
 
 # 下载源码
 echo "下载源码..."
-sudo wget -q $GITHUB_REPO -O /tmp/trading_custody_backend.zip
+sudo wget -q $GITHUB_REPO -O /tmp/trading_custody.zip
 
 # 解压文件
 echo "解压文件..."
-sudo unzip -q /tmp/trading_custody_backend.zip -d /opt/
+sudo unzip -q /tmp/trading_custody.zip -d /opt/
 
 # 重命名解压目录
 echo "重命名目录..."
