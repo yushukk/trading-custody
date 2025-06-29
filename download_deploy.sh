@@ -70,7 +70,8 @@ sudo pkill -f "serve -s build -p $FRONTEND_PORT"
 # 安装依赖
 echo "安装依赖..."
 cd $APP_DIR/trading-custody
-sudo tnpm install -d
+#sudo tnpm install -d
+sudo npm install -d
 
 
 # 部署后端
