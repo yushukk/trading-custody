@@ -3,7 +3,7 @@
 check_serve() {
   if ! command -v serve &> /dev/null; then
     echo "未检测到 serve，正在安装..."
-    sudo npm install -g serve
+    npm install -g serve
   fi
 }
 
@@ -71,7 +71,7 @@ sudo pkill -f "serve -s build -p $FRONTEND_PORT"
 echo "安装依赖..."
 cd $APP_DIR/trading-custody
 #sudo tnpm install -d
-sudo npm install -d
+npm install -d
 
 
 # 部署后端
@@ -80,7 +80,7 @@ echo "=== 部署后端开始 ==="
 
 # 启动服务
 echo "启动后端服务..."
-sudo nohup node server/server.js > $APP_DIR/trading_custody_backend.log 2>&1 &
+nohup node server/server.js > $APP_DIR/trading_custody_backend.log 2>&1 &
 echo "后端服务已启动，监听端口 $BACKEND_PORT"
 
 # 部署前端
@@ -89,11 +89,11 @@ check_serve
 
 # 构建前端
 echo "构建前端..."
-sudo npm run build
+npm run build
 
 # 启动静态服务器
 echo "启动前端服务..."
-sudo nohup serve -s build -p $FRONTEND_PORT > $APP_DIR/trading_custody_frontend.log 2>&1 &
+nohup serve -s build -p $FRONTEND_PORT > $APP_DIR/trading_custody_frontend.log 2>&1 &
 echo "前端服务已启动，监听端口 $FRONTEND_PORT"
 
 echo "部署完成，请检查日志文件：
