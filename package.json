@@ -6,7 +6,8 @@
     "server": "nodemon server/server.js",
     "client": "react-scripts start",
     "dev": "concurrently \"npm run server\" \"npm run client\"",
-    "build": "react-scripts build"
+    "build": "react-scripts build",
+    "serve": "react-scripts build && npm install -g serve && serve -s build -p 3000"
   },
   "dependencies": {
     "cors": "^2.8.5",

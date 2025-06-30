@@ -3,12 +3,12 @@
 check_serve() {
   if ! command -v serve &> /dev/null; then
     echo "未检测到 serve，正在安装..."
-    npm install -g serve
+    yarn global add serve
   fi
   # 检查 react-scripts 是否安装
   if ! command -v react-scripts &> /dev/null; then
     echo "未检测到 react-scripts，正在安装..."
-    npm install -g react-scripts
+    yarn global add react-scripts
   fi
 }
 
@@ -75,8 +75,7 @@ sudo pkill -f "serve -s build -p $FRONTEND_PORT"
 # 安装依赖
 echo "安装依赖..."
 cd $APP_DIR/trading-custody
-#sudo tnpm install -d
-npm install -d
+yarn install
 
 
 # 部署后端
@@ -94,7 +93,7 @@ check_serve
 
 # 构建前端
 echo "构建前端..."
-npm run build
+yarn build
 
 # 启动静态服务器
 echo "启动前端服务..."
