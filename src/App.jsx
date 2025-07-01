@@ -104,7 +104,7 @@ function AppContent() {
   );
 }
 
-// 创建受保护路由高阶组件
+// 修改受保护路由高阶组件
 const ProtectedRoute = ({ children }) => {
   const isLoggedIn = !!localStorage.getItem('authToken');
   const isAdmin = localStorage.getItem('userRole') === 'admin';
@@ -113,6 +113,14 @@ const ProtectedRoute = ({ children }) => {
   // 如果未登录，重定向到登录页
   if (!isLoggedIn) {
     return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+  
+  // 新增：处理根路径跳转逻辑
+  if (location.pathname === '/') {
+    if (!isAdmin) {
+      // 非管理员用户重定向到资金持仓页面
+      return <Navigate to="/user-fund-position" replace />;
+    }
   }
   
   // 对于管理员专用路由的处理
