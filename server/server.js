@@ -78,11 +78,16 @@ function getDbLatestPrice(code, asset_type) {
 // 修改getLatestPrice函数使用配置
 async function getLatestPrice(code, asset_type) {
   let apiUrl;
+
+  //输出当前系统时间
+  console.log(`当前时间: ${new Date().toISOString()}`);
   
   // 计算最近10天日期范围
   const endDate = new Date();
   const startDate = new Date();
   startDate.setDate(endDate.getDate() - 10);
+  // 解决服务器时区问题
+  endDate.setDate(endDate.getDate() + 1);
   
   // 格式化日期为YYYYMMDD
   const formatDate = (date) => {
@@ -100,6 +105,7 @@ async function getLatestPrice(code, asset_type) {
   } else {
     return 0.0; // 不支持的资产类型返回默认值
   }
+  console.log(`正在获取价格 ${code}(${asset_type}):`, apiUrl);
   
   try {
     // 使用Promise封装http请求
