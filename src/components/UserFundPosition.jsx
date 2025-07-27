@@ -1,20 +1,20 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Card, Badge, Toast, Button } from 'antd-mobile'; // 导入Button组件
+import { Card, Badge, Toast, Button } from 'antd-mobile';
 import { useNavigate } from 'react-router-dom';
 
 const UserFundPosition = () => {
-  const navigate = useNavigate(); // 初始化navigate函数
+  const navigate = useNavigate();
   const [fundInfo, setFundInfo] = useState({ balance: 0, logs: [] });
   const [positions, setPositions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [consolidatedPositions, setConsolidatedPositions] = useState([]);
-  const [tradeHistory, setTradeHistory] = useState([]); // 新增历史交易记录状态
+  const [tradeHistory, setTradeHistory] = useState([]);
 
   useEffect(() => {
     const userId = localStorage.getItem('userId');
     fetchFundInfo(userId);
     fetchPositions(userId);
-    fetchTradeHistory(userId); // 获取历史交易记录
+    fetchTradeHistory(userId);
   }, []);
 
   const fetchFundInfo = async (userId) => {
@@ -32,7 +32,7 @@ const UserFundPosition = () => {
         logs: logsData.slice(0, 5)
       });
     } catch (error) {
-      message.error(error.message);
+      console.error(error.message);
     } finally {
       setLoading(false);
     }
@@ -45,11 +45,10 @@ const UserFundPosition = () => {
       const data = await response.json();
       setPositions(data);
     } catch (error) {
-      message.error(error.message);
+      console.error(error.message);
     }
   };
 
-  // 新增获取历史交易记录函数
   const fetchTradeHistory = async (userId) => {
     try {
       const response = await fetch(`${window.API_BASE_URL}/api/positions/${userId}`);
@@ -64,12 +63,11 @@ const UserFundPosition = () => {
   useEffect(() => {
     if (positions.length === 0) return;
 
-    // 使用接口返回的现成持仓数据，仅做格式适配
     const adaptedPositions = positions.map(pos => ({
       ...pos,
-      asset_type: pos.assetType, // 固定资产类型为股票
-      price: pos.latestPrice ?? 0, // 显式赋值 price 字段
-      costBasis: (pos.latestPrice ?? 0) - ((pos.totalPnL ?? 0) / (pos.quantity ?? 1)), // 避免除以0
+      asset_type: pos.assetType,
+      price: pos.latestPrice ?? 0,
+      costBasis: (pos.latestPrice ?? 0) - ((pos.totalPnL ?? 0) / (pos.quantity ?? 1)),
       quantity: pos.quantity ?? 0,
       unrealizedPnL: pos.unrealizedPnL ?? 0
     }));
@@ -90,7 +88,6 @@ const UserFundPosition = () => {
     }
   };
 
-  // 获取操作类型中文名称
   const getOperationText = (operation) => {
     switch(operation) {
       case 'buy': return '买入';
@@ -99,7 +96,6 @@ const UserFundPosition = () => {
     }
   };
 
-  // 获取资产类型中文名称
   const getAssetTypeText = (assetType) => {
     switch(assetType) {
       case 'stock': return '股票';
@@ -109,38 +105,67 @@ const UserFundPosition = () => {
     }
   };
 
-  // 新增加载状态提示
   useEffect(() => {
     if (loading) {
       Toast.show({
         icon: 'loading',
         content: '加载中...',
-        duration: 0 // 持续显示直到手动隐藏
+        duration: 0
       });
     } else {
-      Toast.clear(); // 替换 Toast.hide() 为 Toast.clear()
+      Toast.clear();
     }
-    return () => Toast.clear(); // 组件卸载时清理
+    return () => Toast.clear();
   }, [loading]);
+
+  // 格式化时间显示
+  const formatTime = (timestamp) => {
+    const date = new Date(timestamp);
+    const now = new Date();
+    
+    // 如果是今天，只显示时间
+    if (date.toDateString() === now.toDateString()) {
+      return date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
+    }
+    
+    // 如果是今年，显示月日和时间
+    if (date.getFullYear() === now.getFullYear()) {
+      return date.toLocaleString('zh-CN', { 
+        month: '2-digit', 
+        day: '2-digit', 
+        hour: '2-digit', 
+        minute: '2-digit' 
+      });
+    }
+    
+    // 其他情况显示完整日期
+    return date.toLocaleString('zh-CN', { 
+      year: '2-digit',
+      month: '2-digit', 
+      day: '2-digit', 
+      hour: '2-digit', 
+      minute: '2-digit' 
+    });
+  };
 
   return (
     <div style={{ 
       width: '100%',
-      backgroundColor: '#f5f2f5', 
+      backgroundColor: '#f0f2f5',
       minHeight: '100vh',
-      padding: '0 8px',
+      padding: '12px',
       fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
     }}>
-      <h2 style={{ 
+      <div style={{ 
         textAlign: 'center', 
-        marginBottom: '4px', 
-        color: '#1a73e8',
-        fontSize: '18px', 
-        fontWeight: '700',
-        paddingTop: '8px' 
+        marginBottom: '16px',
+        color: '#1890ff',
+        fontSize: '20px',
+        fontWeight: '600',
+        paddingTop: '8px'
       }}>
         我的资金与持仓
-      </h2>
+      </div>
       
       {loading ? (
         null
@@ -149,34 +174,59 @@ const UserFundPosition = () => {
           {/* 资金概览卡片 */}
           <Card 
             style={{ 
-              marginBottom: '6px', 
-              borderRadius: '10px', 
-              boxShadow: '0 1px 8px rgba(0,0,0,0.06)', 
+              marginBottom: '16px', 
+              borderRadius: '12px', 
+              boxShadow: '0 2px 8px rgba(0,0,0,0.08)', 
               backgroundColor: '#ffffff',
               overflow: 'hidden',
-              position: 'relative' // 新增定位基准
+              border: 'none',
+              // 添加左右内边距，使其与其他卡片一致
+              paddingLeft: '16px',
+              paddingRight: '16px'
             }}
           >
-            <div style={{ padding: '8px' }}> 
+            <div>
               <div style={{ 
-                fontSize: '18px', 
-                fontWeight: 700,
+                fontSize: '16px', 
+                fontWeight: 500,
                 textAlign: 'left',
-                marginBottom: '4px' 
+                marginBottom: '12px',
+                color: '#333'
               }}>
-                当前总资产
-                <br />
-                <span style={{fontWeight: 'bold', color: '#1a73e8'}}>{(fundInfo.balance + totalPnL).toFixed(2)}</span>
+                资产总览
+              </div>
+              
+              <div style={{ 
+                fontSize: '24px', 
+                fontWeight: 600,
+                textAlign: 'left',
+                marginBottom: '16px',
+                color: '#1890ff'
+              }}>
+                ¥{(fundInfo.balance + totalPnL).toFixed(2)}
               </div>
               
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div style={{ textAlign: 'left', flex: 1 }}>
-                  <div style={{ fontSize: '12px', color: '#666', marginBottom: '2px' }}>投入金额</div> 
-                  <div style={{ fontSize: '14px', color: '#333' }}>￥{fundInfo.balance.toFixed(2)}</div>
+                  <div style={{ fontSize: '13px', color: '#666', marginBottom: '4px' }}>投入金额</div> 
+                  <div style={{ fontSize: '16px', color: '#333', fontWeight: 500 }}>¥{fundInfo.balance.toFixed(2)}</div>
                 </div>
                 <div style={{ textAlign: 'right', flex: 1 }}>
-                  <div style={{ fontSize: '12px', color: '#666', marginBottom: '2px' }}>总盈亏</div> 
-                  <div style={{ fontSize: '14px', color: totalPnL >= 0 ? '#d32f2f' : '#2e7d32' }}>￥{totalPnL.toFixed(2)}</div>
+                  <div style={{ fontSize: '13px', color: '#666', marginBottom: '4px' }}>总盈亏</div> 
+                  <div style={{ 
+                    fontSize: '16px', 
+                    fontWeight: 500,
+                    color: totalPnL >= 0 ? '#f5222d' : '#52c41a'
+                  }}>
+                    ¥{totalPnL.toFixed(2)}
+                    <span style={{ 
+                      fontSize: '12px', 
+                      marginLeft: '4px',
+                      color: totalPnL >= 0 ? '#f5222d' : '#52c41a'
+                    }}>
+                      ({totalPnL >= 0 ? '+' : ''}{((totalPnL / fundInfo.balance) * 100 || 0).toFixed(2)}%)
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -185,115 +235,116 @@ const UserFundPosition = () => {
           {/* 持仓概览卡片 */}
           <Card 
             title={
-              <span style={{ fontSize: '15px', fontWeight: 700 }}>持仓明细</span> 
+              <span style={{ fontSize: '16px', fontWeight: 500, color: '#333' }}>持仓明细</span> 
             }
             style={{ 
-              borderRadius: '10px', 
-              boxShadow: '0 1px 8px rgba(0,0,0,0.04)', 
+              borderRadius: '12px', 
+              boxShadow: '0 2px 8px rgba(0,0,0,0.08)', 
               backgroundColor: '#ffffff',
               overflow: 'hidden',
-              marginBottom: '6px' 
+              marginBottom: '16px',
+              border: 'none',
+              // 已经有左右内边距，无需额外设置
             }}
           >
             {consolidatedPositions.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '12px', color: '#888' }}> 
+              <div style={{ textAlign: 'center', padding: '24px', color: '#999' }}> 
                 暂无持仓
               </div>
             ) : (
-              <div style={{ overflowX: 'auto' }}>
-                <table style={{ 
-                  width: '100%', 
-                  borderCollapse: 'separate',
-                  borderSpacing: '0 4px'
-                }}>
-                  <thead>
-                    <tr style={{ 
-                      backgroundColor: '#f8f9fa', 
-                      fontWeight: 600,
-                      fontSize: '12px', 
-                      color: '#555'
-                    }}>
-                      <th style={{ textAlign: 'left', padding: '8px' }}>资产</th>
-                      <th style={{ textAlign: 'center', padding: '8px' }}>数量</th>
-                      <th style={{ textAlign: 'center', padding: '8px' }}>价格/成本</th>
-                      <th style={{ textAlign: 'right', padding: '8px' }}>盈亏</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {consolidatedPositions.map(position => (
-                      <tr 
-                        key={`${position.asset_type}-${position.code}`}
-                        style={{ 
-                          backgroundColor: '#fff',
-                          borderRadius: '6px',
-                          boxShadow: '0 1px 3px rgba(0,0,0,0.02)'
-                        }}
-                      >
-                        <td style={{ 
-                          padding: '8px', 
-                          borderTopLeftRadius: '6px', 
-                          borderBottomLeftRadius: '6px'
+              <div>
+                {consolidatedPositions.map(position => (
+                  <div 
+                    key={`${position.asset_type}-${position.code}`}
+                    style={{ 
+                      padding: '12px 0',
+                      borderBottom: consolidatedPositions.indexOf(position) !== consolidatedPositions.length - 1 ? '1px solid #f0f0f0' : 'none'
+                    }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ 
+                          fontWeight: 500, 
+                          fontSize: '15px', 
+                          color: '#333',
+                          marginBottom: '4px'
                         }}>
-                          <div>
-                            <span style={{ fontWeight: 600, fontSize: '13px', color: '#333' }}> 
-                              {position.name}
-                            </span>
-                            <br />
-                            <span style={{ color: '#888', fontSize: '11px', marginBottom: '2px' }}> 
-                              {position.code}
-                            </span>
-                            <br />
-                            <Badge 
-                              content={position.asset_type === 'stock' ? '股票' : position.asset_type === 'future' ? '期货' : '基金'}
-                              style={{ 
-                                backgroundColor: position.asset_type === 'stock' ? '#ffe082' : position.asset_type === 'future' ? '#ce93d8' : '#81d4fa',
-                                color: '#333',
-                                fontSize: '10px', 
-                                padding: '2px 4px', 
-                                borderRadius: '3px',
-                                fontWeight: 500
-                              }}
-                            />
-                          </div>
-                        </td>
-                        <td style={{ 
-                          textAlign: 'center', 
-                          padding: '8px', 
+                          {position.name}
+                          <Badge 
+                            content={getAssetTypeText(position.asset_type)}
+                            style={{ 
+                              backgroundColor: position.asset_type === 'stock' ? '#ffd700' : position.asset_type === 'future' ? '#ffa500' : '#e6fffb',
+                              color: position.asset_type === 'stock' ? '#000000' : position.asset_type === 'future' ? '#000000' : '#13c2c2',
+                              fontSize: '10px', 
+                              padding: '0 4px', 
+                              borderRadius: '4px',
+                              fontWeight: 500,
+                              marginLeft: '8px'
+                            }}
+                          />
+                        </div>
+                        <div style={{ 
                           fontSize: '12px', 
-                          color: '#333',
-                          verticalAlign: 'top'
-                        }}> 
+                          color: '#999'
+                        }}>
+                          {position.code}
+                        </div>
+                      </div>
+
+                      <div style={{ 
+                        textAlign: 'right',
+                        flex: 1
+                      }}>
+                        <div style={{ 
+                          fontSize: '15px', 
+                          fontWeight: 500,
+                          color: '#333'
+                        }}>
                           {position.quantity}
-                        </td>
-                        <td style={{ 
-                          textAlign: 'center', 
-                          padding: '8px', 
+                        </div>
+                        <div style={{ 
                           fontSize: '12px', 
-                          color: '#333',
-                          verticalAlign: 'top'
-                        }}> 
-                          <div>{position.price.toFixed(2)}</div>
-                          <div style={{ color: '#888', fontSize: '10px' }}>{position.costBasis.toFixed(2)}</div>
-                        </td>
-                        <td style={{ 
-                          textAlign: 'right', 
-                          padding: '8px', 
-                          fontSize: '12px',
-                          borderTopRightRadius: '6px', 
-                          borderBottomRightRadius: '6px',
-                          verticalAlign: 'top'
-                        }}> 
-                          <span style={{ 
-                            color: position.unrealizedPnL >= 0 ? '#d32f2f' : '#2e7d32',
-                            fontWeight: 600
-                          }}>
-                            {position.totalPnL.toFixed(2)}
-                          </span>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                          color: '#999'
+                        }}>
+                          数量
+                        </div>
+                      </div>
+
+                      <div style={{ 
+                        textAlign: 'right',
+                        flex: 1
+                      }}>
+                        <div style={{ 
+                          fontSize: '15px', 
+                          fontWeight: 500,
+                          color: position.unrealizedPnL >= 0 ? '#f5222d' : '#52c41a'
+                        }}>
+                          ¥{position.totalPnL.toFixed(2)}
+                        </div>
+                        <div style={{ 
+                          fontSize: '12px', 
+                          color: '#999'
+                        }}>
+                          盈亏
+                        </div>
+                      </div>
+                    </div>
+
+                    <div style={{ 
+                      display: 'flex', 
+                      justifyContent: 'flex-end', 
+                      marginTop: '8px'
+                    }}>
+                      <div style={{ 
+                        fontSize: '12px', 
+                        color: '#999',
+                        textAlign: 'right'
+                      }}>
+                        现价: ¥{position.price.toFixed(2)} | 成本: ¥{position.costBasis.toFixed(2)}
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
             )}
           </Card>
@@ -301,115 +352,144 @@ const UserFundPosition = () => {
           {/* 交易记录卡片 */}
           <Card 
             title={
-              <span style={{ fontSize: '15px', fontWeight: 700 }}>交易记录</span> 
+              <span style={{ fontSize: '16px', fontWeight: 500, color: '#333' }}>交易记录</span> 
             }
             style={{ 
-              borderRadius: '10px', 
-              boxShadow: '0 1px 8px rgba(0,0,0,0.04)', 
+              borderRadius: '12px', 
+              boxShadow: '0 2px 8px rgba(0,0,0,0.08)', 
               backgroundColor: '#ffffff',
               overflow: 'hidden',
-              marginBottom: '6px' 
+              marginBottom: '16px',
+              border: 'none',
+              // 已经有左右内边距，无需额外设置
             }}
           >
             {tradeHistory.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '12px', color: '#888' }}> 
+              <div style={{ textAlign: 'center', padding: '24px', color: '#999' }}> 
                 暂无交易记录
               </div>
             ) : (
-              <div style={{ overflowX: 'auto' }}>
-                <table style={{ 
-                  width: '100%', 
-                  borderCollapse: 'separate',
-                  borderSpacing: '0 4px'
-                }}>
-                  <thead>
-                    <tr style={{ 
-                      backgroundColor: '#f8f9fa', 
-                      fontWeight: 600,
-                      fontSize: '12px', 
-                      color: '#555'
-                    }}>
-                      <th style={{ textAlign: 'left', padding: '8px' }}>资产</th>
-                      <th style={{ textAlign: 'center', padding: '8px' }}>操作</th>
-                      <th style={{ textAlign: 'center', padding: '8px' }}>价格</th>
-                      <th style={{ textAlign: 'center', padding: '8px' }}>数量</th>
-                      <th style={{ textAlign: 'center', padding: '8px' }}>交易费用</th>
-                      <th style={{ textAlign: 'right', padding: '8px' }}>时间</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {tradeHistory.map(record => (
-                      <tr 
-                        key={record.id}
-                        style={{ 
-                          backgroundColor: '#fff',
-                          borderRadius: '6px',
-                          boxShadow: '0 1px 3px rgba(0,0,0,0.02)'
-                        }}
-                      >
-                        <td style={{ 
-                          padding: '8px', 
-                          borderTopLeftRadius: '6px', 
-                          borderBottomLeftRadius: '6px'
+              <div>
+                {tradeHistory.map(record => (
+                  <div 
+                    key={record.id}
+                    style={{ 
+                      padding: '12px 0',
+                      borderBottom: tradeHistory.indexOf(record) !== tradeHistory.length - 1 ? '1px solid #f0f0f0' : 'none'
+                    }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ 
+                          fontWeight: 500, 
+                          fontSize: '15px', 
+                          color: '#333',
+                          marginBottom: '4px'
                         }}>
-                          <div>
-                            <span style={{ fontWeight: 600, fontSize: '13px', color: '#333' }}> 
-                              {record.name}
-                            </span>
-                            <br />
-                            <span style={{ color: '#888', fontSize: '11px' }}> 
-                              {record.code}
-                            </span>
-                            <br />
-                            <Badge 
-                              content={getAssetTypeText(record.asset_type)}
-                              style={{ 
-                                backgroundColor: record.asset_type === 'stock' ? '#ffe082' : record.asset_type === 'future' ? '#ce93d8' : '#81d4fa',
-                                color: '#333',
-                                fontSize: '10px', 
-                                padding: '2px 4px', 
-                                borderRadius: '3px',
-                                fontWeight: 500
-                              }}
-                            />
-                          </div>
-                        </td>
-                        <td style={{ textAlign: 'center', padding: '8px', fontSize: '12px', color: '#333', verticalAlign: 'top', fontWeight: 600 }}>
+                          {record.name}
+                          <Badge 
+                            content={getAssetTypeText(record.asset_type)}
+                            style={{ 
+                              backgroundColor: record.asset_type === 'stock' ? '#ffd700' : record.asset_type === 'future' ? '#ffa500' : '#e6fffb',
+                              color: record.asset_type === 'stock' ? '#000000' : record.asset_type === 'future' ? '#000000' : '#13c2c2',
+                              fontSize: '10px', 
+                              padding: '0 4px', 
+                              borderRadius: '4px',
+                              fontWeight: 500,
+                              marginLeft: '8px'
+                            }}
+                          />
+                        </div>
+                        <div style={{ 
+                          fontSize: '12px', 
+                          color: '#999'
+                        }}>
+                          {record.code}
+                        </div>
+                      </div>
+                      
+                      <div style={{ 
+                        textAlign: 'center',
+                        flex: 1
+                      }}>
+                        <div style={{ 
+                          fontSize: '15px', 
+                          fontWeight: 500,
+                          color: record.operation === 'buy' ? '#f5222d' : '#52c41a'
+                        }}>
                           {getOperationText(record.operation)}
-                        </td>
-                        <td style={{ textAlign: 'center', padding: '8px', fontSize: '12px', color: record.operation === 'buy' ? '#d32f2f' : '#2e7d32', verticalAlign: 'top' }}>
-                          {record.price.toFixed(2)}
-                        </td>
-                        <td style={{ textAlign: 'center', padding: '8px', fontSize: '12px', color: '#333', verticalAlign: 'top' }}>
-                          {record.quantity}
-                        </td>
-                        <td style={{ textAlign: 'center', padding: '8px', fontSize: '12px', color: '#333', verticalAlign: 'top' }}>
-                          {record.fee.toFixed(2)}
-                        </td>
-                        <td style={{ textAlign: 'right', padding: '8px', fontSize: '10px', borderTopRightRadius: '6px', borderBottomRightRadius: '6px', verticalAlign: 'top', color: '#888' }}>
-                          {new Date(record.timestamp).toLocaleString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                        </div>
+                        <div style={{ 
+                          fontSize: '12px', 
+                          color: '#999'
+                        }}>
+                          
+                        </div>
+                      </div>
+                      
+                      <div style={{ 
+                        textAlign: 'right',
+                        flex: 1
+                      }}>
+                        <div style={{ 
+                          fontSize: '15px', 
+                          fontWeight: 500,
+                          color: '#333'
+                        }}>
+                          ¥{record.price.toFixed(2)}
+                        </div>
+                        <div style={{ 
+                          fontSize: '12px', 
+                          color: '#999'
+                        }}>
+                          价格
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div style={{ 
+                      display: 'flex', 
+                      justifyContent: 'space-between', 
+                      marginTop: '8px'
+                    }}>
+                      <div style={{ 
+                        fontSize: '12px', 
+                        color: '#999'
+                      }}>
+                        数量: {record.quantity}
+                      </div>
+                      <div style={{ 
+                        fontSize: '12px', 
+                        color: '#999'
+                      }}>
+                        交易费用: ¥{record.fee.toFixed(2)}
+                      </div>
+                      <div style={{ 
+                        fontSize: '12px', 
+                        color: '#999'
+                      }}>
+                        {formatTime(record.timestamp)}
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
             )}
           </Card>
         </>
       )}
-      {/* 修改：将退出登录和修改密码按钮并列排列 */}
-      <div style={{ display: 'flex', justifyContent: 'center', gap: '12px', margin: '10px auto' }}>
+      
+      <div style={{ display: 'flex', justifyContent: 'space-between', gap: '12px', margin: '16px 0' }}>
         <Button 
           style={{ 
-            backgroundColor: '#e0e0e0',
+            backgroundColor: '#ffffff',
             color: '#333',
-            border: '1px solid #ccc',
-            padding: '6px 12px',
-            fontSize: '12px',
-            width: '40%',
-            maxWidth: '160px',
-            borderRadius: '4px'
+            border: '1px solid #d9d9d9',
+            padding: '10px 0',
+            fontSize: '15px',
+            flex: 1,
+            borderRadius: '8px',
+            boxShadow: '0 2px 4px rgba(0,0,0,0.04)'
           }}
           onClick={() => {
             localStorage.removeItem('authToken');
@@ -423,14 +503,14 @@ const UserFundPosition = () => {
         </Button>
         <Button 
           style={{ 
-            backgroundColor: '#4caf50',
+            backgroundColor: '#1890ff',
             color: 'white',
             border: 'none',
-            padding: '6px 12px',
-            fontSize: '12px',
-            width: '40%',
-            maxWidth: '160px',
-            borderRadius: '4px'
+            padding: '10px 0',
+            fontSize: '15px',
+            flex: 1,
+            borderRadius: '8px',
+            boxShadow: '0 2px 4px rgba(24, 144, 255, 0.2)'
           }}
           onClick={() => navigate('/change-password')}
         >
