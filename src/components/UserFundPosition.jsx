@@ -333,7 +333,7 @@ const UserFundPosition = () => {
                       <th style={{ textAlign: 'center', padding: '8px' }}>操作</th>
                       <th style={{ textAlign: 'center', padding: '8px' }}>价格</th>
                       <th style={{ textAlign: 'center', padding: '8px' }}>数量</th>
-                      <th style={{ textAlign: 'center', padding: '8px' }}>费用</th>
+                      <th style={{ textAlign: 'center', padding: '8px' }}>交易费用</th>
                       <th style={{ textAlign: 'right', padding: '8px' }}>时间</th>
                     </tr>
                   </thead>
