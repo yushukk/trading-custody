@@ -8,11 +8,13 @@ const UserFundPosition = () => {
   const [positions, setPositions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [consolidatedPositions, setConsolidatedPositions] = useState([]);
+  const [tradeHistory, setTradeHistory] = useState([]); // 新增历史交易记录状态
 
   useEffect(() => {
     const userId = localStorage.getItem('userId');
     fetchFundInfo(userId);
     fetchPositions(userId);
+    fetchTradeHistory(userId); // 获取历史交易记录
   }, []);
 
   const fetchFundInfo = async (userId) => {
@@ -47,6 +49,18 @@ const UserFundPosition = () => {
     }
   };
 
+  // 新增获取历史交易记录函数
+  const fetchTradeHistory = async (userId) => {
+    try {
+      const response = await fetch(`${window.API_BASE_URL}/api/positions/${userId}`);
+      if (!response.ok) throw new Error('Failed to fetch trade history');
+      const data = await response.json();
+      setTradeHistory(data);
+    } catch (error) {
+      console.error('获取历史交易记录失败:', error);
+    }
+  };
+
   useEffect(() => {
     if (positions.length === 0) return;
 
@@ -73,6 +87,25 @@ const UserFundPosition = () => {
       case 'deposit': return 'green';
       case 'withdraw': return 'red';
       default: return 'default';
+    }
+  };
+
+  // 获取操作类型中文名称
+  const getOperationText = (operation) => {
+    switch(operation) {
+      case 'buy': return '买入';
+      case 'sell': return '卖出';
+      default: return operation;
+    }
+  };
+
+  // 获取资产类型中文名称
+  const getAssetTypeText = (assetType) => {
+    switch(assetType) {
+      case 'stock': return '股票';
+      case 'future': return '期货';
+      case 'fund': return '基金';
+      default: return assetType;
     }
   };
 
@@ -256,6 +289,105 @@ const UserFundPosition = () => {
                           }}>
                             {position.totalPnL.toFixed(2)}
                           </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </Card>
+
+          {/* 交易记录卡片 */}
+          <Card 
+            title={
+              <span style={{ fontSize: '15px', fontWeight: 700 }}>交易记录</span> 
+            }
+            style={{ 
+              borderRadius: '10px', 
+              boxShadow: '0 1px 8px rgba(0,0,0,0.04)', 
+              backgroundColor: '#ffffff',
+              overflow: 'hidden',
+              marginBottom: '6px' 
+            }}
+          >
+            {tradeHistory.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '12px', color: '#888' }}> 
+                暂无交易记录
+              </div>
+            ) : (
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ 
+                  width: '100%', 
+                  borderCollapse: 'separate',
+                  borderSpacing: '0 4px'
+                }}>
+                  <thead>
+                    <tr style={{ 
+                      backgroundColor: '#f8f9fa', 
+                      fontWeight: 600,
+                      fontSize: '12px', 
+                      color: '#555'
+                    }}>
+                      <th style={{ textAlign: 'left', padding: '8px' }}>资产</th>
+                      <th style={{ textAlign: 'center', padding: '8px' }}>操作</th>
+                      <th style={{ textAlign: 'center', padding: '8px' }}>价格</th>
+                      <th style={{ textAlign: 'center', padding: '8px' }}>数量</th>
+                      <th style={{ textAlign: 'center', padding: '8px' }}>费用</th>
+                      <th style={{ textAlign: 'right', padding: '8px' }}>时间</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {tradeHistory.map(record => (
+                      <tr 
+                        key={record.id}
+                        style={{ 
+                          backgroundColor: '#fff',
+                          borderRadius: '6px',
+                          boxShadow: '0 1px 3px rgba(0,0,0,0.02)'
+                        }}
+                      >
+                        <td style={{ 
+                          padding: '8px', 
+                          borderTopLeftRadius: '6px', 
+                          borderBottomLeftRadius: '6px'
+                        }}>
+                          <div>
+                            <span style={{ fontWeight: 600, fontSize: '13px', color: '#333' }}> 
+                              {record.name}
+                            </span>
+                            <br />
+                            <span style={{ color: '#888', fontSize: '11px' }}> 
+                              {record.code}
+                            </span>
+                            <br />
+                            <Badge 
+                              content={getAssetTypeText(record.asset_type)}
+                              style={{ 
+                                backgroundColor: record.asset_type === 'stock' ? '#ffe082' : record.asset_type === 'future' ? '#ce93d8' : '#81d4fa',
+                                color: '#333',
+                                fontSize: '10px', 
+                                padding: '2px 4px', 
+                                borderRadius: '3px',
+                                fontWeight: 500
+                              }}
+                            />
+                          </div>
+                        </td>
+                        <td style={{ textAlign: 'center', padding: '8px', fontSize: '12px', color: '#333', verticalAlign: 'top', fontWeight: 600 }}>
+                          {getOperationText(record.operation)}
+                        </td>
+                        <td style={{ textAlign: 'center', padding: '8px', fontSize: '12px', color: record.operation === 'buy' ? '#d32f2f' : '#2e7d32', verticalAlign: 'top' }}>
+                          {record.price.toFixed(2)}
+                        </td>
+                        <td style={{ textAlign: 'center', padding: '8px', fontSize: '12px', color: '#333', verticalAlign: 'top' }}>
+                          {record.quantity}
+                        </td>
+                        <td style={{ textAlign: 'center', padding: '8px', fontSize: '12px', color: '#333', verticalAlign: 'top' }}>
+                          {record.fee.toFixed(2)}
+                        </td>
+                        <td style={{ textAlign: 'right', padding: '8px', fontSize: '10px', borderTopRightRadius: '6px', borderBottomRightRadius: '6px', verticalAlign: 'top', color: '#888' }}>
+                          {new Date(record.timestamp).toLocaleString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}
                         </td>
                       </tr>
                     ))}
