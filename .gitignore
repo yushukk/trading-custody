@@ -6,3 +6,4 @@ server/test01.sql
 server/trade.api
 server/stock_daily.json
 server/说明.md
+.DS_Store
