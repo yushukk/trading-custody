@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import './App.css';
+import './styles/global.css'; // 引入全局样式
+import MainLayout from './layouts/MainLayout'; // 引入主布局
 import Login from './components/Login';
 import AdminDashboard from './components/AdminDashboard';
 import ChangePassword from './components/ChangePassword';
-import UserManagement from './components/UserManagement'; // 确保路径正确且组件已导出
-import FundManagement from './components/FundManagement'; // 新增资金管理组件
-import PositionManagement from './components/PositionManagement'; // 新增持仓管理组件
-import UserFundPosition from './components/UserFundPosition'; // 新增资金持仓页面组件
+import UserManagement from './components/UserManagement';
+import FundManagement from './components/FundManagement';
+import PositionManagement from './components/PositionManagement';
+import UserFundPosition from './components/UserFundPosition';
 
 import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 
@@ -15,7 +17,7 @@ function AppContent() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [username, setUsername] = useState('');
-  const [userId, setUserId] = useState(''); // 新增：存储用户ID
+  const [userId, setUserId] = useState('');
   const [view, setView] = useState('login');
   const navigate = useNavigate();
 
@@ -25,28 +27,27 @@ function AppContent() {
       setIsLoggedIn(true);
       const role = localStorage.getItem('userRole');
       const storedUsername = localStorage.getItem('username');
-      const storedUserId = localStorage.getItem('userId'); // 获取用户ID
+      const storedUserId = localStorage.getItem('userId');
       setIsAdmin(role === 'admin');
       setUsername(storedUsername || token);
-      setUserId(storedUserId || ''); // 设置用户ID
+      setUserId(storedUserId || '');
       if (role != 'admin') {
         navigate('/user-fund-position');
       }
     }
   }, []);
 
-  const handleLogin = (token, role, username, userId) => { // 修改：添加userId参数
+  const handleLogin = (token, role, username, userId) => {
     localStorage.setItem('authToken', token);
     localStorage.setItem('userRole', role);
     localStorage.setItem('username', username);
-    localStorage.setItem('userId', userId); // 存储用户ID
+    localStorage.setItem('userId', userId);
     setIsLoggedIn(true);
     setIsAdmin(role === 'admin');
     setUsername(username);
-    setUserId(userId); // 设置用户ID
-    // 修改：根据角色跳转不同路径
+    setUserId(userId);
     if (role === 'admin') {
-      navigate('/'); // 管理员跳转到仪表盘
+      navigate('/');
     } else {
       navigate('/user-fund-position');
     }
@@ -56,50 +57,51 @@ function AppContent() {
     localStorage.removeItem('authToken');
     localStorage.removeItem('userRole');
     localStorage.removeItem('username');
-    localStorage.removeItem('userId'); // 秒速用户名
+    localStorage.removeItem('userId');
     setIsLoggedIn(false);
     setIsAdmin(false);
     setUsername('');
-    navigate('/login'); // 登出后跳转到登录页
+    navigate('/login');
   };
 
   return (
     <Routes>
       <Route path="/login" element={<Login onLogin={handleLogin} />} />
-      {/* 使用统一的ProtectedRoute组件 */}
-      <Route path="/user-management" element={
-        <ProtectedRoute>
-          <UserManagement />
-        </ProtectedRoute>
-      } />
-      <Route path="/fund-management" element={
-        <ProtectedRoute>
-          <FundManagement />
-        </ProtectedRoute>
-      } />
-      <Route path="/position-management" element={
-        <ProtectedRoute>
-          <PositionManagement />
-        </ProtectedRoute>
-      } />
-      {/* 添加用户资金持仓页面路由 */}
-      <Route path="/user-fund-position" element={
-        <ProtectedRoute>
-          <UserFundPosition />
-        </ProtectedRoute>
-      } />
-      {/* 新增修改密码页面的独立路由 */}
-      <Route path="/change-password" element={
-        <ProtectedRoute>
-          <ChangePassword username={username} onLogout={handleLogout} onBack={() => navigate('/')} />
-        </ProtectedRoute>
-      } />
-      {/* 修改仪表盘路由定义 */}
-      <Route path="/" element={
-        <ProtectedRoute>
-          <AdminDashboard username={username} onLogout={handleLogout} onNavigate={setView} onOpenUserManagement={() => setView('user-management')} />
-        </ProtectedRoute>
-      } />
+      <Route path="/" element={<MainLayout />}>
+        {/* 使用统一的ProtectedRoute组件 */}
+        <Route index element={
+          <ProtectedRoute>
+            <AdminDashboard username={username} onLogout={handleLogout} onNavigate={setView} onOpenUserManagement={() => setView('user-management')} />
+          </ProtectedRoute>
+        } />
+        <Route path="/user-management" element={
+          <ProtectedRoute>
+            <UserManagement />
+          </ProtectedRoute>
+        } />
+        <Route path="/fund-management" element={
+          <ProtectedRoute>
+            <FundManagement />
+          </ProtectedRoute>
+        } />
+        <Route path="/position-management" element={
+          <ProtectedRoute>
+            <PositionManagement />
+          </ProtectedRoute>
+        } />
+        {/* 添加用户资金持仓页面路由 */}
+        <Route path="/user-fund-position" element={
+          <ProtectedRoute>
+            <UserFundPosition />
+          </ProtectedRoute>
+        } />
+        {/* 新增修改密码页面的独立路由 */}
+        <Route path="/change-password" element={
+          <ProtectedRoute>
+            <ChangePassword username={username} onLogout={handleLogout} onBack={() => navigate('/')} />
+          </ProtectedRoute>
+        } />
+      </Route>
     </Routes>
   );
 }

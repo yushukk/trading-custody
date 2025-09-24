@@ -1,4 +1,4 @@
-name: NodeJS with Webpack
+name: CI
 
 on:
   push:
@@ -7,7 +7,7 @@ on:
     branches: [ "main" ]
 
 jobs:
-  build:
+  build-and-test:
     runs-on: ubuntu-latest
 
     strategy:
@@ -22,7 +22,20 @@ jobs:
       with:
         node-version: ${{ matrix.node-version }}
 
-    - name: Build
+    - name: Install dependencies
       run: |
-        npm install
-        npx webpack
+        npm ci
+        cd server && npm ci && cd ..
+
+    - name: Run linting
+      run: |
+        npm run lint
+
+    - name: Run unit tests
+      run: |
+        npm test
+        npm run test:server
+
+    - name: Run build
+      run: |
+        npm run build

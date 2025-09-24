@@ -1,0 +1,15 @@
+{"duration":"6ms","ip":"::ffff:127.0.0.1","level":"info","message":"HTTP Request","method":"GET","statusCode":500,"timestamp":"2025-09-19T03:26:31.796Z","url":"/api/funds/1"}
+{"duration":"1ms","ip":"::ffff:127.0.0.1","level":"info","message":"HTTP Request","method":"GET","statusCode":500,"timestamp":"2025-09-19T03:26:31.810Z","url":"/api/funds/999"}
+{"duration":"1ms","ip":"::ffff:127.0.0.1","level":"info","message":"HTTP Request","method":"GET","statusCode":500,"timestamp":"2025-09-19T03:26:31.813Z","url":"/api/funds/1/logs"}
+{"duration":"1ms","ip":"::ffff:127.0.0.1","level":"info","message":"HTTP Request","method":"POST","statusCode":500,"timestamp":"2025-09-19T03:26:31.827Z","url":"/api/funds/1/initial"}
+{"duration":"1ms","ip":"::ffff:127.0.0.1","level":"info","message":"HTTP Request","method":"POST","statusCode":500,"timestamp":"2025-09-19T03:26:31.833Z","url":"/api/funds/1/deposit"}
+{"duration":"1ms","ip":"::ffff:127.0.0.1","level":"info","message":"HTTP Request","method":"POST","statusCode":500,"timestamp":"2025-09-19T03:26:31.837Z","url":"/api/funds/1/withdraw"}
+{"duration":"1ms","ip":"::ffff:127.0.0.1","level":"info","message":"HTTP Request","method":"POST","statusCode":500,"timestamp":"2025-09-19T03:26:31.840Z","url":"/api/funds/1/withdraw"}
+{"duration":"0ms","ip":"::ffff:127.0.0.1","level":"info","message":"HTTP Request","method":"POST","statusCode":400,"timestamp":"2025-09-19T03:26:31.843Z","url":"/api/funds/1/invalid"}
+{"duration":"9ms","ip":"::ffff:127.0.0.1","level":"info","message":"HTTP Request","method":"POST","statusCode":500,"timestamp":"2025-09-19T03:26:31.902Z","url":"/api/login"}
+{"duration":"0ms","ip":"::ffff:127.0.0.1","level":"info","message":"HTTP Request","method":"POST","statusCode":500,"timestamp":"2025-09-19T03:26:31.912Z","url":"/api/login"}
+{"duration":"1ms","ip":"::ffff:127.0.0.1","level":"info","message":"HTTP Request","method":"PUT","statusCode":500,"timestamp":"2025-09-19T03:26:31.916Z","url":"/api/update-password"}
+{"duration":"1ms","ip":"::ffff:127.0.0.1","level":"info","message":"HTTP Request","method":"GET","statusCode":500,"timestamp":"2025-09-19T03:26:31.921Z","url":"/api/users"}
+{"duration":"1ms","ip":"::ffff:127.0.0.1","level":"info","message":"HTTP Request","method":"POST","statusCode":500,"timestamp":"2025-09-19T03:26:31.924Z","url":"/api/users"}
+{"duration":"0ms","ip":"::ffff:127.0.0.1","level":"info","message":"HTTP Request","method":"PUT","statusCode":500,"timestamp":"2025-09-19T03:26:31.926Z","url":"/api/users/1/password"}
+{"duration":"1ms","ip":"::ffff:127.0.0.1","level":"info","message":"HTTP Request","method":"DELETE","statusCode":500,"timestamp":"2025-09-19T03:26:31.928Z","url":"/api/users/3"}

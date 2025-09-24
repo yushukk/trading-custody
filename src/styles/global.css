@@ -1,0 +1,131 @@
+/* 全局样式文件 */
+@import './variables.css';
+
+/* 重置默认样式 */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: var(--font-family);
+  background-color: var(--color-background);
+  color: var(--color-text);
+  line-height: 1.6;
+}
+
+/* 主布局样式 */
+.main-layout {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.main-header {
+  background-color: var(--color-header-background);
+  color: white;
+  padding: var(--spacing-md);
+  box-shadow: var(--box-shadow);
+}
+
+.main-header h1 {
+  text-align: center;
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-bold);
+}
+
+.main-content {
+  flex: 1;
+  padding: var(--spacing-md);
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.main-footer {
+  background-color: var(--color-footer-background);
+  padding: var(--spacing-md);
+  text-align: center;
+  border-top: 1px solid var(--color-border);
+}
+
+/* 卡片样式 */
+.card {
+  background: var(--color-card-background);
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--box-shadow);
+  padding: var(--spacing-md);
+  margin-bottom: var(--spacing-md);
+}
+
+.card-title {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+  margin-bottom: var(--spacing-md);
+  color: var(--color-text);
+}
+
+/* 按钮样式 */
+.btn {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  font-size: var(--font-size-base);
+  transition: background-color var(--transition-duration);
+}
+
+.btn-primary {
+  background-color: var(--color-primary);
+  color: white;
+}
+
+.btn-primary:hover {
+  background-color: var(--color-primary-hover);
+}
+
+.btn-danger {
+  background-color: var(--color-danger);
+  color: white;
+}
+
+.btn-danger:hover {
+  background-color: var(--color-danger-hover);
+}
+
+/* 表单样式 */
+.form-group {
+  margin-bottom: var(--spacing-md);
+}
+
+.form-label {
+  display: block;
+  margin-bottom: var(--spacing-sm);
+  font-weight: var(--font-weight-medium);
+}
+
+.form-input {
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
+  font-size: var(--font-size-base);
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .main-content {
+    padding: var(--spacing-sm);
+  }
+  
+  .main-header h1 {
+    font-size: var(--font-size-lg);
+  }
+}

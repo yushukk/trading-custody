@@ -1,31 +1,70 @@
 {
-  "name": "trading_custody",
+  "name": "trading-custody",
   "version": "1.0.0",
+  "description": "A React and Express based trading and custody management system with user authentication, fund management, and position tracking",
+  "keywords": [
+    "react",
+    "express",
+    "trading",
+    "custody",
+    "finance",
+    "portfolio",
+    "management",
+    "jwt",
+    "sqlite"
+  ],
+  "homepage": ".",
+  "bugs": {
+    "url": "https://github.com/your-username/trading-custody/issues"
+  },
+  "license": "MIT",
+  "author": "Trading Custody System Contributors",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-username/trading-custody.git"
+  },
   "scripts": {
     "start": "node server/server.js",
     "server": "nodemon server/server.js",
     "client": "react-scripts start",
     "dev": "concurrently \"npm run server\" \"npm run client\"",
     "build": "react-scripts build",
-    "serve": "react-scripts build && npm install -g serve && serve -s build -p 3000"
+    "serve": "react-scripts build && npm install -g serve && serve -s build -p 3000",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "test:server": "cd server && jest",
+    "test:server:watch": "cd server && jest --watch",
+    "test:server:coverage": "cd server && jest --coverage",
+    "test:e2e": "cypress run",
+    "test:e2e:open": "cypress open",
+    "coverage": "npm run test:coverage && npm run test:server:coverage",
+    "dev:local": "APP_PORT=${APP_PORT:-8085} SERVER_PORT=${SERVER_PORT:-3001} concurrently \"npm run server\" \"npm run client\""
   },
   "dependencies": {
+    "antd-mobile": "^5.39.0",
     "cors": "^2.8.5",
     "express": "^4.18.2",
     "jsonwebtoken": "^8.5.1",
-    "react-dom": "^18.2.0",
-    "sqlite3": "^5.1.7",
-    "antd": "^5.0.0",
-    "react-router-dom": "^6.14.0",
-    "antd-mobile": "^5.39.0",
-    "@ant-design/icons": "^4.7.0",
     "moment": "^2.29.4",
-    "node-schedule": "^2.1.0" 
+    "node-schedule": "^2.1.0",
+    "react-dom": "^18.2.0",
+    "react-router-dom": "^6.14.0",
+    "sqlite3": "^5.1.7",
+    "winston": "^3.17.0"
   },
   "devDependencies": {
+    "@istanbuljs/nyc-config-babel": "^3.0.0",
+    "@testing-library/jest-dom": "^6.8.0",
+    "@testing-library/react": "^16.3.0",
     "concurrently": "^7.6.0",
+    "cypress": "^15.2.0",
+    "http-proxy-middleware": "^3.0.5",
+    "jest": "^27.5.1",
     "nodemon": "^3.0.2",
-    "react-scripts": "^5.0.1"
+    "nyc": "^17.1.0",
+    "react-scripts": "^5.0.1",
+    "supertest": "^7.1.4"
   },
   "browserslist": {
     "production": [
@@ -38,5 +77,9 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
+  },
+  "engines": {
+    "node": ">=16.0.0",
+    "npm": ">=7.0.0"
   }
 }

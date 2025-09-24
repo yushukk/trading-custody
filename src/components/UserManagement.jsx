@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 const UserManagement = () => {
   const [users, setUsers] = useState([]);
   const [newUser, setNewUser] = useState({ name: '', email: '', password: '', role: 'user' });
+  const [passwordInputs, setPasswordInputs] = useState({}); // 用于存储每个用户的密码输入
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
@@ -61,6 +62,8 @@ const UserManagement = () => {
       if (!response.ok) throw new Error('Failed to update password');
 
       fetchUsers();
+      // 清空密码输入
+      setPasswordInputs(prev => ({ ...prev, [userId]: '' }));
       Toast.show({ content: '密码更新成功', duration: 1000 });
     } catch (error) {
       Toast.show({ content: error.message, duration: 2000, color: 'danger' });
@@ -115,6 +118,7 @@ const UserManagement = () => {
         <Input
           placeholder="密码"
           type="password"
+          value={newUser.password}
           onChange={(val) => setNewUser({ ...newUser, password: val })}
           style={{ marginBottom: '12px' }}
         />
@@ -123,7 +127,7 @@ const UserManagement = () => {
             { label: '普通用户', value: 'user' },
             { label: '管理员', value: 'admin' }
           ]}
-          value={newUser.role}
+          value={[newUser.role]}
           onChange={(val) => setNewUser({ ...newUser, role: val[0] })}
           style={{ marginBottom: '12px' }}
         />
@@ -153,7 +157,8 @@ const UserManagement = () => {
                 <Input
                   placeholder="新密码"
                   type="password"
-                  onChange={(val) => setPasswordInput(val)}
+                  value={passwordInputs[user.id] || ''}
+                  onChange={(val) => setPasswordInputs(prev => ({ ...prev, [user.id]: val }))}
                   style={{ marginBottom: '12px' }}
                 />
                 
@@ -162,11 +167,12 @@ const UserManagement = () => {
                     color="primary"
                     style={{ flex: 1 }}
                     onClick={() => {
-                      if (!passwordInput) {
+                      const password = passwordInputs[user.id] || '';
+                      if (!password) {
                         Toast.show({ content: '请输入新密码', duration: 1500, color: 'warning' });
                         return;
                       }
-                      handleUpdatePassword(user.id, passwordInput);
+                      handleUpdatePassword(user.id, password);
                     }}
                   >
                     修改密码

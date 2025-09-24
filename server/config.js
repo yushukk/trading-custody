@@ -1,6 +1,6 @@
 // server/config.js
 module.exports = {
-  PORT: process.env.PORT || 3001,
+  PORT: process.env.SERVER_PORT || 3001,
   DATABASE_PATH: process.env.DATABASE_PATH || './server/database.db',
   API_BASE_URL: process.env.API_BASE_URL || 'http://localhost:3001',
   EXTERNAL_APIS: {
