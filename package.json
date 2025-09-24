@@ -43,6 +43,7 @@
   },
   "dependencies": {
     "antd-mobile": "^5.39.0",
+    "antd-mobile-icons": "^0.3.0",
     "cors": "^2.8.5",
     "express": "^4.18.2",
     "jsonwebtoken": "^8.5.1",

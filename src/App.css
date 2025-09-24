@@ -7,4 +7,8 @@
 /* 可以在这里添加特定于App的额外样式 */
 .App {
   text-align: center;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background-color: #f5f5f5;
 }

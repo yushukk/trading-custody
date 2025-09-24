@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import './Login.css';
-import { Input, Button } from 'antd-mobile';
 
 // 设置API基础URL，统一使用window.API_BASE_URL
 const API_BASE_URL = window.API_BASE_URL || 'http://localhost:3001';
@@ -30,30 +29,44 @@ const Login = ({ onLogin }) => {
     }
   };
 
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter') {
+      handleLogin();
+    }
+  };
+
   return (
     <div className="login-container">
-      <h1>DEMO</h1>
-      <Input
-        placeholder="用户名"
-        value={username}
-        onChange={setUsername}
-        className="login-input"
-      />
-      <Input
-        type="password"
-        placeholder="密码"
-        value={password}
-        onChange={setPassword}
-        className="login-input"
-      />
-      <Button 
-        block 
-        color="primary" 
+      <div className="login-logo">D</div>
+      <h1 className="login-title">欢迎回来</h1>
+      <div className="login-input-group">
+        <label className="login-input-label">用户名</label>
+        <input
+          type="text"
+          placeholder="请输入用户名"
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
+          onKeyPress={handleKeyPress}
+          className="login-input"
+        />
+      </div>
+      <div className="login-input-group">
+        <label className="login-input-label">密码</label>
+        <input
+          type="password"
+          placeholder="请输入密码"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          onKeyPress={handleKeyPress}
+          className="login-input"
+        />
+      </div>
+      <button 
         onClick={handleLogin}
         className="login-button"
       >
         登录
-      </Button>
+      </button>
     </div>
   );
 };
