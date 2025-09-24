@@ -1,4 +1,5 @@
 const db = require('../utils/database');
+const AppError = require('../utils/AppError');
 
 /**
  * 获取用户资金余额服务
@@ -9,7 +10,7 @@ exports.getFundBalance = (userId) => {
   return new Promise((resolve, reject) => {
     db.get("SELECT * FROM funds WHERE user_id = ?", [userId], (err, row) => {
       if (err) {
-        reject(err);
+        reject(new AppError(err.message, 'DATABASE_ERROR'));
       } else {
         resolve(row || { user_id: userId, balance: 0 });
       }
@@ -26,7 +27,7 @@ exports.getFundLogs = (userId) => {
   return new Promise((resolve, reject) => {
     db.all("SELECT * FROM fund_logs WHERE user_id = ? ORDER BY timestamp DESC", [userId], (err, rows) => {
       if (err) {
-        reject(err);
+        reject(new AppError(err.message, 'DATABASE_ERROR'));
       } else {
         resolve(rows || []);
       }
@@ -45,12 +46,12 @@ exports.getFundLogs = (userId) => {
 exports.handleFundOperation = (userId, type, amount, remark) => {
   // 验证操作类型
   if (!['initial', 'deposit', 'withdraw'].includes(type)) {
-    return Promise.reject(new Error('无效的操作类型'));
+    return Promise.reject(new AppError('无效的操作类型', 'INVALID_OPERATION'));
   }
   
   // 验证金额
   if (typeof amount !== 'number' || amount <= 0) {
-    return Promise.reject(new Error('金额必须为正数'));
+    return Promise.reject(new AppError('金额必须为正数', 'INVALID_AMOUNT'));
   }
   
   return new Promise((resolve, reject) => {
@@ -58,7 +59,7 @@ exports.handleFundOperation = (userId, type, amount, remark) => {
       // 获取当前余额
       db.get("SELECT * FROM funds WHERE user_id = ?", [userId], (err, row) => {
         if (err) {
-          reject(err);
+          reject(new AppError(err.message, 'DATABASE_ERROR'));
           return;
         }
         
@@ -72,7 +73,7 @@ exports.handleFundOperation = (userId, type, amount, remark) => {
           newBalance += amount;
         } else if (type === 'withdraw') {
           if (currentBalance < amount) {
-            reject(new Error('余额不足'));
+            reject(new AppError('余额不足', 'INSUFFICIENT_BALANCE'));
             return;
           }
           newBalance -= amount;
@@ -84,7 +85,7 @@ exports.handleFundOperation = (userId, type, amount, remark) => {
             if (row) {
               db.run("UPDATE funds SET balance = ? WHERE user_id = ?", [newBalance, userId], (err) => {
                 if (err) {
-                  reject(err);
+                  reject(new AppError(err.message, 'DATABASE_ERROR'));
                 } else {
                   resolve();
                 }
@@ -92,7 +93,7 @@ exports.handleFundOperation = (userId, type, amount, remark) => {
             } else {
               db.run("INSERT INTO funds (user_id, balance) VALUES (?, ?)", [userId, newBalance], (err) => {
                 if (err) {
-                  reject(err);
+                  reject(new AppError(err.message, 'DATABASE_ERROR'));
                 } else {
                   resolve();
                 }
@@ -106,7 +107,7 @@ exports.handleFundOperation = (userId, type, amount, remark) => {
           return new Promise((resolve, reject) => {
             db.run("INSERT INTO fund_logs (user_id, type, amount, remark) VALUES (?, ?, ?, ?)", [userId, type, amount, remark || ''], (err) => {
               if (err) {
-                reject(err);
+                reject(new AppError(err.message, 'DATABASE_ERROR'));
               } else {
                 resolve();
               }

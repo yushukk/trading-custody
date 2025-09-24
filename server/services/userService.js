@@ -1,5 +1,6 @@
 const jwt = require('jsonwebtoken');
 const db = require('../utils/database');
+const AppError = require('../utils/AppError');
 
 /**
  * 用户服务
@@ -16,7 +17,7 @@ exports.authenticateUser = (username, password) => {
   return new Promise((resolve, reject) => {
     db.get("SELECT * FROM users WHERE name = ? AND password = ?", [username, password], (err, row) => {
       if (err) {
-        reject(err);
+        reject(new AppError(err.message, 'DATABASE_ERROR'));
       } else {
         resolve(row);
       }
@@ -43,7 +44,7 @@ exports.updateUserPassword = (username, newPassword) => {
   return new Promise((resolve, reject) => {
     db.run("UPDATE users SET password = ? WHERE name = ?", [newPassword, username], (err) => {
       if (err) {
-        reject(err);
+        reject(new AppError(err.message, 'DATABASE_ERROR'));
       } else {
         resolve({ message: 'Password updated successfully' });
       }
@@ -59,7 +60,7 @@ exports.getAllUsers = () => {
   return new Promise((resolve, reject) => {
     db.all("SELECT * FROM users", [], (err, rows) => {
       if (err) {
-        reject(err);
+        reject(new AppError(err.message, 'DATABASE_ERROR'));
       } else {
         resolve(rows);
       }
@@ -77,7 +78,7 @@ exports.createUser = (userData) => {
   return new Promise((resolve, reject) => {
     db.run("INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, ?)", [name, email, password, role], function(err) {
       if (err) {
-        reject(err);
+        reject(new AppError(err.message, 'DATABASE_ERROR'));
       } else {
         resolve({ id: this.lastID, name, email, password, role });
       }
@@ -95,7 +96,7 @@ exports.updateUserPasswordById = (id, newPassword) => {
   return new Promise((resolve, reject) => {
     db.run("UPDATE users SET password = ? WHERE id = ?", [newPassword, id], (err) => {
       if (err) {
-        reject(err);
+        reject(new AppError(err.message, 'DATABASE_ERROR'));
       } else {
         resolve({ message: 'Password updated successfully' });
       }
@@ -112,7 +113,7 @@ exports.deleteUser = (id) => {
   return new Promise((resolve, reject) => {
     db.run("DELETE FROM users WHERE id = ?", [id], (err) => {
       if (err) {
-        reject(err);
+        reject(new AppError(err.message, 'DATABASE_ERROR'));
       } else {
         resolve({ message: 'User deleted successfully' });
       }

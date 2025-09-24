@@ -1,5 +1,6 @@
 const db = require('../utils/database');
 const { getDbLatestPrice } = require('../utils/priceUtils');
+const AppError = require('../utils/AppError');
 
 /**
  * 获取用户持仓服务
@@ -10,7 +11,7 @@ exports.getPositions = (userId) => {
   return new Promise((resolve, reject) => {
     db.all("SELECT * FROM positions WHERE user_id = ? ORDER BY timestamp DESC", [userId], (err, rows) => {
       if (err) {
-        reject(err);
+        reject(new AppError(err.message, 'DATABASE_ERROR'));
       } else {
         resolve(rows || []);
       }
@@ -29,10 +30,10 @@ exports.addPosition = (userId, positionData) => {
   
   // 参数验证
   if (!['stock', 'future', 'fund'].includes(assetType)) {
-    return Promise.reject(new Error('无效的资产类型'));
+    return Promise.reject(new AppError('无效的资产类型', 'INVALID_ASSET_TYPE'));
   }
   if (!operation || !['buy', 'sell'].includes(operation)) {
-    return Promise.reject(new Error('无效的操作类型'));
+    return Promise.reject(new AppError('无效的操作类型', 'INVALID_OPERATION'));
   }
   
   // 将费用转换为数字
@@ -43,10 +44,10 @@ exports.addPosition = (userId, positionData) => {
   const parsedQuantity = parseFloat(quantity);
   
   if (isNaN(parsedPrice) || parsedPrice <= 0) {
-    return Promise.reject(new Error('价格必须为正数'));
+    return Promise.reject(new AppError('价格必须为正数', 'INVALID_PRICE'));
   }
   if (isNaN(parsedQuantity) || parsedQuantity <= 0) {
-    return Promise.reject(new Error('数量必须为正数'));
+    return Promise.reject(new AppError('数量必须为正数', 'INVALID_QUANTITY'));
   }
   
   return new Promise((resolve, reject) => {
@@ -55,7 +56,7 @@ exports.addPosition = (userId, positionData) => {
       [userId, assetType, code, name, operation, price, quantity, timestamp || new Date().toISOString(), parsedFee], 
       function(err) {
         if (err) {
-          reject(err);
+          reject(new AppError(err.message, 'DATABASE_ERROR'));
         } else {
           resolve({ message: '操作成功', id: this.lastID });
         }
@@ -72,7 +73,7 @@ exports.calculatePositionProfit = (userId) => {
   return new Promise((resolve, reject) => {
     db.all("SELECT * FROM positions WHERE user_id = ? ORDER BY timestamp ASC", [userId], async (err, rows) => {
       if (err) {
-        reject(err);
+        reject(new AppError(err.message, 'DATABASE_ERROR'));
         return;
       }
 
@@ -165,7 +166,7 @@ exports.deletePositions = (userId) => {
   return new Promise((resolve, reject) => {
     db.run("DELETE FROM positions WHERE user_id = ?", [userId], function(err) {
       if (err) {
-        reject(err);
+        reject(new AppError(err.message, 'DATABASE_ERROR'));
       } else {
         resolve({ message: `成功清除用户${userId}的${this.changes}条交易记录` });
       }

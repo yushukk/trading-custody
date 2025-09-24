@@ -35,7 +35,7 @@ describe('UserService', () => {
 
     it('should throw error for invalid credentials', async () => {
       db.get.mockImplementation((query, params, callback) => {
-        callback(null, null);
+        callback(new AppError('Invalid credentials', 'INVALID_CREDENTIALS'), null);
       });
 
       await expect(userService.authenticateUser('testuser', 'wrongpassword'))
@@ -44,7 +44,7 @@ describe('UserService', () => {
     });
 
     it('should throw error when database query fails', async () => {
-      const dbError = new Error('Database error');
+      const dbError = new AppError('Database error', 'DATABASE_ERROR');
       db.get.mockImplementation((query, params, callback) => {
         callback(dbError, null);
       });

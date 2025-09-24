@@ -1,5 +1,6 @@
 # 忽略 node_modules 文件夹
 node_modules/
+logs/
 public/Screenshot_2025-06-13-09-42-42-467_global.longbridge.app.android.jpg
 server/test.sql
 server/test01.sql

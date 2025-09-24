@@ -1,10 +1,10 @@
 # Trading Custody System
 
-[![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/your-username/trading-custody/blob/main/LICENSE)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/yushukk/trading-custody/blob/main/LICENSE)
 [![Node.js](https://img.shields.io/badge/node-%3E%3D16.0.0-blue.svg)](https://nodejs.org/)
-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/your-username/trading-custody/pulls)
-[![Build Status](https://img.shields.io/github/workflow/status/your-username/trading-custody/CI)](https://github.com/your-username/trading-custody/actions)
-[![Coverage Status](https://img.shields.io/codecov/c/github/your-username/trading-custody)](https://codecov.io/gh/your-username/trading-custody)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/yushukk/trading-custody/pulls)
+[![Build Status](https://img.shields.io/github/workflow/status/yushukk/trading-custody/CI)](https://github.com/yushukk/trading-custody/actions)
+[![Coverage Status](https://img.shields.io/codecov/c/github/yushukk/trading-custody)](https://codecov.io/gh/yushukk/trading-custody)
 
 ## 简介
 
@@ -89,7 +89,7 @@ Trading Custody System 是一个基于 React 和 Express 的开源交易与托�
 
 ```bash
 # 克隆项目
-git clone https://github.com/your-username/trading-custody.git
+git clone https://github.com/yushukk/trading-custody.git
 cd trading-custody
 
 # 安装所有依赖

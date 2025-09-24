@@ -5,8 +5,8 @@ describe('User Dashboard', () => {
     // Login as a regular user before each test
     cy.visit('/login')
     // 修复：使用数据库中存在的普通用户登录，而不是不存在的user1
-    cy.get('.login-input').eq(0).type('Bob')
-    cy.get('.login-input').eq(1).type('bob123')
+    cy.get('.login-input').eq(0).type('test')
+    cy.get('.login-input').eq(1).type('test')
     cy.get('.login-button').click()
   })
 

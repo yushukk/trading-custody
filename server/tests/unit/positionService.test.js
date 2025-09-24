@@ -6,7 +6,8 @@ jest.mock('../../utils/database', () => {
   return {
     all: jest.fn(),
     run: jest.fn(),
-    serialize: jest.fn()
+    serialize: jest.fn(),
+    get: jest.fn()
   };
 });
 
@@ -57,6 +58,18 @@ describe('PositionService', () => {
       const result = await positionService.getPositions(999);
       expect(result).toEqual([]);
     });
+
+    it('should throw error when database query fails', async () => {
+      const dbError = new AppError('Database error', 'DATABASE_ERROR');
+      db.all.mockImplementation((query, params, callback) => {
+        callback(dbError, null);
+      });
+
+      await expect(positionService.getPositions(1))
+        .rejects
+        .toThrow(AppError);
+    });
+
   });
 
   describe('addPosition', () => {
@@ -105,9 +118,11 @@ describe('PositionService', () => {
     });
 
     it('should add position successfully', async () => {
+      // 创建一个带lastID属性的上下文对象
+      const context = { lastID: 1 };
+      
       db.run.mockImplementation(function(query, params, callback) {
-        callback(null);
-        this.lastID = 1;
+        callback.call(context, null);
       });
 
       const positionData = {
@@ -128,6 +143,29 @@ describe('PositionService', () => {
         expect.any(Function)
       );
     });
+
+    it('should throw error when database query fails', async () => {
+      const dbError = new AppError('Database error', 'DATABASE_ERROR');
+      db.run.mockImplementation(function(query, params, callback) {
+        callback(dbError);
+        this.lastID = 1;
+      });
+
+      const positionData = {
+        assetType: 'stock',
+        code: 'AAPL',
+        name: 'Apple',
+        operation: 'buy',
+        price: 150,
+        quantity: 10,
+        fee: 5
+      };
+
+      await expect(positionService.addPosition(1, positionData))
+        .rejects
+        .toThrow(AppError);
+    });
+
   });
 
   describe('calculatePositionProfit', () => {
@@ -149,13 +187,27 @@ describe('PositionService', () => {
       expect(result[0].realizedPnL).toBeCloseTo(90); // (120-100)*5 - 5 - 5
       expect(result[0].unrealizedPnL).toBeCloseTo(150); // (130-100)*5
     });
+
+    it('should throw error when database query fails', async () => {
+      const dbError = new AppError('Database error', 'DATABASE_ERROR');
+      db.all.mockImplementation((query, params, callback) => {
+        callback(dbError, null);
+      });
+
+      await expect(positionService.calculatePositionProfit(1))
+        .rejects
+        .toThrow(AppError);
+    });
+
   });
 
   describe('deletePositions', () => {
     it('should delete positions for user', async () => {
+      // 创建一个带changes属性的上下文对象
+      const context = { changes: 2 };
+      
       db.run.mockImplementation(function(query, params, callback) {
-        callback(null);
-        this.changes = 2;
+        callback.call(context, null);
       });
 
       const result = await positionService.deletePositions(1);
@@ -166,5 +218,18 @@ describe('PositionService', () => {
         expect.any(Function)
       );
     });
+
+    it('should throw error when database query fails', async () => {
+      const dbError = new AppError('Database error', 'DATABASE_ERROR');
+      db.run.mockImplementation(function(query, params, callback) {
+        callback(dbError);
+        this.changes = 2;
+      });
+
+      await expect(positionService.deletePositions(1))
+        .rejects
+        .toThrow(AppError);
+    });
+
   });
 });

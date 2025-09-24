@@ -6,6 +6,7 @@ jest.mock('../../utils/database', () => {
   return {
     get: jest.fn(),
     run: jest.fn(),
+    all: jest.fn(),
     serialize: jest.fn()
   };
 });
@@ -49,7 +50,7 @@ describe('FundService', () => {
     });
 
     it('should throw error when database query fails', async () => {
-      const dbError = new Error('Database error');
+      const dbError = new AppError('Database error', 'DATABASE_ERROR');
       db.get.mockImplementation((query, params, callback) => {
         callback(dbError, null);
       });
@@ -87,6 +88,17 @@ describe('FundService', () => {
       const result = await fundService.getFundLogs(999);
       expect(result).toEqual([]);
     });
+
+    it('should throw error when database query fails', async () => {
+      const dbError = new AppError('Database error', 'DATABASE_ERROR');
+      db.all.mockImplementation((query, params, callback) => {
+        callback(dbError, null);
+      });
+
+      await expect(fundService.getFundLogs(1))
+        .rejects
+        .toThrow(AppError);
+    });
   });
 
   describe('handleFundOperation', () => {
@@ -116,6 +128,17 @@ describe('FundService', () => {
       expect(result).toEqual({ message: '操作成功', balance: 1000 });
     });
 
+    it('should throw error when database query fails', async () => {
+      const dbError = new AppError('Database error', 'DATABASE_ERROR');
+      db.get.mockImplementation((query, params, callback) => {
+        callback(dbError, null);
+      });
+
+      await expect(fundService.handleFundOperation(1, 'initial', 1000, 'Initial deposit'))
+        .rejects
+        .toThrow(AppError);
+    });
+
     it('should handle deposit operation', async () => {
       const mockBalance = { user_id: 1, balance: 500 };
       db.get.mockImplementation((query, params, callback) => {
@@ -130,6 +153,22 @@ describe('FundService', () => {
       expect(result).toEqual({ message: '操作成功', balance: 700 });
     });
 
+    it('should throw error when database query fails', async () => {
+      const mockBalance = { user_id: 1, balance: 500 };
+      db.get.mockImplementation((query, params, callback) => {
+        callback(null, mockBalance);
+      });
+      
+      const dbError = new AppError('Database error', 'DATABASE_ERROR');
+      db.run.mockImplementation((query, params, callback) => {
+        callback(dbError, null);
+      });
+
+      await expect(fundService.handleFundOperation(1, 'deposit', 200, 'Deposit'))
+        .rejects
+        .toThrow(AppError);
+    });
+
     it('should handle withdraw operation', async () => {
       const mockBalance = { user_id: 1, balance: 1000 };
       db.get.mockImplementation((query, params, callback) => {
@@ -142,6 +181,22 @@ describe('FundService', () => {
 
       const result = await fundService.handleFundOperation(1, 'withdraw', 200, 'Withdrawal');
       expect(result).toEqual({ message: '操作成功', balance: 800 });
+    });
+
+    it('should throw error when database query fails', async () => {
+      const mockBalance = { user_id: 1, balance: 1000 };
+      db.get.mockImplementation((query, params, callback) => {
+        callback(null, mockBalance);
+      });
+      
+      const dbError = new AppError('Database error', 'DATABASE_ERROR');
+      db.run.mockImplementation((query, params, callback) => {
+        callback(dbError, null);
+      });
+
+      await expect(fundService.handleFundOperation(1, 'withdraw', 200, 'Withdrawal'))
+        .rejects
+        .toThrow(AppError);
     });
 
     it('should throw error for insufficient balance on withdrawal', async () => {

@@ -6,6 +6,12 @@ const config = require('../config');
 const dbPath = config.DATABASE_PATH;
 
 // 创建并导出数据库连接
-const db = new sqlite3.Database(dbPath);
+const db = new sqlite3.Database(dbPath, (err) => {
+  if (err) {
+    console.error('数据库连接错误:', err.message);
+  } else {
+    console.log('成功连接到数据库:', dbPath);
+  }
+});
 
 module.exports = db;

@@ -17,7 +17,7 @@ describe('Login Flow', () => {
     cy.get('.login-button').click()
     
     // 修复：检查正确的URL
-    cy.url().should('eq', 'http://localhost:8085/')
+    cy.url().should('eq', 'http://localhost:3000/')
     // 修复：检查正确的标题文本
     cy.get('h1').should('contain', '欢迎管理员')
   })

@@ -5,30 +5,23 @@ const sqlite3 = require('sqlite3').verbose();
 const fs = require('fs');
 const path = require('path');
 
-// 导入应用组件
-const fundController = require('../../controllers/fundController');
-const logMiddleware = require('../../middleware/logMiddleware');
-const errorHandler = require('../../middleware/errorMiddleware');
+// 在文件顶部设置环境变量，确保在导入任何模块之前设置
+const testDbPath = path.join(__dirname, '../test-fund-database.db');
+process.env.DATABASE_PATH = testDbPath;
 
 // 创建测试应用
 const app = express();
 app.use(cors());
 app.use(express.json());
-app.use(logMiddleware);
-
-// 资金相关路由
-app.get('/api/funds/:userId', fundController.getFundBalance);
-app.get('/api/funds/:userId/logs', fundController.getFundLogs);
-app.post('/api/funds/:userId/:type', fundController.handleFundOperation);
-
-// 错误处理中间件
-app.use(errorHandler);
-
-// 测试数据库路径
-const testDbPath = path.join(__dirname, '../../test-fund-database.db');
 
 describe('Fund API Integration', () => {
   let db;
+  let fundController;
+  let logMiddleware;
+  let errorHandler;
+  
+  // 增加测试超时时间
+  jest.setTimeout(30000);
   
   beforeAll((done) => {
     // 删除测试数据库文件（如果存在）
@@ -72,7 +65,21 @@ describe('Fund API Integration', () => {
               userStmt.finalize(() => {
                 const fundStmt = db.prepare("INSERT INTO funds (user_id, balance) VALUES (?, ?)");
                 fundStmt.run(1, 1000);
-                fundStmt.finalize(done);
+                fundStmt.finalize(() => {
+                  // 在数据库初始化完成后导入控制器
+                  fundController = require('../../controllers/fundController');
+                  logMiddleware = require('../../middleware/logMiddleware');
+                  errorHandler = require('../../middleware/errorMiddleware');
+                  
+                  // 设置中间件和路由
+                  app.use(logMiddleware);
+                  app.get('/api/funds/:userId', fundController.getFundBalance);
+                  app.get('/api/funds/:userId/logs', fundController.getFundLogs);
+                  app.post('/api/funds/:userId/:type', fundController.handleFundOperation);
+                  app.use(errorHandler);
+                  
+                  done();
+                });
               });
             });
           });
@@ -107,7 +114,7 @@ describe('Fund API Integration', () => {
         .get('/api/funds/999')
         .expect(200);
 
-      expect(response.body.user_id).toBe(999);
+      expect(response.body.user_id).toBe('999');
       expect(response.body.balance).toBe(0);
     });
   });

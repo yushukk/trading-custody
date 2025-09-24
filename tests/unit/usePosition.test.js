@@ -1,9 +1,9 @@
 import { renderHook, act } from '@testing-library/react';
-import { usePosition } from './usePosition';
-import * as positionApi from '../api/positionApi';
+import { usePosition } from '../../src/hooks/usePosition';
+import * as positionApi from '../../src/api/positionApi';
 
 // Mock positionApi
-jest.mock('../api/positionApi');
+jest.mock('../../src/api/positionApi');
 
 describe('usePosition', () => {
   beforeEach(() => {

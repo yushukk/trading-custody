@@ -1,9 +1,9 @@
 import { renderHook, act } from '@testing-library/react';
-import { useFund } from './useFund';
-import * as fundApi from '../api/fundApi';
+import { useFund } from '../../src/hooks/useFund';
+import * as fundApi from '../../src/api/fundApi';
 
 // Mock fundApi
-jest.mock('../api/fundApi');
+jest.mock('../../src/api/fundApi');
 
 describe('useFund', () => {
   beforeEach(() => {

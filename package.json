@@ -15,13 +15,13 @@
   ],
   "homepage": ".",
   "bugs": {
-    "url": "https://github.com/your-username/trading-custody/issues"
+    "url": "https://github.com/yushukk/trading-custody/issues"
   },
   "license": "MIT",
   "author": "Trading Custody System Contributors",
   "repository": {
     "type": "git",
-    "url": "https://github.com/your-username/trading-custody.git"
+    "url": "https://github.com/yushukk/trading-custody.git"
   },
   "scripts": {
     "start": "node server/server.js",
@@ -30,14 +30,14 @@
     "dev": "concurrently \"npm run server\" \"npm run client\"",
     "build": "react-scripts build",
     "serve": "react-scripts build && npm install -g serve && serve -s build -p 3000",
-    "test": "jest",
-    "test:watch": "jest --watch",
-    "test:coverage": "jest --coverage",
-    "test:server": "cd server && jest",
-    "test:server:watch": "cd server && jest --watch",
-    "test:server:coverage": "cd server && jest --coverage",
-    "test:e2e": "cypress run",
-    "test:e2e:open": "cypress open",
+    "test": "jest --config=jest.config.js",
+    "test:watch": "jest --config=jest.config.js --watch",
+    "test:coverage": "jest --config=jest.config.js --coverage",
+    "test:server": "cd server && jest --config=tests/jest.config.js",
+    "test:server:watch": "cd server && jest --config=tests/jest.config.js --watch",
+    "test:server:coverage": "cd server && jest --config=tests/jest.config.js --coverage",
+    "test:e2e": "cypress run --config-file tests/cypress/cypress.config.js",
+    "test:e2e:open": "cypress open --config-file tests/cypress/cypress.config.js",
     "coverage": "npm run test:coverage && npm run test:server:coverage",
     "dev:local": "APP_PORT=${APP_PORT:-8085} SERVER_PORT=${SERVER_PORT:-3001} concurrently \"npm run server\" \"npm run client\""
   },

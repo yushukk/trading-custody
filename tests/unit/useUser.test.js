@@ -1,9 +1,9 @@
 import { renderHook, act } from '@testing-library/react';
-import { useUser } from './useUser';
-import * as userApi from '../api/userApi';
+import { useUser } from '../../src/hooks/useUser';
+import * as userApi from '../../src/api/userApi';
 
 // Mock userApi
-jest.mock('../api/userApi');
+jest.mock('../../src/api/userApi');
 
 describe('useUser', () => {
   beforeEach(() => {
