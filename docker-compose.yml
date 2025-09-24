@@ -1,0 +1,35 @@
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    ports:
+      - "3001:3001"
+    volumes:
+      - backend-data:/app/server/data
+    environment:
+      - NODE_ENV=production
+      - DATABASE_PATH=/app/server/data/database.db
+      - SERVER_PORT=3001
+    networks:
+      - app-network
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    environment:
+      - REACT_APP_API_BASE_URL=http://localhost:3001
+    networks:
+      - app-network
+
+volumes:
+  backend-data:
+
+networks:
+  app-network:
+    driver: bridge

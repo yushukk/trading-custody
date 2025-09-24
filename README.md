@@ -198,14 +198,50 @@ npm run build
 npm start
 ```
 
-### Docker部署（可选）
+### Docker部署
+
+本项目支持通过Docker进行容器化部署，包含以下组件：
+- 前端React应用（通过Nginx提供服务）
+- 后端Express服务
+- SQLite数据库（数据持久化）
+
+#### 部署步骤
+
+1. 确保已安装Docker和Docker Compose
+2. 在项目根目录执行以下命令构建和启动服务：
+
 ```bash
 # 构建Docker镜像
-docker build -t trading-custody .
+docker-compose build
 
-# 运行容器
-docker run -p 3000:3000 -p 5000:5000 trading-custody
+# 启动所有服务
+docker-compose up -d
 ```
+
+3. 访问应用：
+   - 前端应用：http://localhost
+   - 后端API：http://localhost:3001
+
+4. 停止服务：
+
+```bash
+# 停止并移除容器
+docker-compose down
+```
+
+#### Docker配置说明
+
+- 前端服务运行在80端口
+- 后端服务运行在3001端口
+- 数据库文件存储在Docker卷中以确保数据持久化
+- 前端通过Nginx反向代理与后端通信
+
+#### 自定义配置
+
+可以通过修改docker-compose.yml文件来调整以下配置：
+- 端口映射
+- 环境变量
+- 数据卷路径
 
 ## 贡献
 
