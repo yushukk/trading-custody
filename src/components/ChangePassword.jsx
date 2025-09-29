@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import './ChangePassword.css';
 
 const ChangePassword = ({ username, onBack }) => {
   const [newPassword, setNewPassword] = useState('');
@@ -31,33 +32,47 @@ const ChangePassword = ({ username, onBack }) => {
     }
   };
 
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter') {
+      handleUpdatePassword();
+    }
+  };
+
   return (
-    <div style={{ textAlign: 'center', padding: '50px', backgroundColor: '#f5f5f5' }}>
-      <h1>修改密码</h1>
-      <input
-        type="password"
-        placeholder="新密码"
-        value={newPassword}
-        onChange={(e) => setNewPassword(e.target.value)}
-        style={{ margin: '10px 0', padding: '10px', width: '300px' }}
-      />
-      <input
-        type="password"
-        placeholder="确认新密码"
-        value={confirmPassword}
-        onChange={(e) => setConfirmPassword(e.target.value)}
-        style={{ margin: '10px 0', padding: '10px', width: '300px' }}
-      />
-      {error && <p style={{ color: 'red' }}>{error}</p>}
+    <div className="change-password-container">
+      <h1 className="change-password-title">修改密码</h1>
+      <div className="change-password-input-group">
+        <label className="change-password-input-label">新密码</label>
+        <input
+          type="password"
+          placeholder="请输入新密码"
+          value={newPassword}
+          onChange={(e) => setNewPassword(e.target.value)}
+          onKeyPress={handleKeyPress}
+          className="change-password-input"
+        />
+      </div>
+      <div className="change-password-input-group">
+        <label className="change-password-input-label">确认新密码</label>
+        <input
+          type="password"
+          placeholder="请再次输入新密码"
+          value={confirmPassword}
+          onChange={(e) => setConfirmPassword(e.target.value)}
+          onKeyPress={handleKeyPress}
+          className="change-password-input"
+        />
+      </div>
+      {error && <p className="change-password-error">{error}</p>}
       <button
-        style={{ padding: '10px 20px', backgroundColor: '#007bff', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', marginRight: '10px' }}
         onClick={handleUpdatePassword}
+        className="change-password-button"
       >
         确认修改
       </button>
       <button
-        style={{ padding: '10px 20px', backgroundColor: '#ccc', color: 'black', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
         onClick={onBack}
+        className="change-password-back-button"
       >
         返回
       </button>
