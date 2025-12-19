@@ -153,12 +153,12 @@ const UserFundPosition = () => {
       width: '100%',
       backgroundColor: '#f0f2f5',
       minHeight: '100vh',
-      padding: '12px',
+      padding: '6px', // 减少左右留白
       fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
     }}>
       <div style={{ 
         textAlign: 'center', 
-        marginBottom: '16px',
+        marginBottom: '12px',
         color: '#1890ff',
         fontSize: '20px',
         fontWeight: '600',
@@ -174,15 +174,12 @@ const UserFundPosition = () => {
           {/* 资金概览卡片 */}
           <Card 
             style={{ 
-              marginBottom: '16px', 
-              borderRadius: '12px', 
+              marginBottom: '12px', 
+              borderRadius: '8px', 
               boxShadow: '0 2px 8px rgba(0,0,0,0.08)', 
               backgroundColor: '#ffffff',
               overflow: 'hidden',
-              border: 'none',
-              // 添加左右内边距，使其与其他卡片一致
-              paddingLeft: '16px',
-              paddingRight: '16px'
+              border: 'none'
             }}
           >
             <div>
@@ -190,7 +187,7 @@ const UserFundPosition = () => {
                 fontSize: '16px', 
                 fontWeight: 500,
                 textAlign: 'left',
-                marginBottom: '12px',
+                marginBottom: '10px',
                 color: '#333'
               }}>
                 资产总览
@@ -200,7 +197,7 @@ const UserFundPosition = () => {
                 fontSize: '24px', 
                 fontWeight: 600,
                 textAlign: 'left',
-                marginBottom: '16px',
+                marginBottom: '14px',
                 color: '#1890ff'
               }}>
                 ¥{(fundInfo.balance + totalPnL).toFixed(2)}
@@ -238,17 +235,16 @@ const UserFundPosition = () => {
               <span style={{ fontSize: '16px', fontWeight: 500, color: '#333' }}>持仓明细</span> 
             }
             style={{ 
-              borderRadius: '12px', 
+              borderRadius: '8px', 
               boxShadow: '0 2px 8px rgba(0,0,0,0.08)', 
               backgroundColor: '#ffffff',
               overflow: 'hidden',
-              marginBottom: '16px',
-              border: 'none',
-              // 已经有左右内边距，无需额外设置
+              marginBottom: '12px',
+              border: 'none'
             }}
           >
             {consolidatedPositions.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '24px', color: '#999' }}> 
+              <div style={{ textAlign: 'center', padding: '20px', color: '#999' }}> 
                 暂无持仓
               </div>
             ) : (
@@ -257,19 +253,21 @@ const UserFundPosition = () => {
                   <div 
                     key={`${position.asset_type}-${position.code}`}
                     style={{ 
-                      padding: '12px 0',
+                      padding: '10px 0',
                       borderBottom: consolidatedPositions.indexOf(position) !== consolidatedPositions.length - 1 ? '1px solid #f0f0f0' : 'none'
                     }}
                   >
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <div style={{ flex: 1 }}>
+                      <div style={{ flex: 1.5 }}> {/* 增加标的名称区域宽度 */}
                         <div style={{ 
                           fontWeight: 500, 
                           fontSize: '15px', 
                           color: '#333',
-                          marginBottom: '4px'
+                          marginBottom: '4px',
+                          display: 'flex',
+                          alignItems: 'center'
                         }}>
-                          {position.name}
+                          <span style={{ marginRight: '8px' }}>{position.name}</span>
                           <Badge 
                             content={getAssetTypeText(position.asset_type)}
                             style={{ 
@@ -278,8 +276,7 @@ const UserFundPosition = () => {
                               fontSize: '10px', 
                               padding: '0 4px', 
                               borderRadius: '4px',
-                              fontWeight: 500,
-                              marginLeft: '8px'
+                              fontWeight: 500
                             }}
                           />
                         </div>
@@ -292,7 +289,7 @@ const UserFundPosition = () => {
                       </div>
 
                       <div style={{ 
-                        textAlign: 'right',
+                        textAlign: 'center',
                         flex: 1
                       }}>
                         <div style={{ 
@@ -333,7 +330,7 @@ const UserFundPosition = () => {
                     <div style={{ 
                       display: 'flex', 
                       justifyContent: 'flex-end', 
-                      marginTop: '8px'
+                      marginTop: '6px'
                     }}>
                       <div style={{ 
                         fontSize: '12px', 
@@ -355,17 +352,16 @@ const UserFundPosition = () => {
               <span style={{ fontSize: '16px', fontWeight: 500, color: '#333' }}>交易记录</span> 
             }
             style={{ 
-              borderRadius: '12px', 
+              borderRadius: '8px', 
               boxShadow: '0 2px 8px rgba(0,0,0,0.08)', 
               backgroundColor: '#ffffff',
               overflow: 'hidden',
-              marginBottom: '16px',
-              border: 'none',
-              // 已经有左右内边距，无需额外设置
+              marginBottom: '12px',
+              border: 'none'
             }}
           >
             {tradeHistory.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '24px', color: '#999' }}> 
+              <div style={{ textAlign: 'center', padding: '20px', color: '#999' }}> 
                 暂无交易记录
               </div>
             ) : (
@@ -374,19 +370,21 @@ const UserFundPosition = () => {
                   <div 
                     key={record.id}
                     style={{ 
-                      padding: '12px 0',
+                      padding: '10px 0',
                       borderBottom: tradeHistory.indexOf(record) !== tradeHistory.length - 1 ? '1px solid #f0f0f0' : 'none'
                     }}
                   >
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <div style={{ flex: 1 }}>
+                      <div style={{ flex: 1.5 }}> {/* 增加标的名称区域宽度以对齐持仓明细 */}
                         <div style={{ 
                           fontWeight: 500, 
                           fontSize: '15px', 
                           color: '#333',
-                          marginBottom: '4px'
+                          marginBottom: '4px',
+                          display: 'flex',
+                          alignItems: 'center'
                         }}>
-                          {record.name}
+                          <span style={{ marginRight: '8px' }}>{record.name}</span>
                           <Badge 
                             content={getAssetTypeText(record.asset_type)}
                             style={{ 
@@ -395,8 +393,7 @@ const UserFundPosition = () => {
                               fontSize: '10px', 
                               padding: '0 4px', 
                               borderRadius: '4px',
-                              fontWeight: 500,
-                              marginLeft: '8px'
+                              fontWeight: 500
                             }}
                           />
                         </div>
@@ -450,7 +447,7 @@ const UserFundPosition = () => {
                     <div style={{ 
                       display: 'flex', 
                       justifyContent: 'space-between', 
-                      marginTop: '8px'
+                      marginTop: '6px'
                     }}>
                       <div style={{ 
                         fontSize: '12px', 
@@ -479,16 +476,16 @@ const UserFundPosition = () => {
         </>
       )}
       
-      <div style={{ display: 'flex', justifyContent: 'space-between', gap: '12px', margin: '16px 0' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', gap: '10px', margin: '12px 0' }}>
         <Button 
           style={{ 
             backgroundColor: '#ffffff',
             color: '#333',
             border: '1px solid #d9d9d9',
-            padding: '10px 0',
+            padding: '8px 0',
             fontSize: '15px',
             flex: 1,
-            borderRadius: '8px',
+            borderRadius: '6px',
             boxShadow: '0 2px 4px rgba(0,0,0,0.04)'
           }}
           onClick={() => {
@@ -506,10 +503,10 @@ const UserFundPosition = () => {
             backgroundColor: '#1890ff',
             color: 'white',
             border: 'none',
-            padding: '10px 0',
+            padding: '8px 0',
             fontSize: '15px',
             flex: 1,
-            borderRadius: '8px',
+            borderRadius: '6px',
             boxShadow: '0 2px 4px rgba(24, 144, 255, 0.2)'
           }}
           onClick={() => navigate('/change-password')}
