@@ -5,6 +5,35 @@ module.exports = {
     node: true,
     jest: true,
   },
+  overrides: [
+    {
+      files: ['tests/cypress/**/*.js'],
+      globals: {
+        cy: 'readonly',
+        Cypress: 'readonly',
+        describe: 'readonly',
+        it: 'readonly',
+        beforeEach: 'readonly',
+        afterEach: 'readonly',
+        before: 'readonly',
+        after: 'readonly',
+        expect: 'readonly',
+        assert: 'readonly',
+      },
+    },
+    {
+      files: ['server/tests/**/*.js'],
+      rules: {
+        'no-unused-vars': [
+          'error',
+          {
+            argsIgnorePattern: '^_',
+            varsIgnorePattern: '^_',
+          },
+        ],
+      },
+    },
+  ],
   extends: [
     'eslint:recommended',
     'plugin:react/recommended',

@@ -1,17 +1,17 @@
 export const ROLES = {
   ADMIN: 'admin',
-  USER: 'user'
+  USER: 'user',
 };
 
 export const KEYS = {
   ENTER: 'Enter',
-  ESCAPE: 'Escape'
+  ESCAPE: 'Escape',
 };
 
 export const LIMITS = {
   FUND_LOGS: 5,
   POSITIONS_PER_PAGE: 10,
-  TRADE_HISTORY_LIMIT: 20
+  TRADE_HISTORY_LIMIT: 20,
 };
 
 export const ROUTES = {
@@ -21,5 +21,5 @@ export const ROUTES = {
   CHANGE_PASSWORD: '/change-password',
   USER_MANAGEMENT: '/user-management',
   FUND_MANAGEMENT: '/fund-management',
-  POSITION_MANAGEMENT: '/position-management'
+  POSITION_MANAGEMENT: '/position-management',
 };

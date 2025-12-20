@@ -13,16 +13,16 @@ describe('useUser', () => {
   it('should fetch users on mount', async () => {
     const mockUsers = [
       { id: 1, name: 'Alice', email: 'alice@example.com', role: 'user' },
-      { id: 2, name: 'Bob', email: 'bob@example.com', role: 'admin' }
+      { id: 2, name: 'Bob', email: 'bob@example.com', role: 'admin' },
     ];
-    
+
     userApi.getAllUsers.mockResolvedValue(mockUsers);
 
     const { result } = renderHook(() => useUser());
 
-    // 等待异步操作完成
+    // 手动调用 fetchUsers
     await act(async () => {
-      await new Promise(resolve => setTimeout(resolve, 0));
+      await result.current.fetchUsers();
     });
 
     expect(result.current.users).toEqual(mockUsers);
@@ -36,9 +36,9 @@ describe('useUser', () => {
 
     const { result } = renderHook(() => useUser());
 
-    // 等待异步操作完成
+    // 手动调用 fetchUsers
     await act(async () => {
-      await new Promise(resolve => setTimeout(resolve, 0));
+      await result.current.fetchUsers();
     });
 
     expect(result.current.users).toEqual([]);
@@ -53,7 +53,11 @@ describe('useUser', () => {
     const { result } = renderHook(() => useUser());
 
     await act(async () => {
-      await result.current.createUser({ name: 'Charlie', email: 'charlie@example.com', role: 'user' });
+      await result.current.createUser({
+        name: 'Charlie',
+        email: 'charlie@example.com',
+        role: 'user',
+      });
     });
 
     expect(result.current.users).toContainEqual(newUser);
@@ -63,24 +67,28 @@ describe('useUser', () => {
   it('should delete user', async () => {
     const mockUsers = [
       { id: 1, name: 'Alice', email: 'alice@example.com', role: 'user' },
-      { id: 2, name: 'Bob', email: 'bob@example.com', role: 'admin' }
+      { id: 2, name: 'Bob', email: 'bob@example.com', role: 'admin' },
     ];
-    
+
     userApi.getAllUsers.mockResolvedValue(mockUsers);
     userApi.deleteUser.mockResolvedValue();
 
     const { result } = renderHook(() => useUser());
 
-    // 等待初始加载完成
+    // 先加载用户列表
     await act(async () => {
-      await new Promise(resolve => setTimeout(resolve, 0));
+      await result.current.fetchUsers();
     });
+
+    // 验证用户列表已加载
+    expect(result.current.users).toEqual(mockUsers);
 
     // 删除用户
     await act(async () => {
       await result.current.deleteUser(1);
     });
 
+    expect(userApi.deleteUser).toHaveBeenCalledWith(1);
     expect(result.current.users).toEqual([mockUsers[1]]);
     expect(result.current.loading).toBe(false);
     expect(result.current.error).toBeNull();

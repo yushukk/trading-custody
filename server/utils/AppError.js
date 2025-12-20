@@ -12,7 +12,7 @@ class AppError extends Error {
     super(message);
     this.errorCode = errorCode;
     this.statusCode = statusCode;
-    
+
     // 确保堆栈跟踪正确
     Error.captureStackTrace(this, this.constructor);
   }

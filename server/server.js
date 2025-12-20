@@ -20,10 +20,12 @@ const PORT = config.PORT;
 const CRON_EXPRESSION = config.CRON_SCHEDULE.price_sync;
 
 // CORS 配置
-app.use(cors({
-  origin: process.env.CORS_ORIGIN || 'http://localhost:8085',
-  credentials: true // 允许携带 Cookie
-}));
+app.use(
+  cors({
+    origin: process.env.CORS_ORIGIN || 'http://localhost:8085',
+    credentials: true, // 允许携带 Cookie
+  })
+);
 app.use(express.json());
 app.use(cookieParser()); // 添加 cookie-parser 中间件
 
@@ -53,10 +55,10 @@ schedule.scheduleJob(CRON_EXPRESSION, async () => {
 async function startServer() {
   try {
     // 初始化数据库
-    const db = require('./utils/database');
+    const db = require('./utils/database').default;
     await db.initialize();
     console.log('数据库初始化完成');
-    
+
     app.listen(PORT, () => {
       console.log(`Server running on http://localhost:${PORT}`);
     });

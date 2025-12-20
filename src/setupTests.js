@@ -7,5 +7,5 @@ import '@testing-library/jest-dom';
 // Mock window.API_BASE_URL
 Object.defineProperty(window, 'API_BASE_URL', {
   value: 'http://localhost:3001',
-  writable: true
+  writable: true,
 });

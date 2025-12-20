@@ -7,7 +7,7 @@ jest.mock('../../dao/fundDao', () => {
     getBalance: jest.fn(),
     addFunds: jest.fn(),
     getFundLogs: jest.fn(),
-    addFundLog: jest.fn()
+    addFundLog: jest.fn(),
   };
 });
 
@@ -39,9 +39,7 @@ describe('FundService', () => {
     it('should throw error when database query fails', async () => {
       fundDao.getBalance.mockRejectedValue(new Error('Database error'));
 
-      await expect(fundService.getFundBalance(1))
-        .rejects
-        .toThrow(AppError);
+      await expect(fundService.getFundBalance(1)).rejects.toThrow(AppError);
     });
   });
 
@@ -49,7 +47,7 @@ describe('FundService', () => {
     it('should return fund logs for user', async () => {
       const mockLogs = [
         { id: 1, user_id: 1, type: 'deposit', amount: 1000, remark: 'Initial deposit' },
-        { id: 2, user_id: 1, type: 'withdraw', amount: 500, remark: 'Withdrawal' }
+        { id: 2, user_id: 1, type: 'withdraw', amount: 500, remark: 'Withdrawal' },
       ];
       fundDao.getFundLogs.mockResolvedValue(mockLogs);
 
@@ -68,23 +66,21 @@ describe('FundService', () => {
     it('should throw error when database query fails', async () => {
       fundDao.getFundLogs.mockRejectedValue(new Error('Database error'));
 
-      await expect(fundService.getFundLogs(1))
-        .rejects
-        .toThrow(AppError);
+      await expect(fundService.getFundLogs(1)).rejects.toThrow(AppError);
     });
   });
 
   describe('handleFundOperation', () => {
     it('should throw error for invalid operation type', async () => {
-      await expect(fundService.handleFundOperation(1, 'invalid', 100, 'Test'))
-        .rejects
-        .toThrow(AppError);
+      await expect(fundService.handleFundOperation(1, 'invalid', 100, 'Test')).rejects.toThrow(
+        AppError
+      );
     });
 
     it('should throw error for invalid amount', async () => {
-      await expect(fundService.handleFundOperation(1, 'deposit', -100, 'Test'))
-        .rejects
-        .toThrow(AppError);
+      await expect(fundService.handleFundOperation(1, 'deposit', -100, 'Test')).rejects.toThrow(
+        AppError
+      );
     });
 
     it('should handle initial fund operation', async () => {
@@ -99,9 +95,9 @@ describe('FundService', () => {
     it('should throw error when database query fails', async () => {
       fundDao.getBalance.mockRejectedValue(new Error('Database error'));
 
-      await expect(fundService.handleFundOperation(1, 'initial', 1000, 'Initial deposit'))
-        .rejects
-        .toThrow(AppError);
+      await expect(
+        fundService.handleFundOperation(1, 'initial', 1000, 'Initial deposit')
+      ).rejects.toThrow(AppError);
     });
 
     it('should handle deposit operation', async () => {
@@ -125,9 +121,9 @@ describe('FundService', () => {
     it('should throw error for insufficient balance on withdrawal', async () => {
       fundDao.getBalance.mockResolvedValue(100);
 
-      await expect(fundService.handleFundOperation(1, 'withdraw', 200, 'Withdrawal'))
-        .rejects
-        .toThrow(AppError);
+      await expect(
+        fundService.handleFundOperation(1, 'withdraw', 200, 'Withdrawal')
+      ).rejects.toThrow(AppError);
     });
   });
 });

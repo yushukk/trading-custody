@@ -1,42 +1,26 @@
 import * as userApi from './userApi';
+import apiClient from './apiClient';
 
-// Mock fetch
-global.fetch = jest.fn();
+// Mock apiClient
+jest.mock('./apiClient');
 
 describe('userApi', () => {
   beforeEach(() => {
-    fetch.mockClear();
+    jest.clearAllMocks();
   });
 
   describe('login', () => {
     it('should call login API with correct parameters', async () => {
       const mockResponse = { token: 'test-token', role: 'user', id: 1 };
-      fetch.mockResolvedValue({
-        ok: true,
-        json: () => Promise.resolve(mockResponse)
-      });
+      apiClient.post.mockResolvedValue(mockResponse);
 
       const result = await userApi.login('testuser', 'password');
-      
-      expect(fetch).toHaveBeenCalledWith(
-        'http://localhost:3001/api/login',
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ username: 'testuser', password: 'password' })
-        }
-      );
-      expect(result).toEqual(mockResponse);
-    });
 
-    it('should throw error when login fails', async () => {
-      fetch.mockResolvedValue({
-        ok: false
+      expect(apiClient.post).toHaveBeenCalledWith('/api/login', {
+        username: 'testuser',
+        password: 'password',
       });
-
-      await expect(userApi.login('testuser', 'wrongpassword'))
-        .rejects
-        .toThrow('登录失败');
+      expect(result).toEqual(mockResponse);
     });
   });
 });

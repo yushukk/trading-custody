@@ -29,34 +29,34 @@ export const formatPercentage = (value, decimals = 2) => {
  * @param {string|Date} timestamp - 时间戳
  * @returns {string} 格式化后的时间字符串
  */
-export const formatTime = (timestamp) => {
+export const formatTime = timestamp => {
   if (!timestamp) return '';
-  
+
   const date = new Date(timestamp);
   const now = new Date();
-  
+
   // 如果是今天，只显示时间
   if (date.toDateString() === now.toDateString()) {
     return date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
   }
-  
+
   // 如果是今年，显示月日和时间
   if (date.getFullYear() === now.getFullYear()) {
-    return date.toLocaleString('zh-CN', { 
-      month: '2-digit', 
-      day: '2-digit', 
-      hour: '2-digit', 
-      minute: '2-digit' 
+    return date.toLocaleString('zh-CN', {
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
     });
   }
-  
+
   // 其他情况显示完整日期
-  return date.toLocaleString('zh-CN', { 
+  return date.toLocaleString('zh-CN', {
     year: '2-digit',
-    month: '2-digit', 
-    day: '2-digit', 
-    hour: '2-digit', 
-    minute: '2-digit' 
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
   });
 };
 
@@ -65,14 +65,20 @@ export const formatTime = (timestamp) => {
  * @param {string} operation - 操作类型
  * @returns {string} 操作类型文本
  */
-export const getOperationText = (operation) => {
-  switch(operation) {
-    case 'buy': return '买入';
-    case 'sell': return '卖出';
-    case 'initial': return '初始资金';
-    case 'deposit': return '追加资金';
-    case 'withdraw': return '取出资金';
-    default: return operation;
+export const getOperationText = operation => {
+  switch (operation) {
+    case 'buy':
+      return '买入';
+    case 'sell':
+      return '卖出';
+    case 'initial':
+      return '初始资金';
+    case 'deposit':
+      return '追加资金';
+    case 'withdraw':
+      return '取出资金';
+    default:
+      return operation;
   }
 };
 
@@ -81,12 +87,16 @@ export const getOperationText = (operation) => {
  * @param {string} assetType - 资产类型
  * @returns {string} 资产类型文本
  */
-export const getAssetTypeText = (assetType) => {
-  switch(assetType) {
-    case 'stock': return '股票';
-    case 'future': return '期货';
-    case 'fund': return '基金';
-    default: return assetType;
+export const getAssetTypeText = assetType => {
+  switch (assetType) {
+    case 'stock':
+      return '股票';
+    case 'future':
+      return '期货';
+    case 'fund':
+      return '基金';
+    default:
+      return assetType;
   }
 };
 
@@ -95,13 +105,19 @@ export const getAssetTypeText = (assetType) => {
  * @param {string} type - 操作类型
  * @returns {string} 颜色名称
  */
-export const getOperationColor = (type) => {
-  switch(type) {
-    case 'initial': return 'blue';
-    case 'deposit': return 'green';
-    case 'withdraw': return 'red';
-    case 'buy': return 'red';
-    case 'sell': return 'green';
-    default: return 'default';
+export const getOperationColor = type => {
+  switch (type) {
+    case 'initial':
+      return 'blue';
+    case 'deposit':
+      return 'green';
+    case 'withdraw':
+      return 'red';
+    case 'buy':
+      return 'red';
+    case 'sell':
+      return 'green';
+    default:
+      return 'default';
   }
 };

@@ -3,7 +3,6 @@ import { Card, Button, Input, Selector, Toast } from 'antd-mobile';
 import { useNavigate } from 'react-router-dom';
 import apiClient from '../api/apiClient';
 import { handleError } from '../utils/errorHandler';
-import { OPERATION_TYPES } from '../constants/appConstants';
 import UserSelect from './UserSelect';
 
 const FundManagement = () => {
@@ -16,35 +15,48 @@ const FundManagement = () => {
   const [logs, setLogs] = useState([]);
   const navigate = useNavigate();
 
-  const fetchUsers = useCallback(async () => {
-    try {
-      const data = await apiClient.get('/api/users');
-      setUsers(data);
-    } catch (error) {
-      handleError(error);
-    }
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadUsers = async () => {
+      try {
+        const data = await apiClient.get('/api/users');
+        if (isMounted) {
+          setUsers(data.users || []);
+        }
+      } catch (error) {
+        if (isMounted) {
+          handleError(error);
+        }
+      }
+    };
+
+    loadUsers();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
-  useEffect(() => {
-    fetchUsers();
-  }, [fetchUsers]);
-
-  const fetchFundInfo = useCallback(async (userId) => {
+  const fetchFundInfo = useCallback(async userId => {
     try {
       const balanceData = await apiClient.get(`/api/funds/${userId}`);
       const logsData = await apiClient.get(`/api/funds/${userId}/logs`);
-      
+
       setBalance(balanceData.balance || 0);
-      setLogs(logsData);
+      setLogs(logsData.logs || []);
     } catch (error) {
       handleError(error);
     }
   }, []);
 
-  const handleUserSelect = useCallback((userId) => {
-    setSelectedUserId(userId);
-    fetchFundInfo(userId);
-  }, [fetchFundInfo]);
+  const handleUserSelect = useCallback(
+    userId => {
+      setSelectedUserId(userId);
+      fetchFundInfo(userId);
+    },
+    [fetchFundInfo]
+  );
 
   const handleFundOperation = useCallback(async () => {
     if (!selectedUserId || !amount || amount <= 0) {
@@ -55,9 +67,9 @@ const FundManagement = () => {
     try {
       await apiClient.post(`/api/funds/${selectedUserId}/${operationType}`, {
         amount: parseFloat(amount),
-        remark: remark // 添加备注参数
+        remark: remark, // 添加备注参数
       });
-      
+
       Toast.show({ content: '操作成功', duration: 1000 });
       fetchFundInfo(selectedUserId);
       setRemark(''); // 清空备注输入框
@@ -67,10 +79,20 @@ const FundManagement = () => {
   }, [selectedUserId, amount, operationType, remark, fetchFundInfo]);
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', padding: '10px', backgroundColor: '#f5f5f5', minHeight: '100vh' }}>
+    <div
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        padding: '10px',
+        backgroundColor: '#f5f5f5',
+        minHeight: '100vh',
+      }}
+    >
       <h1 style={{ textAlign: 'center' }}>资金管理</h1>
-      <Button block onClick={() => navigate('/')} style={{ marginBottom: '10px' }}>返回仪表盘</Button>
-      
+      <Button block onClick={() => navigate('/')} style={{ marginBottom: '10px' }}>
+        返回仪表盘
+      </Button>
+
       <Card style={{ width: '100%', margin: '0 0 20px', padding: '10px' }}>
         <UserSelect users={users} onSelect={handleUserSelect} />
 
@@ -84,7 +106,7 @@ const FundManagement = () => {
               options={[
                 { label: '设置初始资金', value: 'initial' },
                 { label: '追加资金', value: 'deposit' },
-                { label: '取出资金', value: 'withdraw' }
+                { label: '取出资金', value: 'withdraw' },
               ]}
               value={operationType}
               onChange={val => setOperationType(val)}
@@ -95,21 +117,22 @@ const FundManagement = () => {
               type="number"
               placeholder="金额"
               value={amount}
-              onChange={(val) => setAmount(val)}
+              onChange={val => setAmount(val)}
               style={{ width: '100%', marginBottom: '15px' }}
             />
-            
+
             {/* 新增备注输入框 */}
             <Input
               type="text"
               placeholder="备注（可选）"
               value={remark}
-              onChange={(val) => setRemark(val)}
+              onChange={val => setRemark(val)}
               style={{ width: '100%', marginBottom: '15px' }}
             />
 
             <Button type="primary" block onClick={handleFundOperation}>
-              确认{operationType === 'initial' ? '设置' : operationType === 'deposit' ? '追加' : '取出'}
+              确认
+              {operationType === 'initial' ? '设置' : operationType === 'deposit' ? '追加' : '取出'}
             </Button>
           </>
         )}
@@ -121,12 +144,29 @@ const FundManagement = () => {
             <div style={{ textAlign: 'center', padding: '12px', color: '#888' }}>暂无资金流水</div>
           ) : (
             logs.map(log => (
-              <div key={log.id} style={{ marginBottom: '10px', borderBottom: '1px solid #e8e8e8', paddingBottom: '10px' }}>
-                <div style={{ fontSize: '14px', color: '#666' }}>{new Date(log.timestamp).toLocaleString()}</div>
-                <div style={{ fontSize: '14px', color: '#333' }}>{log.type === 'initial' ? '初始资金' : log.type === 'deposit' ? '追加资金' : '取出资金'}</div>
+              <div
+                key={log.id}
+                style={{
+                  marginBottom: '10px',
+                  borderBottom: '1px solid #e8e8e8',
+                  paddingBottom: '10px',
+                }}
+              >
+                <div style={{ fontSize: '14px', color: '#666' }}>
+                  {new Date(log.timestamp).toLocaleString()}
+                </div>
+                <div style={{ fontSize: '14px', color: '#333' }}>
+                  {log.type === 'initial'
+                    ? '初始资金'
+                    : log.type === 'deposit'
+                      ? '追加资金'
+                      : '取出资金'}
+                </div>
                 <div style={{ fontSize: '14px', color: '#1a73e8' }}>￥{log.amount.toFixed(2)}</div>
                 {/* 显示备注信息 */}
-                {log.remark && <div style={{ fontSize: '14px', color: '#5f6368' }}>备注：{log.remark}</div>}
+                {log.remark && (
+                  <div style={{ fontSize: '14px', color: '#5f6368' }}>备注：{log.remark}</div>
+                )}
               </div>
             ))
           )}

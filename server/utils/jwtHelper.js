@@ -20,12 +20,12 @@ class JwtHelper {
     if (!secret) {
       throw new Error('JWT_ACCESS_SECRET 未配置');
     }
-    
+
     return jwt.sign(payload, secret, {
-      expiresIn: process.env.JWT_ACCESS_EXPIRES_IN || '15m'
+      expiresIn: process.env.JWT_ACCESS_EXPIRES_IN || '15m',
     });
   }
-  
+
   /**
    * 生成刷新令牌（Refresh Token）
    * @param {Object} payload - 令牌载荷
@@ -39,12 +39,12 @@ class JwtHelper {
     if (!secret) {
       throw new Error('JWT_REFRESH_SECRET 未配置');
     }
-    
+
     return jwt.sign(payload, secret, {
-      expiresIn: process.env.JWT_REFRESH_EXPIRES_IN || '7d'
+      expiresIn: process.env.JWT_REFRESH_EXPIRES_IN || '7d',
     });
   }
-  
+
   /**
    * 验证访问令牌
    * @param {string} token - JWT 访问令牌
@@ -56,10 +56,10 @@ class JwtHelper {
     if (!secret) {
       throw new Error('JWT_ACCESS_SECRET 未配置');
     }
-    
+
     return jwt.verify(token, secret);
   }
-  
+
   /**
    * 验证刷新令牌
    * @param {string} token - JWT 刷新令牌
@@ -71,10 +71,10 @@ class JwtHelper {
     if (!secret) {
       throw new Error('JWT_REFRESH_SECRET 未配置');
     }
-    
+
     return jwt.verify(token, secret);
   }
-  
+
   /**
    * 解码令牌（不验证签名）
    * @param {string} token - JWT 令牌

@@ -1,15 +1,14 @@
-const positionService = require('../../services/positionService');
-const AppError = require('../../utils/AppError');
+const positionService = require('../../services/positionService').default;
 
 // Mock DAO层和价格服务
 jest.mock('../../dao/positionDao', () => ({
   findByUserId: jest.fn(),
   create: jest.fn(),
-  deleteByUserId: jest.fn()
+  deleteByUserId: jest.fn(),
 }));
 
 jest.mock('../../services/priceService', () => ({
-  getLatestPrice: jest.fn()
+  getLatestPrice: jest.fn(),
 }));
 
 const positionDao = require('../../dao/positionDao');
@@ -24,8 +23,26 @@ describe('PositionService', () => {
   describe('getPositions', () => {
     it('should return positions for user', async () => {
       const mockPositions = [
-        { id: 1, user_id: 1, asset_type: 'stock', code: 'AAPL', name: 'Apple', operation: 'buy', price: 150, quantity: 10 },
-        { id: 2, user_id: 1, asset_type: 'stock', code: 'GOOGL', name: 'Google', operation: 'buy', price: 2500, quantity: 5 }
+        {
+          id: 1,
+          user_id: 1,
+          asset_type: 'stock',
+          code: 'AAPL',
+          name: 'Apple',
+          operation: 'buy',
+          price: 150,
+          quantity: 10,
+        },
+        {
+          id: 2,
+          user_id: 1,
+          asset_type: 'stock',
+          code: 'GOOGL',
+          name: 'Google',
+          operation: 'buy',
+          price: 2500,
+          quantity: 5,
+        },
       ];
       positionDao.findByUserId.mockResolvedValue(mockPositions);
 
@@ -44,63 +61,66 @@ describe('PositionService', () => {
     it('should throw error when database query fails', async () => {
       positionDao.findByUserId.mockRejectedValueOnce(new Error('Database error'));
 
-      await expect(positionService.getPositions(1))
-        .rejects
-        .toThrow('获取持仓失败');
+      await expect(positionService.getPositions(1)).rejects.toThrow('获取持仓失败');
     });
-
   });
 
   describe('addPositionOperation', () => {
     it('should throw error for invalid asset type', async () => {
-      await expect(positionService.addPositionOperation(1, {
-        assetType: 'invalid',
-        code: 'AAPL',
-        name: 'Apple',
-        operation: 'buy',
-        price: 150,
-        quantity: 10
-      })).rejects.toThrow('无效的资产类型');
+      await expect(
+        positionService.addPositionOperation(1, {
+          assetType: 'invalid',
+          code: 'AAPL',
+          name: 'Apple',
+          operation: 'buy',
+          price: 150,
+          quantity: 10,
+        })
+      ).rejects.toThrow('无效的资产类型');
     });
 
     it('should throw error for invalid operation', async () => {
-      await expect(positionService.addPositionOperation(1, {
-        assetType: 'stock',
-        code: 'AAPL',
-        name: 'Apple',
-        operation: 'invalid',
-        price: 150,
-        quantity: 10
-      })).rejects.toThrow('无效的操作类型');
+      await expect(
+        positionService.addPositionOperation(1, {
+          assetType: 'stock',
+          code: 'AAPL',
+          name: 'Apple',
+          operation: 'invalid',
+          price: 150,
+          quantity: 10,
+        })
+      ).rejects.toThrow('无效的操作类型');
     });
 
     it('should throw error for invalid price', async () => {
-      await expect(positionService.addPositionOperation(1, {
-        assetType: 'stock',
-        code: 'AAPL',
-        name: 'Apple',
-        operation: 'buy',
-        price: -150,
-        quantity: 10
-      })).rejects.toThrow('价格必须为正数');
+      await expect(
+        positionService.addPositionOperation(1, {
+          assetType: 'stock',
+          code: 'AAPL',
+          name: 'Apple',
+          operation: 'buy',
+          price: -150,
+          quantity: 10,
+        })
+      ).rejects.toThrow('价格必须为正数');
     });
 
     it('should throw error for invalid quantity', async () => {
-      await expect(positionService.addPositionOperation(1, {
-        assetType: 'stock',
-        code: 'AAPL',
-        name: 'Apple',
-        operation: 'buy',
-        price: 150,
-        quantity: -10
-      })).rejects.toThrow('数量必须为正数');
+      await expect(
+        positionService.addPositionOperation(1, {
+          assetType: 'stock',
+          code: 'AAPL',
+          name: 'Apple',
+          operation: 'buy',
+          price: 150,
+          quantity: -10,
+        })
+      ).rejects.toThrow('数量必须为正数');
     });
 
     it('should add position successfully', async () => {
       // 创建一个带lastID属性的上下文对象
-      const context = { lastID: 1 };
-      
-      
+
       const positionData = {
         assetType: 'stock',
         code: 'AAPL',
@@ -108,7 +128,7 @@ describe('PositionService', () => {
         operation: 'buy',
         price: 150,
         quantity: 10,
-        fee: 5
+        fee: 5,
       };
 
       positionDao.create.mockResolvedValueOnce(1);
@@ -124,7 +144,7 @@ describe('PositionService', () => {
         price: 150,
         quantity: 10,
         timestamp: expect.any(String),
-        fee: 5
+        fee: 5,
       });
     });
 
@@ -136,26 +156,40 @@ describe('PositionService', () => {
         operation: 'buy',
         price: 150,
         quantity: 10,
-        fee: 5
+        fee: 5,
       };
 
       positionDao.create.mockRejectedValueOnce(new Error('Database error'));
 
-      await expect(positionService.addPositionOperation(1, positionData))
-        .rejects
-        .toThrow('添加持仓操作失败');
+      await expect(positionService.addPositionOperation(1, positionData)).rejects.toThrow(
+        '添加持仓操作失败'
+      );
     });
-
   });
 
   describe('calculatePositionProfit', () => {
     it('should calculate profit correctly', async () => {
       const mockPositions = [
-        { code: 'AAPL', asset_type: 'stock', name: 'Apple', operation: 'buy', price: 100, quantity: 10, fee: 5 },
-        { code: 'AAPL', asset_type: 'stock', name: 'Apple', operation: 'sell', price: 120, quantity: 5, fee: 5 }
+        {
+          code: 'AAPL',
+          asset_type: 'stock',
+          name: 'Apple',
+          operation: 'buy',
+          price: 100,
+          quantity: 10,
+          fee: 5,
+        },
+        {
+          code: 'AAPL',
+          asset_type: 'stock',
+          name: 'Apple',
+          operation: 'sell',
+          price: 120,
+          quantity: 5,
+          fee: 5,
+        },
       ];
-      
-      
+
       positionDao.findByUserId.mockResolvedValueOnce(mockPositions);
       getLatestPrice.mockResolvedValue(130);
       const result = await positionService.calculatePositionProfit(1);
@@ -168,11 +202,8 @@ describe('PositionService', () => {
     it('should throw error when database query fails', async () => {
       positionDao.findByUserId.mockRejectedValueOnce(new Error('Database error'));
 
-      await expect(positionService.calculatePositionProfit(1))
-        .rejects
-        .toThrow('计算持仓收益失败');
+      await expect(positionService.calculatePositionProfit(1)).rejects.toThrow('计算持仓收益失败');
     });
-
   });
 
   describe('deletePositions', () => {
@@ -186,10 +217,7 @@ describe('PositionService', () => {
     it('should throw error when database query fails', async () => {
       positionDao.deleteByUserId.mockRejectedValueOnce(new Error('Database error'));
 
-      await expect(positionService.deletePositions(1))
-        .rejects
-        .toThrow('删除持仓失败');
+      await expect(positionService.deletePositions(1)).rejects.toThrow('删除持仓失败');
     });
-
   });
 });

@@ -10,10 +10,11 @@ class FundDao {
   }
 
   async addFunds(userId, amount, timestamp) {
-    const result = await db.run(
-      'INSERT INTO funds (user_id, amount, timestamp) VALUES (?, ?, ?)',
-      [userId, amount, timestamp]
-    );
+    const result = await db.run('INSERT INTO funds (user_id, amount, timestamp) VALUES (?, ?, ?)', [
+      userId,
+      amount,
+      timestamp,
+    ]);
     return result.lastID;
   }
 

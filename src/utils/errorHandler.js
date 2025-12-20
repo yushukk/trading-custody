@@ -21,7 +21,7 @@ export const ERROR_MESSAGES = {
   404: '请求的资源不存在',
   500: '服务器错误，请稍后重试',
   NETWORK_ERROR: '网络连接失败，请检查网络',
-  TOKEN_EXPIRED: 'Token 已过期，请重新登录'
+  TOKEN_EXPIRED: 'Token 已过期，请重新登录',
 };
 
 /**
@@ -31,15 +31,15 @@ export const ERROR_MESSAGES = {
  */
 export const handleError = (error, navigate) => {
   console.error('Error:', error);
-  
+
   if (error instanceof ApiError) {
     const message = ERROR_MESSAGES[error.status] || error.message;
-    
+
     Toast.show({
       icon: 'fail',
-      content: message
+      content: message,
     });
-    
+
     // 401 错误跳转到登录页
     if (error.status === 401 && navigate) {
       setTimeout(() => {
@@ -49,12 +49,12 @@ export const handleError = (error, navigate) => {
   } else if (error.message === 'Failed to fetch' || error.message === 'Network request failed') {
     Toast.show({
       icon: 'fail',
-      content: ERROR_MESSAGES.NETWORK_ERROR
+      content: ERROR_MESSAGES.NETWORK_ERROR,
     });
   } else {
     Toast.show({
       icon: 'fail',
-      content: error.message || '操作失败'
+      content: error.message || '操作失败',
     });
   }
 };

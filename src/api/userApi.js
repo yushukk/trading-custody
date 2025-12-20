@@ -62,7 +62,7 @@ export const getAllUsers = async () => {
  * @param {Object} userData - 用户数据
  * @returns {Promise} 创建结果Promise
  */
-export const createUser = async (userData) => {
+export const createUser = async userData => {
   return await apiClient.post('/api/users', userData);
 };
 
@@ -81,6 +81,6 @@ export const updateUserPasswordById = async (id, newPassword) => {
  * @param {number} id - 用户ID
  * @returns {Promise} 删除结果Promise
  */
-export const deleteUser = async (id) => {
+export const deleteUser = async id => {
   return await apiClient.delete(`/api/users/${id}`);
 };

@@ -16,10 +16,7 @@ class PriceDao {
   }
 
   async deleteOldData(cutoffDate) {
-    await db.run(
-      'DELETE FROM price_data WHERE timestamp < ?',
-      [cutoffDate]
-    );
+    await db.run('DELETE FROM price_data WHERE timestamp < ?', [cutoffDate]);
   }
 
   async getLatestPrice(code, assetType) {

@@ -1,6 +1,5 @@
-const userService = require('../../services/userService');
+const userService = require('../../services/userService').default;
 const AppError = require('../../utils/AppError');
-const PasswordHelper = require('../../utils/passwordHelper');
 
 // Mock DAO and PasswordHelper
 jest.mock('../../dao/userDao', () => {
@@ -11,13 +10,13 @@ jest.mock('../../dao/userDao', () => {
     update: jest.fn(),
     updatePassword: jest.fn(),
     delete: jest.fn(),
-    findAll: jest.fn()
+    findAll: jest.fn(),
   };
 });
 
 jest.mock('../../utils/passwordHelper', () => {
   return {
-    hash: jest.fn()
+    hash: jest.fn(),
   };
 });
 
@@ -34,7 +33,7 @@ describe('UserService', () => {
     it('should return all users', async () => {
       const mockUsers = [
         { id: 1, name: 'User1', email: 'user1@example.com', role: 'user' },
-        { id: 2, name: 'User2', email: 'user2@example.com', role: 'admin' }
+        { id: 2, name: 'User2', email: 'user2@example.com', role: 'admin' },
       ];
       userDao.findAll.mockResolvedValue(mockUsers);
 
@@ -46,9 +45,7 @@ describe('UserService', () => {
     it('should throw error when database query fails', async () => {
       userDao.findAll.mockRejectedValue(new Error('Database error'));
 
-      await expect(userService.getAllUsers())
-        .rejects
-        .toThrow(AppError);
+      await expect(userService.getAllUsers()).rejects.toThrow(AppError);
     });
   });
 
@@ -65,9 +62,7 @@ describe('UserService', () => {
     it('should throw error when database query fails', async () => {
       userDao.findById.mockRejectedValue(new Error('Database error'));
 
-      await expect(userService.getUserById(1))
-        .rejects
-        .toThrow(AppError);
+      await expect(userService.getUserById(1)).rejects.toThrow(AppError);
     });
   });
 
@@ -84,15 +79,18 @@ describe('UserService', () => {
     it('should throw error when database query fails', async () => {
       userDao.findByEmail.mockRejectedValue(new Error('Database error'));
 
-      await expect(userService.getUserByEmail('user1@example.com'))
-        .rejects
-        .toThrow(AppError);
+      await expect(userService.getUserByEmail('user1@example.com')).rejects.toThrow(AppError);
     });
   });
 
   describe('createUser', () => {
     it('should create a new user', async () => {
-      const userData = { name: 'New User', email: 'newuser@example.com', password: 'password123', role: 'user' };
+      const userData = {
+        name: 'New User',
+        email: 'newuser@example.com',
+        password: 'password123',
+        role: 'user',
+      };
       const hashedPassword = 'hashedPassword';
       const userId = 1;
 
@@ -101,36 +99,52 @@ describe('UserService', () => {
       userDao.create.mockResolvedValue(userId);
 
       const result = await userService.createUser(userData);
-      expect(result).toEqual({ id: userId, name: userData.name, email: userData.email, role: userData.role });
+      expect(result).toEqual({
+        id: userId,
+        name: userData.name,
+        email: userData.email,
+        role: userData.role,
+      });
       expect(userDao.findByEmail).toHaveBeenCalledWith(userData.email);
       expect(passwordHelper.hash).toHaveBeenCalledWith(userData.password);
       expect(userDao.create).toHaveBeenCalledWith({
         name: userData.name,
         email: userData.email,
         password: hashedPassword,
-        role: userData.role
+        role: userData.role,
       });
     });
 
     it('should throw error if email already exists', async () => {
-      const userData = { name: 'New User', email: 'newuser@example.com', password: 'password123', role: 'user' };
-      const existingUser = { id: 1, name: 'Existing User', email: 'newuser@example.com', role: 'user' };
+      const userData = {
+        name: 'New User',
+        email: 'newuser@example.com',
+        password: 'password123',
+        role: 'user',
+      };
+      const existingUser = {
+        id: 1,
+        name: 'Existing User',
+        email: 'newuser@example.com',
+        role: 'user',
+      };
 
       userDao.findByEmail.mockResolvedValue(existingUser);
 
-      await expect(userService.createUser(userData))
-        .rejects
-        .toThrow(AppError);
+      await expect(userService.createUser(userData)).rejects.toThrow(AppError);
     });
 
     it('should throw error when database query fails', async () => {
-      const userData = { name: 'New User', email: 'newuser@example.com', password: 'password123', role: 'user' };
+      const userData = {
+        name: 'New User',
+        email: 'newuser@example.com',
+        password: 'password123',
+        role: 'user',
+      };
 
       userDao.findByEmail.mockRejectedValue(new Error('Database error'));
 
-      await expect(userService.createUser(userData))
-        .rejects
-        .toThrow(AppError);
+      await expect(userService.createUser(userData)).rejects.toThrow(AppError);
     });
   });
 
@@ -149,9 +163,7 @@ describe('UserService', () => {
 
       userDao.update.mockRejectedValue(new Error('Database error'));
 
-      await expect(userService.updateUser(userId, userData))
-        .rejects
-        .toThrow(AppError);
+      await expect(userService.updateUser(userId, userData)).rejects.toThrow(AppError);
     });
   });
 
@@ -174,9 +186,7 @@ describe('UserService', () => {
 
       userDao.updatePassword.mockRejectedValue(new Error('Database error'));
 
-      await expect(userService.updatePassword(userId, newPassword))
-        .rejects
-        .toThrow(AppError);
+      await expect(userService.updatePassword(userId, newPassword)).rejects.toThrow(AppError);
     });
   });
 
@@ -193,9 +203,7 @@ describe('UserService', () => {
 
       userDao.delete.mockRejectedValue(new Error('Database error'));
 
-      await expect(userService.deleteUser(userId))
-        .rejects
-        .toThrow(AppError);
+      await expect(userService.deleteUser(userId)).rejects.toThrow(AppError);
     });
   });
 });

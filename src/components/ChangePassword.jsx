@@ -1,5 +1,4 @@
 import React, { useState, useCallback } from 'react';
-import { useAuth } from '../contexts/AuthContext';
 import apiClient from '../api/apiClient';
 import { handleError } from '../utils/errorHandler';
 import { KEYS } from '../constants';
@@ -9,7 +8,6 @@ const ChangePassword = ({ onBack }) => {
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
-  const { user } = useAuth();
 
   const handleUpdatePassword = useCallback(async () => {
     if (newPassword !== confirmPassword) {
@@ -19,7 +17,7 @@ const ChangePassword = ({ onBack }) => {
 
     try {
       await apiClient.put('/api/users/password', {
-        newPassword
+        newPassword,
       });
 
       alert('密码修改成功');
@@ -29,11 +27,14 @@ const ChangePassword = ({ onBack }) => {
     }
   }, [newPassword, confirmPassword, onBack]);
 
-  const handleKeyPress = useCallback((e) => {
-    if (e.key === KEYS.ENTER) {
-      handleUpdatePassword();
-    }
-  }, [handleUpdatePassword]);
+  const handleKeyPress = useCallback(
+    e => {
+      if (e.key === KEYS.ENTER) {
+        handleUpdatePassword();
+      }
+    },
+    [handleUpdatePassword]
+  );
 
   return (
     <div className="change-password-container">
@@ -44,7 +45,7 @@ const ChangePassword = ({ onBack }) => {
           type="password"
           placeholder="请输入新密码"
           value={newPassword}
-          onChange={(e) => setNewPassword(e.target.value)}
+          onChange={e => setNewPassword(e.target.value)}
           onKeyPress={handleKeyPress}
           className="change-password-input"
         />
@@ -55,22 +56,16 @@ const ChangePassword = ({ onBack }) => {
           type="password"
           placeholder="请再次输入新密码"
           value={confirmPassword}
-          onChange={(e) => setConfirmPassword(e.target.value)}
+          onChange={e => setConfirmPassword(e.target.value)}
           onKeyPress={handleKeyPress}
           className="change-password-input"
         />
       </div>
       {error && <p className="change-password-error">{error}</p>}
-      <button
-        onClick={handleUpdatePassword}
-        className="change-password-button"
-      >
+      <button onClick={handleUpdatePassword} className="change-password-button">
         确认修改
       </button>
-      <button
-        onClick={onBack}
-        className="change-password-back-button"
-      >
+      <button onClick={onBack} className="change-password-back-button">
         返回
       </button>
     </div>

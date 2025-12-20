@@ -16,7 +16,7 @@ class PasswordHelper {
   static async hash(password) {
     return await bcrypt.hash(password, SALT_ROUNDS);
   }
-  
+
   /**
    * 验证密码
    * @param {string} password - 明文密码

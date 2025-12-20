@@ -8,7 +8,7 @@ const logger = require('../utils/logger');
  */
 const logMiddleware = (req, res, next) => {
   const start = Date.now();
-  
+
   // 监听响应完成事件
   res.on('finish', () => {
     const duration = Date.now() - start;
@@ -18,21 +18,21 @@ const logMiddleware = (req, res, next) => {
       statusCode: res.statusCode,
       duration: `${duration}ms`,
       userAgent: req.get('User-Agent'),
-      ip: req.ip
+      ip: req.ip,
     };
-    
+
     // 记录请求日志
     logger.info('HTTP Request', logData);
   });
-  
+
   // 如果有错误，记录错误
-  res.on('error', (err) => {
-    logger.error('Response Error', { 
+  res.on('error', err => {
+    logger.error('Response Error', {
       error: err.message,
-      stack: err.stack
+      stack: err.stack,
     });
   });
-  
+
   next();
 };
 

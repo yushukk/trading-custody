@@ -37,7 +37,9 @@
   border-radius: var(--border-radius-lg);
   box-shadow: var(--box-shadow);
   padding: var(--spacing-lg);
-  transition: transform var(--transition-duration), box-shadow var(--transition-duration);
+  transition:
+    transform var(--transition-duration),
+    box-shadow var(--transition-duration);
 }
 
 .dashboard-card:hover {
@@ -113,8 +115,12 @@
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 /* 错误消息样式 */
@@ -142,17 +148,17 @@
   .dashboard-grid {
     grid-template-columns: 1fr;
   }
-  
+
   .dashboard-header {
     flex-direction: column;
     gap: var(--spacing-md);
     text-align: center;
   }
-  
+
   .data-table {
     font-size: var(--font-size-sm);
   }
-  
+
   .data-table th,
   .data-table td {
     padding: 0.75rem 0.5rem;

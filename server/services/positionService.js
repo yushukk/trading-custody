@@ -1,11 +1,14 @@
-const positionDao = require('../dao/positionDao');
-const priceService = require('./priceService');
 const AppError = require('../utils/AppError');
 
 class PositionService {
+  constructor(positionDao, priceService) {
+    this.positionDao = positionDao;
+    this.priceService = priceService;
+  }
+
   async getPositions(userId) {
     try {
-      return await positionDao.findByUserId(userId);
+      return await this.positionDao.findByUserId(userId);
     } catch (error) {
       throw new AppError('获取持仓失败', 'GET_POSITIONS_FAILED', 500);
     }
@@ -13,31 +16,40 @@ class PositionService {
 
   async addPositionOperation(userId, positionData) {
     try {
-      const { assetType, code, name, operation, price, quantity, timestamp, fee = 0 } = positionData;
-      
+      const {
+        assetType,
+        code,
+        name,
+        operation,
+        price,
+        quantity,
+        timestamp,
+        fee = 0,
+      } = positionData;
+
       // 参数验证
       if (!['stock', 'future', 'fund'].includes(assetType)) {
-        throw new AppError('无效的资产类型', 'INVALID_ASSET_TYPE', 400);
+        throw new AppError('无效的资产类型', 'POSITION_002', 400);
       }
       if (!operation || !['buy', 'sell'].includes(operation)) {
-        throw new AppError('无效的操作类型', 'INVALID_OPERATION_TYPE', 400);
+        throw new AppError('无效的操作类型', 'POSITION_003', 400);
       }
-      
+
       // 将费用转换为数字
       const parsedFee = parseFloat(fee) || 0;
-      
+
       // 将字符串转换为数字，如果转换后不是有效数字则返回错误
       const parsedPrice = parseFloat(price);
       const parsedQuantity = parseFloat(quantity);
-      
+
       if (isNaN(parsedPrice) || parsedPrice <= 0) {
-        throw new AppError('价格必须为正数', 'INVALID_PRICE', 400);
+        throw new AppError('价格必须为正数', 'POSITION_004', 400);
       }
       if (isNaN(parsedQuantity) || parsedQuantity <= 0) {
-        throw new AppError('数量必须为正数', 'INVALID_QUANTITY', 400);
+        throw new AppError('数量必须为正数', 'POSITION_005', 400);
       }
-      
-      return await positionDao.create({
+
+      return await this.positionDao.create({
         userId,
         assetType,
         code,
@@ -46,7 +58,7 @@ class PositionService {
         price: parsedPrice,
         quantity: parsedQuantity,
         timestamp: timestamp || new Date().toISOString(),
-        fee: parsedFee
+        fee: parsedFee,
       });
     } catch (error) {
       if (error instanceof AppError) {
@@ -58,8 +70,8 @@ class PositionService {
 
   async calculatePositionProfit(userId) {
     try {
-      const transactions = await positionDao.findByUserId(userId);
-      
+      const transactions = await this.positionDao.findByUserId(userId);
+
       const positionsMap = {};
       transactions.forEach(row => {
         if (!positionsMap[row.code]) {
@@ -81,7 +93,6 @@ class PositionService {
           const fee = tx.fee || 0; // 获取交易费用
           totalFee += fee; // 累计买入费用
 
-
           if (tx.operation === 'buy') {
             queue.push({ quantity, price, fee }); // 将费用加入队列
           } else if (tx.operation === 'sell') {
@@ -92,10 +103,10 @@ class PositionService {
 
               if (head.quantity <= remaining) {
                 const tradeQuantity = head.quantity;
-                const cost = head.price * tradeQuantity ; // 成本包含费用
+                const cost = head.price * tradeQuantity; // 成本包含费用
                 const revenue = price * tradeQuantity; // 收入扣除费用
                 realizedPnL += revenue - cost; // 计算盈亏
-                
+
                 remaining -= tradeQuantity;
                 queue.shift();
               } else {
@@ -103,7 +114,7 @@ class PositionService {
                 const cost = head.price * tradeQuantity; // 按比例分配费用
                 const revenue = price * tradeQuantity; // 收入扣除费用
                 realizedPnL += revenue - cost; // 计算盈亏
-                
+
                 head.quantity -= tradeQuantity;
                 remaining = 0;
               }
@@ -117,7 +128,10 @@ class PositionService {
         let unrealizedPnL = 0;
 
         if (currentQuantity > 0) {
-          latestPrice = await priceService.getLatestPrice(code, transactions[0].asset_type);
+          latestPrice = await this.priceService.getLatestPrice(
+            code,
+            transactions[0].assetType || transactions[0].asset_type
+          );
           // 计算平均成本包含费用
           const totalCost = queue.reduce((sum, item) => sum + item.price * item.quantity, 0);
           const averageCost = totalCost / currentQuantity;
@@ -127,13 +141,13 @@ class PositionService {
         results.push({
           code,
           name: transactions[0].name,
-          assetType: transactions[0].asset_type,
+          assetType: transactions[0].assetType || transactions[0].asset_type,
           quantity: currentQuantity,
           totalPnL: realizedPnL + unrealizedPnL,
           realizedPnL,
           unrealizedPnL,
           latestPrice,
-          fee: totalFee // 返回总费用
+          fee: totalFee, // 返回总费用
         });
       }
 
@@ -145,10 +159,18 @@ class PositionService {
 
   async deletePositions(userId) {
     try {
-      await positionDao.deleteByUserId(userId);
+      await this.positionDao.deleteByUserId(userId);
     } catch (error) {
       throw new AppError('删除持仓失败', 'DELETE_POSITIONS_FAILED', 500);
     }
   }
 }
-module.exports = new PositionService();
+
+// 导出实例
+const positionDao = require('../dao/positionDao');
+const priceService = require('./priceService');
+const positionServiceInstance = new PositionService(positionDao, priceService);
+
+module.exports = positionServiceInstance;
+module.exports.default = positionServiceInstance;
+module.exports.PositionService = PositionService;

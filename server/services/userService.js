@@ -1,11 +1,14 @@
-const userDao = require('../dao/userDao');
 const AppError = require('../utils/AppError');
 const PasswordHelper = require('../utils/passwordHelper');
 
 class UserService {
+  constructor(userDao) {
+    this.userDao = userDao;
+  }
+
   async getAllUsers() {
     try {
-      return await userDao.findAll();
+      return await this.userDao.findAll();
     } catch (error) {
       throw new AppError('获取用户列表失败', 'DATABASE_ERROR', 500);
     }
@@ -13,7 +16,7 @@ class UserService {
 
   async getUserById(id) {
     try {
-      return await userDao.findById(id);
+      return await this.userDao.findById(id);
     } catch (error) {
       throw new AppError('获取用户信息失败', 'DATABASE_ERROR', 500);
     }
@@ -21,7 +24,7 @@ class UserService {
 
   async getUserByEmail(email) {
     try {
-      return await userDao.findByEmail(email);
+      return await this.userDao.findByEmail(email);
     } catch (error) {
       throw new AppError('获取用户信息失败', 'DATABASE_ERROR', 500);
     }
@@ -30,18 +33,18 @@ class UserService {
   async createUser(userData) {
     try {
       // 检查邮箱是否已存在
-      const existingUser = await userDao.findByEmail(userData.email);
+      const existingUser = await this.userDao.findByEmail(userData.email);
       if (existingUser) {
         throw new AppError('邮箱已被注册', 'EMAIL_EXISTS', 400);
       }
-      
+
       const { name, email, password, role } = userData;
       const hashedPassword = await PasswordHelper.hash(password);
-      const userId = await userDao.create({
+      const userId = await this.userDao.create({
         name,
         email,
         password: hashedPassword,
-        role
+        role,
       });
       return { id: userId, name, email, role };
     } catch (error) {
@@ -55,7 +58,7 @@ class UserService {
   async updateUser(id, userData) {
     try {
       const { name, email, role } = userData;
-      await userDao.update(id, { name, email, role });
+      await this.userDao.update(id, { name, email, role });
       return { id, name, email, role };
     } catch (error) {
       throw new AppError('更新用户失败', 'DATABASE_ERROR', 500);
@@ -65,7 +68,7 @@ class UserService {
   async updatePassword(id, newPassword) {
     try {
       const hashedPassword = await PasswordHelper.hash(newPassword);
-      await userDao.updatePassword(id, hashedPassword);
+      await this.userDao.updatePassword(id, hashedPassword);
     } catch (error) {
       throw new AppError('更新密码失败', 'DATABASE_ERROR', 500);
     }
@@ -73,11 +76,17 @@ class UserService {
 
   async deleteUser(id) {
     try {
-      await userDao.delete(id);
+      await this.userDao.delete(id);
     } catch (error) {
       throw new AppError('删除用户失败', 'DATABASE_ERROR', 500);
     }
   }
 }
 
-module.exports = new UserService();
+// 导出实例
+const userDao = require('../dao/userDao');
+const userServiceInstance = new UserService(userDao);
+
+module.exports = userServiceInstance;
+module.exports.default = userServiceInstance;
+module.exports.UserService = UserService;

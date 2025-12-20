@@ -124,7 +124,7 @@ body {
   .main-content {
     padding: var(--spacing-sm);
   }
-  
+
   .main-header h1 {
     font-size: var(--font-size-lg);
   }

@@ -17,11 +17,11 @@
     padding: 0;
     border-radius: var(--border-radius-lg);
   }
-  
+
   .ant-row {
     flex-direction: column;
   }
-  
+
   .ant-col {
     width: 100%;
     padding: var(--spacing-sm);
@@ -29,7 +29,7 @@
   }
 
   /* 表头优化 */
-  .ant-row[style*="borderBottom"] .ant-col {
+  .ant-row[style*='borderBottom'] .ant-col {
     font-size: var(--font-size-sm);
     color: var(--color-text-secondary);
   }
@@ -38,12 +38,12 @@
   .position-detail {
     padding: var(--spacing-md);
   }
-  
+
   /* 移动端字体适配 */
   h2 {
     font-size: 1.375rem;
   }
-  
+
   /* 新增：调整移动端表格字体大小 */
   .ant-table-tbody > tr > td {
     font-size: 0.8125rem;
