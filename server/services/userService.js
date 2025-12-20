@@ -70,7 +70,8 @@ class UserService {
       const hashedPassword = await PasswordHelper.hash(newPassword);
       await this.userDao.updatePassword(id, hashedPassword);
     } catch (error) {
-      throw new AppError('更新密码失败', 'DATABASE_ERROR', 500);
+      console.error('更新密码失败，详细错误:', error);
+      throw new AppError(`更新密码失败: ${error.message}`, 'DATABASE_ERROR', 500);
     }
   }
 

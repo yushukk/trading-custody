@@ -1,10 +1,14 @@
 import React, { useState, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Toast } from 'antd-mobile';
 import apiClient from '../api/apiClient';
 import { handleError } from '../utils/errorHandler';
 import { KEYS } from '../constants';
 import './ChangePassword.css';
 
 const ChangePassword = ({ onBack }) => {
+  const navigate = useNavigate();
+  const [oldPassword, setOldPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
@@ -17,15 +21,28 @@ const ChangePassword = ({ onBack }) => {
 
     try {
       await apiClient.put('/api/users/password', {
+        oldPassword,
         newPassword,
       });
 
-      alert('密码修改成功');
-      onBack();
+      Toast.show({
+        icon: 'success',
+        content: '密码修改成功',
+        duration: 1500,
+      });
+
+      // 1.5秒后返回
+      setTimeout(() => {
+        if (onBack) {
+          onBack();
+        } else {
+          navigate(-1);
+        }
+      }, 1500);
     } catch (error) {
       handleError(error);
     }
-  }, [newPassword, confirmPassword, onBack]);
+  }, [oldPassword, newPassword, confirmPassword, onBack, navigate]);
 
   const handleKeyPress = useCallback(
     e => {
@@ -39,6 +56,17 @@ const ChangePassword = ({ onBack }) => {
   return (
     <div className="change-password-container">
       <h1 className="change-password-title">修改密码</h1>
+      <div className="change-password-input-group">
+        <label className="change-password-input-label">旧密码</label>
+        <input
+          type="password"
+          placeholder="请输入旧密码"
+          value={oldPassword}
+          onChange={e => setOldPassword(e.target.value)}
+          onKeyPress={handleKeyPress}
+          className="change-password-input"
+        />
+      </div>
       <div className="change-password-input-group">
         <label className="change-password-input-label">新密码</label>
         <input
@@ -65,7 +93,10 @@ const ChangePassword = ({ onBack }) => {
       <button onClick={handleUpdatePassword} className="change-password-button">
         确认修改
       </button>
-      <button onClick={onBack} className="change-password-back-button">
+      <button
+        onClick={() => (onBack ? onBack() : navigate(-1))}
+        className="change-password-back-button"
+      >
         返回
       </button>
     </div>

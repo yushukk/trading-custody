@@ -90,7 +90,7 @@ class UserController {
 
       const isValid = await PasswordHelper.verify(oldPassword, user.password);
       if (!isValid) {
-        throw new AppError('旧密码错误', 'INVALID_PASSWORD', 401);
+        throw new AppError('旧密码错误', 'INVALID_PASSWORD', 400);
       }
 
       // 更新密码
