@@ -43,7 +43,21 @@
     "test:e2e:headless": "cypress run --config-file tests/cypress/cypress.config.js --headless --browser electron",
     "test:e2e:spec": "cypress run --config-file tests/cypress/cypress.config.js --spec",
     "coverage": "npm run test:coverage && npm run test:server:coverage",
-    "dev:local": "APP_PORT=${APP_PORT:-8085} SERVER_PORT=${SERVER_PORT:-3001} concurrently \"npm run server\" \"npm run client\""
+    "dev:local": "APP_PORT=${APP_PORT:-8085} SERVER_PORT=${SERVER_PORT:-3001} concurrently \"npm run server\" \"npm run client\"",
+    "lint": "eslint src server --ext .js,.jsx",
+    "lint:fix": "eslint src server --ext .js,.jsx --fix",
+    "format": "prettier --write \"src/**/*.{js,jsx,css}\" \"server/**/*.js\"",
+    "format:check": "prettier --check \"src/**/*.{js,jsx,css}\" \"server/**/*.js\"",
+    "prepare": "husky install"
+  },
+  "lint-staged": {
+    "*.{js,jsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.css": [
+      "prettier --write"
+    ]
   },
   "dependencies": {
     "antd-mobile": "^5.39.0",
@@ -63,14 +77,22 @@
   },
   "devDependencies": {
     "@istanbuljs/nyc-config-babel": "^3.0.0",
+    "@testing-library/cypress": "^10.1.0",
     "@testing-library/jest-dom": "^6.8.0",
     "@testing-library/react": "^16.3.0",
     "concurrently": "^7.6.0",
-    "cypress": "^15.2.0",
+    "cypress": "^12.17.4",
+    "eslint": "^8.57.1",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-react": "^7.37.5",
+    "eslint-plugin-react-hooks": "^7.0.1",
     "http-proxy-middleware": "^3.0.5",
+    "husky": "^9.1.7",
     "jest": "^27.5.1",
+    "lint-staged": "^16.2.7",
     "nodemon": "^3.0.2",
     "nyc": "^17.1.0",
+    "prettier": "^3.7.4",
     "react-scripts": "^5.0.1",
     "supertest": "^7.1.4"
   },

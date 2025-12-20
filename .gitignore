@@ -1,10 +1,85 @@
-# 忽略 node_modules 文件夹
+# Dependencies
 node_modules/
+/.pnp
+.pnp.js
+
+# Testing
+/coverage
+server/coverage
+*.test.js.snap
+cypress/videos
+cypress/screenshots
+.nyc_output
+
+# Production
+/build
+/dist
+
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Logs
 logs/
-public/Screenshot_2025-06-13-09-42-42-467_global.longbridge.app.android.jpg
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+server/logs/
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+server/database.db
+trading_custody.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# OS
+Thumbs.db
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Temporary files
+*.tmp
+*.temp
+.cache/
+
+# Build files
+*.tsbuildinfo
+
+# Project specific
+public/Screenshot_*.jpg
 server/test.sql
 server/test01.sql
 server/trade.api
 server/stock_daily.json
 server/说明.md
-.DS_Store
+cookies.txt
+
+# Optional npm cache directory
+.npm
+
+# Optional eslint cache
+.eslintcache
+
+# Optional stylelint cache
+.stylelintcache
+
+# Misc
+.sass-cache/
+*.css.map
+*.sass.map
+*.scss.map

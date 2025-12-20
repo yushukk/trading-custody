@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useRef } from 'react';
 import * as fundApi from '../api/fundApi';
 
 /**
@@ -10,26 +10,38 @@ export const useFund = () => {
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const abortControllerRef = useRef(null);
 
   /**
    * 获取资金信息（余额和流水）
    * @param {number} userId - 用户ID
    */
-  const fetchFundInfo = async (userId) => {
+  const fetchFundInfo = async userId => {
     if (!userId) return;
-    
+
+    // 取消之前的请求
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+
+    // 创建新的AbortController
+    abortControllerRef.current = new AbortController();
+
     setLoading(true);
     setError(null);
     try {
       const [balanceData, logsData] = await Promise.all([
-        fundApi.getFundBalance(userId),
-        fundApi.getFundLogs(userId)
+        fundApi.getFundBalance(userId, { signal: abortControllerRef.current.signal }),
+        fundApi.getFundLogs(userId, { signal: abortControllerRef.current.signal }),
       ]);
-      
+
       setBalance(balanceData.balance || 0);
       setLogs(logsData);
     } catch (err) {
-      setError(err.message);
+      // 忽略取消请求的错误
+      if (err.name !== 'AbortError') {
+        setError(err.message);
+      }
     } finally {
       setLoading(false);
     }
@@ -48,11 +60,11 @@ export const useFund = () => {
     try {
       const result = await fundApi.handleFundOperation(userId, type, amount, remark);
       setBalance(result.balance);
-      
+
       // 重新获取资金流水
       const logsData = await fundApi.getFundLogs(userId);
       setLogs(logsData);
-      
+
       return result;
     } catch (err) {
       setError(err.message);
@@ -62,12 +74,20 @@ export const useFund = () => {
     }
   };
 
+  // 清理函数，组件卸载时取消请求
+  const cleanup = () => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+  };
+
   return {
     balance,
     logs,
     loading,
     error,
     fetchFundInfo,
-    handleFundOperation
+    handleFundOperation,
+    cleanup,
   };
 };
