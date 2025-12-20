@@ -11,6 +11,7 @@ process.env.NODE_ENV = process.env.NODE_ENV || 'development';
 // 导入中间件
 const logMiddleware = require('./middleware/logMiddleware');
 const errorHandler = require('./middleware/errorMiddleware');
+const logger = require('./utils/logger');
 
 // 导入路由
 const routes = require('./config/routes');
@@ -45,9 +46,9 @@ const priceService = require('./services/priceService');
 schedule.scheduleJob(CRON_EXPRESSION, async () => {
   try {
     await priceService.syncPriceData();
-    console.log('价格数据同步任务完成');
+    logger.info('Price data synchronization task completed');
   } catch (error) {
-    console.error('价格数据同步任务失败:', error.message);
+    logger.error('Price data synchronization task failed', { error: error.message });
   }
 });
 
@@ -57,13 +58,13 @@ async function startServer() {
     // 初始化数据库
     const db = require('./utils/database').default;
     await db.initialize();
-    console.log('数据库初始化完成');
+    logger.info('Database initialized successfully');
 
     app.listen(PORT, () => {
-      console.log(`Server running on http://localhost:${PORT}`);
+      logger.info(`Server running on http://localhost:${PORT}`);
     });
   } catch (error) {
-    console.error('服务器启动失败:', error);
+    logger.error('Server startup failed', { error: error.message, stack: error.stack });
     process.exit(1);
   }
 }

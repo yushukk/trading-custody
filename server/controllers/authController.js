@@ -1,4 +1,5 @@
 const AppError = require('../utils/AppError');
+const { COOKIE_OPTIONS, ERROR_MESSAGES } = require('../constants');
 
 class AuthController {
   constructor(authService) {
@@ -11,19 +12,8 @@ class AuthController {
       const { accessToken, refreshToken, user } = await this.authService.login(email, password);
 
       // 设置 HttpOnly Cookie
-      res.cookie('accessToken', accessToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict',
-        maxAge: 15 * 60 * 1000, // 15分钟
-      });
-
-      res.cookie('refreshToken', refreshToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict',
-        maxAge: 7 * 24 * 60 * 60 * 1000, // 7天
-      });
+      res.cookie('accessToken', accessToken, COOKIE_OPTIONS.ACCESS_TOKEN);
+      res.cookie('refreshToken', refreshToken, COOKIE_OPTIONS.REFRESH_TOKEN);
 
       res.json({
         success: true,
@@ -55,17 +45,12 @@ class AuthController {
     try {
       const refreshToken = req.cookies.refreshToken;
       if (!refreshToken) {
-        throw new AppError('缺少刷新令牌', 'MISSING_REFRESH_TOKEN', 401);
+        throw new AppError(ERROR_MESSAGES.MISSING_REFRESH_TOKEN, 'MISSING_REFRESH_TOKEN', 401);
       }
 
       const newAccessToken = await this.authService.refreshToken(refreshToken);
 
-      res.cookie('accessToken', newAccessToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict',
-        maxAge: 15 * 60 * 1000, // 15分钟
-      });
+      res.cookie('accessToken', newAccessToken, COOKIE_OPTIONS.ACCESS_TOKEN);
 
       res.json({ success: true });
     } catch (error) {

@@ -1,4 +1,5 @@
 const ERROR_CODES = require('../utils/errorCodes');
+const logger = require('../utils/logger');
 
 /**
  * 统一错误处理中间件
@@ -8,10 +9,13 @@ const ERROR_CODES = require('../utils/errorCodes');
  * @param {Function} next - 下一步函数
  */
 const errorHandler = (err, req, res, _next) => {
-  // 开发环境显示错误堆栈
-  if (process.env.NODE_ENV === 'development') {
-    console.error(err.stack);
-  }
+  // 记录错误日志
+  logger.error('Request error', {
+    error: err.message,
+    stack: err.stack,
+    path: req.path,
+    method: req.method,
+  });
 
   // 如果是自定义错误码
   if (err.errorCode && ERROR_CODES[err.errorCode]) {
