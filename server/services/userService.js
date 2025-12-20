@@ -1,122 +1,83 @@
-const jwt = require('jsonwebtoken');
-const db = require('../utils/database');
+const userDao = require('../dao/userDao');
 const AppError = require('../utils/AppError');
+const PasswordHelper = require('../utils/passwordHelper');
 
-/**
- * 用户服务
- * @module UserService
- */
+class UserService {
+  async getAllUsers() {
+    try {
+      return await userDao.findAll();
+    } catch (error) {
+      throw new AppError('获取用户列表失败', 'DATABASE_ERROR', 500);
+    }
+  }
 
-/**
- * 用户认证服务
- * @param {string} username - 用户名
- * @param {string} password - 密码
- * @returns {Promise} 认证结果Promise
- */
-exports.authenticateUser = (username, password) => {
-  return new Promise((resolve, reject) => {
-    db.get("SELECT * FROM users WHERE name = ? AND password = ?", [username, password], (err, row) => {
-      if (err) {
-        reject(new AppError(err.message, 'DATABASE_ERROR'));
-      } else {
-        resolve(row);
+  async getUserById(id) {
+    try {
+      return await userDao.findById(id);
+    } catch (error) {
+      throw new AppError('获取用户信息失败', 'DATABASE_ERROR', 500);
+    }
+  }
+
+  async getUserByEmail(email) {
+    try {
+      return await userDao.findByEmail(email);
+    } catch (error) {
+      throw new AppError('获取用户信息失败', 'DATABASE_ERROR', 500);
+    }
+  }
+
+  async createUser(userData) {
+    try {
+      // 检查邮箱是否已存在
+      const existingUser = await userDao.findByEmail(userData.email);
+      if (existingUser) {
+        throw new AppError('邮箱已被注册', 'EMAIL_EXISTS', 400);
       }
-    });
-  });
-};
-
-/**
- * 生成JWT令牌
- * @param {Object} user - 用户对象
- * @returns {string} JWT令牌
- */
-exports.generateToken = (user) => {
-  return jwt.sign({ username: user.name, role: user.role }, 'your-secret-key', { expiresIn: '1h' });
-};
-
-/**
- * 更新用户密码服务
- * @param {string} username - 用户名
- * @param {string} newPassword - 新密码
- * @returns {Promise} 更新结果Promise
- */
-exports.updateUserPassword = (username, newPassword) => {
-  return new Promise((resolve, reject) => {
-    db.run("UPDATE users SET password = ? WHERE name = ?", [newPassword, username], (err) => {
-      if (err) {
-        reject(new AppError(err.message, 'DATABASE_ERROR'));
-      } else {
-        resolve({ message: 'Password updated successfully' });
+      
+      const { name, email, password, role } = userData;
+      const hashedPassword = await PasswordHelper.hash(password);
+      const userId = await userDao.create({
+        name,
+        email,
+        password: hashedPassword,
+        role
+      });
+      return { id: userId, name, email, role };
+    } catch (error) {
+      if (error instanceof AppError) {
+        throw error;
       }
-    });
-  });
-};
+      throw new AppError('创建用户失败', 'DATABASE_ERROR', 500);
+    }
+  }
 
-/**
- * 获取所有用户服务
- * @returns {Promise} 用户列表Promise
- */
-exports.getAllUsers = () => {
-  return new Promise((resolve, reject) => {
-    db.all("SELECT * FROM users", [], (err, rows) => {
-      if (err) {
-        reject(new AppError(err.message, 'DATABASE_ERROR'));
-      } else {
-        resolve(rows);
-      }
-    });
-  });
-};
+  async updateUser(id, userData) {
+    try {
+      const { name, email, role } = userData;
+      await userDao.update(id, { name, email, role });
+      return { id, name, email, role };
+    } catch (error) {
+      throw new AppError('更新用户失败', 'DATABASE_ERROR', 500);
+    }
+  }
 
-/**
- * 创建用户服务
- * @param {Object} userData - 用户数据
- * @returns {Promise} 创建结果Promise
- */
-exports.createUser = (userData) => {
-  const { name, email, password, role } = userData;
-  return new Promise((resolve, reject) => {
-    db.run("INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, ?)", [name, email, password, role], function(err) {
-      if (err) {
-        reject(new AppError(err.message, 'DATABASE_ERROR'));
-      } else {
-        resolve({ id: this.lastID, name, email, password, role });
-      }
-    });
-  });
-};
+  async updatePassword(id, newPassword) {
+    try {
+      const hashedPassword = await PasswordHelper.hash(newPassword);
+      await userDao.updatePassword(id, hashedPassword);
+    } catch (error) {
+      throw new AppError('更新密码失败', 'DATABASE_ERROR', 500);
+    }
+  }
 
-/**
- * 根据ID更新用户密码服务
- * @param {number} id - 用户ID
- * @param {string} newPassword - 新密码
- * @returns {Promise} 更新结果Promise
- */
-exports.updateUserPasswordById = (id, newPassword) => {
-  return new Promise((resolve, reject) => {
-    db.run("UPDATE users SET password = ? WHERE id = ?", [newPassword, id], (err) => {
-      if (err) {
-        reject(new AppError(err.message, 'DATABASE_ERROR'));
-      } else {
-        resolve({ message: 'Password updated successfully' });
-      }
-    });
-  });
-};
+  async deleteUser(id) {
+    try {
+      await userDao.delete(id);
+    } catch (error) {
+      throw new AppError('删除用户失败', 'DATABASE_ERROR', 500);
+    }
+  }
+}
 
-/**
- * 删除用户服务
- * @param {number} id - 用户ID
- * @returns {Promise} 删除结果Promise
- */
-exports.deleteUser = (id) => {
-  return new Promise((resolve, reject) => {
-    db.run("DELETE FROM users WHERE id = ?", [id], (err) => {
-      if (err) {
-        reject(new AppError(err.message, 'DATABASE_ERROR'));
-      } else {
-        resolve({ message: 'User deleted successfully' });
-      }
-    });
-  });
-};
+module.exports = new UserService();

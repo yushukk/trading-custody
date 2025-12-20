@@ -1,46 +1,39 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Card, Button, Input, Selector, Toast } from 'antd-mobile';
 import { useNavigate } from 'react-router-dom';
+import apiClient from '../api/apiClient';
+import { handleError } from '../utils/errorHandler';
+import { ROLES } from '../constants';
 
 const UserManagement = () => {
   const [users, setUsers] = useState([]);
-  const [newUser, setNewUser] = useState({ name: '', email: '', password: '', role: 'user' });
+  const [newUser, setNewUser] = useState({ name: '', email: '', password: '', role: ROLES.USER });
   const [passwordInputs, setPasswordInputs] = useState({}); // 用于存储每个用户的密码输入
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
-  useEffect(() => {
-    fetchUsers();
-  }, []);
-
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     try {
-      const response = await fetch(`${window.API_BASE_URL}/api/users`);
-      if (!response.ok) throw new Error('Failed to fetch users');
-      const data = await response.json();
+      const data = await apiClient.get('/api/users');
       setUsers(data);
     } catch (error) {
-      setError(error.message);
+      handleError(error);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchUsers();
+  }, [fetchUsers]);
 
   const handleAddUser = async () => {
     try {
-      const response = await fetch(`${window.API_BASE_URL}/api/users`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(newUser),
-      });
-
-      if (!response.ok) throw new Error('Failed to add user');
+      await apiClient.post('/api/users', newUser);
 
       fetchUsers();
-      setNewUser({ name: '', email: '', password: '', role: 'user' });
+      setNewUser({ name: '', email: '', password: '', role: ROLES.USER });
       Toast.show({ content: '添加用户成功', duration: 1000 });
     } catch (error) {
-      Toast.show({ content: error.message, duration: 2000, color: 'danger' });
+      handleError(error);
     }
   };
 
@@ -51,37 +44,25 @@ const UserManagement = () => {
     }
 
     try {
-      const response = await fetch(`${window.API_BASE_URL}/api/users/${userId}/password`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ newPassword }),
-      });
-
-      if (!response.ok) throw new Error('Failed to update password');
+      await apiClient.put(`/api/users/${userId}/password`, { newPassword });
 
       fetchUsers();
       // 清空密码输入
       setPasswordInputs(prev => ({ ...prev, [userId]: '' }));
       Toast.show({ content: '密码更新成功', duration: 1000 });
     } catch (error) {
-      Toast.show({ content: error.message, duration: 2000, color: 'danger' });
+      handleError(error);
     }
   };
 
   const handleDeleteUser = async (userId) => {
     try {
-      const response = await fetch(`${window.API_BASE_URL}/api/users/${userId}`, {
-        method: 'DELETE',
-      });
-
-      if (!response.ok) throw new Error('Failed to delete user');
+      await apiClient.delete(`/api/users/${userId}`);
 
       fetchUsers();
       Toast.show({ content: '用户删除成功', duration: 1000 });
     } catch (error) {
-      Toast.show({ content: error.message, duration: 2000, color: 'danger' });
+      handleError(error);
     }
   };
 
@@ -124,8 +105,8 @@ const UserManagement = () => {
         />
         <Selector
           options={[
-            { label: '普通用户', value: 'user' },
-            { label: '管理员', value: 'admin' }
+            { label: '普通用户', value: ROLES.USER },
+            { label: '管理员', value: ROLES.ADMIN }
           ]}
           value={[newUser.role]}
           onChange={(val) => setNewUser({ ...newUser, role: val[0] })}
@@ -194,4 +175,4 @@ const UserManagement = () => {
   );
 };
 
-export default UserManagement;
+export default React.memo(UserManagement);

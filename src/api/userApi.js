@@ -3,7 +3,7 @@
  * @module userApi
  */
 
-const API_BASE_URL = window.API_BASE_URL || 'http://localhost:3001';
+import apiClient from './apiClient';
 
 /**
  * 用户登录
@@ -12,17 +12,31 @@ const API_BASE_URL = window.API_BASE_URL || 'http://localhost:3001';
  * @returns {Promise} 登录结果Promise
  */
 export const login = async (username, password) => {
-  const response = await fetch(`${API_BASE_URL}/api/login`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ username, password })
-  });
-  
-  if (!response.ok) {
-    throw new Error('登录失败');
-  }
-  
-  return response.json();
+  return await apiClient.post('/api/login', { username, password });
+};
+
+/**
+ * 登出
+ * @returns {Promise} 登出结果Promise
+ */
+export const logout = async () => {
+  return await apiClient.post('/api/logout');
+};
+
+/**
+ * 刷新 Token
+ * @returns {Promise} 刷新结果Promise
+ */
+export const refreshToken = async () => {
+  return await apiClient.post('/api/auth/refresh');
+};
+
+/**
+ * 获取当前用户信息
+ * @returns {Promise} 用户信息Promise
+ */
+export const getCurrentUser = async () => {
+  return await apiClient.get('/api/users/me');
 };
 
 /**
@@ -32,17 +46,7 @@ export const login = async (username, password) => {
  * @returns {Promise} 更新结果Promise
  */
 export const updatePassword = async (username, newPassword) => {
-  const response = await fetch(`${API_BASE_URL}/api/update-password`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ username, newPassword })
-  });
-  
-  if (!response.ok) {
-    throw new Error('密码更新失败');
-  }
-  
-  return response.json();
+  return await apiClient.put('/api/update-password', { username, newPassword });
 };
 
 /**
@@ -50,13 +54,7 @@ export const updatePassword = async (username, newPassword) => {
  * @returns {Promise} 用户列表Promise
  */
 export const getAllUsers = async () => {
-  const response = await fetch(`${API_BASE_URL}/api/users`);
-  
-  if (!response.ok) {
-    throw new Error('获取用户列表失败');
-  }
-  
-  return response.json();
+  return await apiClient.get('/api/users');
 };
 
 /**
@@ -65,17 +63,7 @@ export const getAllUsers = async () => {
  * @returns {Promise} 创建结果Promise
  */
 export const createUser = async (userData) => {
-  const response = await fetch(`${API_BASE_URL}/api/users`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(userData)
-  });
-  
-  if (!response.ok) {
-    throw new Error('创建用户失败');
-  }
-  
-  return response.json();
+  return await apiClient.post('/api/users', userData);
 };
 
 /**
@@ -85,17 +73,7 @@ export const createUser = async (userData) => {
  * @returns {Promise} 更新结果Promise
  */
 export const updateUserPasswordById = async (id, newPassword) => {
-  const response = await fetch(`${API_BASE_URL}/api/users/${id}/password`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ newPassword })
-  });
-  
-  if (!response.ok) {
-    throw new Error('密码更新失败');
-  }
-  
-  return response.json();
+  return await apiClient.put(`/api/users/${id}/password`, { newPassword });
 };
 
 /**
@@ -104,13 +82,5 @@ export const updateUserPasswordById = async (id, newPassword) => {
  * @returns {Promise} 删除结果Promise
  */
 export const deleteUser = async (id) => {
-  const response = await fetch(`${API_BASE_URL}/api/users/${id}`, {
-    method: 'DELETE'
-  });
-  
-  if (!response.ok) {
-    throw new Error('删除用户失败');
-  }
-  
-  return response.json();
+  return await apiClient.delete(`/api/users/${id}`);
 };

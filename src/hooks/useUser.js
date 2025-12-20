@@ -68,10 +68,7 @@ export const useUser = () => {
     }
   };
 
-  // 组件挂载时获取用户列表
-  useEffect(() => {
-    fetchUsers();
-  }, []);
+  // 移除了自动获取用户列表的useEffect，改为手动调用fetchUsers
 
   return {
     users,

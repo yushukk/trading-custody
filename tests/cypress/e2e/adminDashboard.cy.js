@@ -37,4 +37,43 @@ describe('Admin Dashboard', () => {
   it('should have logout button', () => {
     cy.contains('退出登录').should('be.visible')
   })
+
+  it('should have change password button', () => {
+    cy.contains('修改密码').should('be.visible')
+  })
+
+  it('should navigate to change password page', () => {
+    cy.contains('修改密码').click()
+    cy.url().should('include', '/change-password')
+    cy.contains('修改密码').should('be.visible')
+  })
+
+  it('should logout successfully and clear localStorage', () => {
+    // Verify logged in state
+    cy.window().then((window) => {
+      expect(window.localStorage.getItem('authToken')).to.exist
+    })
+
+    // Click logout
+    cy.contains('退出登录').click()
+    
+    // Should redirect to login page
+    cy.url().should('include', '/login')
+    
+    // Verify localStorage is cleared
+    cy.window().then((window) => {
+      expect(window.localStorage.getItem('authToken')).to.be.null
+      expect(window.localStorage.getItem('userRole')).to.be.null
+      expect(window.localStorage.getItem('username')).to.be.null
+      expect(window.localStorage.getItem('userId')).to.be.null
+    })
+  })
+
+  it('should display all management sections', () => {
+    // Verify all three management buttons are visible
+    const sections = ['用户管理', '资金管理', '持仓管理']
+    sections.forEach(section => {
+      cy.contains(section).should('be.visible')
+    })
+  })
 })

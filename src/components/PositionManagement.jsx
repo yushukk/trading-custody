@@ -1,6 +1,9 @@
-import React, { useState, useEffect } from 'react';
-import { Card, Button, Input, Selector, Form, DatePicker,Toast } from 'antd-mobile';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Card, Button, Input, Selector, Form, DatePicker, Toast } from 'antd-mobile';
 import { useNavigate } from 'react-router-dom';
+import apiClient from '../api/apiClient';
+import { handleError } from '../utils/errorHandler';
+import { ASSET_TYPES, OPERATION_TYPES } from '../constants/appConstants';
 import UserSelect from './UserSelect';
 import moment from 'moment';
 
@@ -15,63 +18,53 @@ const PositionManagement = () => {
   const navigate = useNavigate();
   const [visible, setVisible] = useState(false);
 
-  useEffect(() => {
-    fetchUsers();
-  }, []);
-
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     try {
-      const response = await fetch(`${window.API_BASE_URL}/api/users`);
-      if (!response.ok) throw new Error('Failed to fetch users');
-      const data = await response.json();
+      const data = await apiClient.get('/api/users');
       setUsers(data);
     } catch (error) {
-      message.error(error.message);
+      handleError(error);
     }
-  };
+  }, []);
 
-  const fetchPositions = async (userId) => {
+  useEffect(() => {
+    fetchUsers();
+  }, [fetchUsers]);
+
+  const fetchPositions = useCallback(async (userId) => {
     try {
-      const response = await fetch(`${window.API_BASE_URL}/api/positions/${userId}`);
-      if (!response.ok) throw new Error('Failed to fetch positions');
-      const data = await response.json();
+      const data = await apiClient.get(`/api/positions/${userId}`);
       setPositions(data);
     } catch (error) {
-      message.error(error.message);
+      handleError(error);
     }
-  };
+  }, []);
 
-  const handleUserSelect = (userId) => {
+  const handleUserSelect = useCallback((userId) => {
     setSelectedUserId(userId);
     fetchPositions(userId);
-  };
+  }, [fetchPositions]);
 
-  const onFinish = async (values) => {
+  const onFinish = useCallback(async (values) => {
     try {
-      const response = await fetch(`${window.API_BASE_URL}/api/positions/${selectedUserId}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          assetType: values.assetType[0],
-          code: values.code,
-          name: values.name,
-          operation: values.operation[0],
-          price: values.price,
-          quantity: values.quantity,
-          fee: values.fee,
-          timestamp: values.timestamp ? values.timestamp.toISOString() : undefined
-        })
+      await apiClient.post(`/api/positions/${selectedUserId}`, {
+        assetType: values.assetType[0],
+        code: values.code,
+        name: values.name,
+        operation: values.operation[0],
+        price: values.price,
+        quantity: values.quantity,
+        fee: values.fee,
+        timestamp: values.timestamp ? values.timestamp.toISOString() : undefined
       });
-
-      if (!response.ok) throw new Error('持仓操作失败');
 
       Toast.show({ content: '操作成功', duration: 2000 });
       form.resetFields();
       fetchPositions(selectedUserId);
     } catch (error) {
-        Toast.show({ content: error.message, duration: 2000 });
+      handleError(error);
     }
-  };
+  }, [selectedUserId, fetchPositions]);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', padding: '10px', backgroundColor: '#f5f5f5', minHeight: '100vh' }}>
@@ -188,4 +181,4 @@ const PositionManagement = () => {
   );
 };
 
-export default PositionManagement;
+export default React.memo(PositionManagement);

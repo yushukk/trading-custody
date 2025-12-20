@@ -17,6 +17,7 @@ app.use(express.json());
 describe('User API Integration', () => {
   let db;
   let userController;
+  let authController;
   let logMiddleware;
   let errorHandler;
   
@@ -51,16 +52,21 @@ describe('User API Integration', () => {
           stmt.finalize(() => {
             // 在数据库初始化完成后导入控制器
             userController = require('../../controllers/userController');
+            authController = require('../../controllers/authController');
             logMiddleware = require('../../middleware/logMiddleware');
             errorHandler = require('../../middleware/errorMiddleware');
             
             // 设置中间件和路由
             app.use(logMiddleware);
-            app.post('/api/login', userController.login);
-            app.put('/api/update-password', userController.updatePassword);
+            app.post('/api/auth/login', authController.login);
+            app.post('/api/auth/register', authController.register);
+            app.post('/api/auth/refresh', authController.refresh);
+            app.post('/api/auth/logout', authController.logout);
+            app.get('/api/auth/me', authController.me);
+            app.put('/api/users/password', userController.updatePassword);
             app.get('/api/users', userController.getAllUsers);
             app.post('/api/users', userController.createUser);
-            app.put('/api/users/:id/password', userController.updateUserPasswordById);
+            app.put('/api/users/:id', userController.updateUser);
             app.delete('/api/users/:id', userController.deleteUser);
             app.use(errorHandler);
             
@@ -82,25 +88,23 @@ describe('User API Integration', () => {
     });
   });
 
-  describe('POST /api/login', () => {
+  describe('POST /api/auth/login', () => {
     it('should login with correct credentials', async () => {
       const response = await request(app)
-        .post('/api/login')
-        .send({ username: 'Alice', password: 'password123' })
+        .post('/api/auth/login')
+        .send({ email: 'alice@example.com', password: 'password123' })
         .expect(200);
 
-      expect(response.body).toHaveProperty('token');
-      expect(response.body.role).toBe('user');
-      expect(response.body.id).toBe(1);
+      expect(response.body.success).toBe(true);
+      expect(response.body.user.role).toBe('user');
+      expect(response.body.user.id).toBe(1);
     });
 
     it('should return 401 for invalid credentials', async () => {
       const response = await request(app)
-        .post('/api/login')
-        .send({ username: 'Alice', password: 'wrongpassword' })
+        .post('/api/auth/login')
+        .send({ email: 'alice@example.com', password: 'wrongpassword' })
         .expect(401);
-
-      expect(response.body.error).toBe('Invalid credentials');
     });
   });
 
@@ -139,14 +143,14 @@ describe('User API Integration', () => {
     });
   });
 
-  describe('PUT /api/users/:id/password', () => {
-    it('should update user password by id', async () => {
+  describe('PUT /api/users/password', () => {
+    it('should update user password', async () => {
       const response = await request(app)
-        .put('/api/users/1/password')
-        .send({ newPassword: 'updatedpassword' })
+        .put('/api/users/password')
+        .send({ oldPassword: 'password123', newPassword: 'updatedpassword' })
         .expect(200);
 
-      expect(response.body.message).toBe('Password updated successfully');
+      expect(response.body.message).toBe('密码更新成功');
     });
   });
 

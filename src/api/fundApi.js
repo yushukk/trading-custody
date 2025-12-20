@@ -2,7 +2,8 @@
  * 资金相关API调用封装
  */
 
-const API_BASE_URL = window.API_BASE_URL || 'http://localhost:3001';
+// 使用空字符串，通过 proxy 转发
+const API_BASE_URL = window.API_BASE_URL || '';
 
 /**
  * 获取用户资金余额

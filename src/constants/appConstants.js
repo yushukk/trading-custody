@@ -2,8 +2,8 @@
  * 应用常量定义
  */
 
-// API相关常量
-export const API_BASE_URL = window.API_BASE_URL || 'http://localhost:3001';
+// API相关常量 - 使用空字符串，通过 proxy 转发
+export const API_BASE_URL = window.API_BASE_URL || '';
 
 // 资产类型常量
 export const ASSET_TYPES = {

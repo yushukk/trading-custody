@@ -1,6 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Card, Button, Input, Selector, Toast } from 'antd-mobile';
 import { useNavigate } from 'react-router-dom';
+import apiClient from '../api/apiClient';
+import { handleError } from '../utils/errorHandler';
+import { OPERATION_TYPES } from '../constants/appConstants';
 import UserSelect from './UserSelect';
 
 const FundManagement = () => {
@@ -13,68 +16,55 @@ const FundManagement = () => {
   const [logs, setLogs] = useState([]);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    fetchUsers();
-  }, []);
-
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     try {
-      const response = await fetch(`${window.API_BASE_URL}/api/users`);
-      if (!response.ok) throw new Error('Failed to fetch users');
-      const data = await response.json();
+      const data = await apiClient.get('/api/users');
       setUsers(data);
     } catch (error) {
-      Toast.show({ content: error.message, duration: 2000 });
+      handleError(error);
     }
-  };
+  }, []);
 
-  const fetchFundInfo = async (userId) => {
+  useEffect(() => {
+    fetchUsers();
+  }, [fetchUsers]);
+
+  const fetchFundInfo = useCallback(async (userId) => {
     try {
-      const balanceRes = await fetch(`${window.API_BASE_URL}/api/funds/${userId}`);
-      const logsRes = await fetch(`${window.API_BASE_URL}/api/funds/${userId}/logs`);
-      
-      if (!balanceRes.ok || !logsRes.ok) throw new Error('Failed to fetch fund info');
-      
-      const balanceData = await balanceRes.json();
-      const logsData = await logsRes.json();
+      const balanceData = await apiClient.get(`/api/funds/${userId}`);
+      const logsData = await apiClient.get(`/api/funds/${userId}/logs`);
       
       setBalance(balanceData.balance || 0);
       setLogs(logsData);
     } catch (error) {
-      Toast.show({ content: error.message, duration: 2000 });
+      handleError(error);
     }
-  };
+  }, []);
 
-  const handleUserSelect = (userId) => {
+  const handleUserSelect = useCallback((userId) => {
     setSelectedUserId(userId);
     fetchFundInfo(userId);
-  };
+  }, [fetchFundInfo]);
 
-  const handleFundOperation = async () => {
+  const handleFundOperation = useCallback(async () => {
     if (!selectedUserId || !amount || amount <= 0) {
       Toast.show({ content: '请选择用户并输入有效金额', duration: 2000 });
       return;
     }
 
     try {
-      const response = await fetch(`${window.API_BASE_URL}/api/funds/${selectedUserId}/${operationType}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          amount: parseFloat(amount),
-          remark: remark // 添加备注参数
-        })
+      await apiClient.post(`/api/funds/${selectedUserId}/${operationType}`, {
+        amount: parseFloat(amount),
+        remark: remark // 添加备注参数
       });
-
-      if (!response.ok) throw new Error('资金操作失败');
       
       Toast.show({ content: '操作成功', duration: 1000 });
       fetchFundInfo(selectedUserId);
       setRemark(''); // 清空备注输入框
     } catch (error) {
-      Toast.show({ content: error.message, duration: 2000 });
+      handleError(error);
     }
-  };
+  }, [selectedUserId, amount, operationType, remark, fetchFundInfo]);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', padding: '10px', backgroundColor: '#f5f5f5', minHeight: '100vh' }}>
@@ -146,4 +136,4 @@ const FundManagement = () => {
   );
 };
 
-export default FundManagement;
+export default React.memo(FundManagement);

@@ -1,9 +1,13 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Card, Badge, Toast, Button } from 'antd-mobile';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
+import apiClient from '../api/apiClient';
+import { LIMITS } from '../constants';
 
 const UserFundPosition = () => {
   const navigate = useNavigate();
+  const { user, logout } = useAuth();
   const [fundInfo, setFundInfo] = useState({ balance: 0, logs: [] });
   const [positions, setPositions] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -11,52 +15,56 @@ const UserFundPosition = () => {
   const [tradeHistory, setTradeHistory] = useState([]);
 
   useEffect(() => {
-    const userId = localStorage.getItem('userId');
-    fetchFundInfo(userId);
-    fetchPositions(userId);
-    fetchTradeHistory(userId);
-  }, []);
+    const abortController = new AbortController();
+    
+    if (user) {
+      fetchFundInfo(user.id, abortController.signal);
+      fetchPositions(user.id, abortController.signal);
+      fetchTradeHistory(user.id, abortController.signal);
+    }
+    
+    return () => {
+      abortController.abort();
+    };
+  }, [user]);
 
-  const fetchFundInfo = async (userId) => {
+  const fetchFundInfo = async (userId, signal) => {
     try {
-      const balanceRes = await fetch(`${window.API_BASE_URL}/api/funds/${userId}`);
-      const logsRes = await fetch(`${window.API_BASE_URL}/api/funds/${userId}/logs`);
-      
-      if (!balanceRes.ok || !logsRes.ok) throw new Error('Failed to fetch fund info');
-      
-      const balanceData = await balanceRes.json();
-      const logsData = await logsRes.json();
+      const balanceData = await apiClient.get(`/api/funds/${userId}`, { signal });
+      const logsData = await apiClient.get(`/api/funds/${userId}/logs`, { signal });
       
       setFundInfo({
         balance: balanceData.balance || 0,
-        logs: logsData.slice(0, 5)
+        logs: logsData.slice(0, LIMITS.FUND_LOGS)
       });
     } catch (error) {
-      console.error(error.message);
+      if (error.name !== 'AbortError') {
+        console.error(error.message);
+      }
     } finally {
       setLoading(false);
     }
   };
 
-  const fetchPositions = async (userId) => {
+  const fetchPositions = async (userId, signal) => {
     try {
-      const response = await fetch(`${window.API_BASE_URL}/api/positions/profit/${userId}`);
-      if (!response.ok) throw new Error('Failed to fetch positions');
-      const data = await response.json();
+      const data = await apiClient.get(`/api/positions/profit/${userId}`, { signal });
       setPositions(data);
     } catch (error) {
-      console.error(error.message);
+      if (error.name !== 'AbortError') {
+        console.error(error.message);
+      }
     }
   };
 
-  const fetchTradeHistory = async (userId) => {
+  const fetchTradeHistory = async (userId, signal) => {
     try {
-      const response = await fetch(`${window.API_BASE_URL}/api/positions/${userId}`);
-      if (!response.ok) throw new Error('Failed to fetch trade history');
-      const data = await response.json();
+      const data = await apiClient.get(`/api/positions/${userId}`, { signal });
       setTradeHistory(data);
     } catch (error) {
-      console.error('获取历史交易记录失败:', error);
+      if (error.name !== 'AbortError') {
+        console.error('获取历史交易记录失败:', error);
+      }
     }
   };
 
@@ -477,8 +485,8 @@ const UserFundPosition = () => {
       )}
       
       <div style={{ display: 'flex', justifyContent: 'space-between', gap: '10px', margin: '12px 0' }}>
-        <Button 
-          style={{ 
+        <Button
+          style={{
             backgroundColor: '#ffffff',
             color: '#333',
             border: '1px solid #d9d9d9',
@@ -488,11 +496,8 @@ const UserFundPosition = () => {
             borderRadius: '6px',
             boxShadow: '0 2px 4px rgba(0,0,0,0.04)'
           }}
-          onClick={() => {
-            localStorage.removeItem('authToken');
-            localStorage.removeItem('userRole');
-            localStorage.removeItem('username');
-            localStorage.removeItem('userId');
+          onClick={async () => {
+            await logout();
             navigate('/login');
           }}
         >
@@ -518,4 +523,4 @@ const UserFundPosition = () => {
   );
 };
 
-export default UserFundPosition;
+export default React.memo(UserFundPosition);

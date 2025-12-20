@@ -1,84 +1,67 @@
-const db = require('../utils/database');
-const { getDbLatestPrice } = require('../utils/priceUtils');
+const positionDao = require('../dao/positionDao');
+const priceService = require('./priceService');
 const AppError = require('../utils/AppError');
 
-/**
- * 获取用户持仓服务
- * @param {number} userId - 用户ID
- * @returns {Promise} 持仓列表Promise
- */
-exports.getPositions = (userId) => {
-  return new Promise((resolve, reject) => {
-    db.all("SELECT * FROM positions WHERE user_id = ? ORDER BY timestamp DESC", [userId], (err, rows) => {
-      if (err) {
-        reject(new AppError(err.message, 'DATABASE_ERROR'));
-      } else {
-        resolve(rows || []);
-      }
-    });
-  });
-};
+class PositionService {
+  async getPositions(userId) {
+    try {
+      return await positionDao.findByUserId(userId);
+    } catch (error) {
+      throw new AppError('获取持仓失败', 'GET_POSITIONS_FAILED', 500);
+    }
+  }
 
-/**
- * 添加持仓操作服务
- * @param {number} userId - 用户ID
- * @param {Object} positionData - 持仓数据
- * @returns {Promise} 操作结果Promise
- */
-exports.addPosition = (userId, positionData) => {
-  const { assetType, code, name, operation, price, quantity, timestamp, fee } = positionData;
-  
-  // 参数验证
-  if (!['stock', 'future', 'fund'].includes(assetType)) {
-    return Promise.reject(new AppError('无效的资产类型', 'INVALID_ASSET_TYPE'));
-  }
-  if (!operation || !['buy', 'sell'].includes(operation)) {
-    return Promise.reject(new AppError('无效的操作类型', 'INVALID_OPERATION'));
-  }
-  
-  // 将费用转换为数字
-  const parsedFee = parseFloat(fee) || 0;
-  
-  // 将字符串转换为数字，如果转换后不是有效数字则返回错误
-  const parsedPrice = parseFloat(price);
-  const parsedQuantity = parseFloat(quantity);
-  
-  if (isNaN(parsedPrice) || parsedPrice <= 0) {
-    return Promise.reject(new AppError('价格必须为正数', 'INVALID_PRICE'));
-  }
-  if (isNaN(parsedQuantity) || parsedQuantity <= 0) {
-    return Promise.reject(new AppError('数量必须为正数', 'INVALID_QUANTITY'));
-  }
-  
-  return new Promise((resolve, reject) => {
-    // 插入持仓记录时包含费用字段
-    db.run("INSERT INTO positions (user_id, asset_type, code, name, operation, price, quantity, timestamp, fee) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)", 
-      [userId, assetType, code, name, operation, price, quantity, timestamp || new Date().toISOString(), parsedFee], 
-      function(err) {
-        if (err) {
-          reject(new AppError(err.message, 'DATABASE_ERROR'));
-        } else {
-          resolve({ message: '操作成功', id: this.lastID });
-        }
+  async addPositionOperation(userId, positionData) {
+    try {
+      const { assetType, code, name, operation, price, quantity, timestamp, fee = 0 } = positionData;
+      
+      // 参数验证
+      if (!['stock', 'future', 'fund'].includes(assetType)) {
+        throw new AppError('无效的资产类型', 'INVALID_ASSET_TYPE', 400);
+      }
+      if (!operation || !['buy', 'sell'].includes(operation)) {
+        throw new AppError('无效的操作类型', 'INVALID_OPERATION_TYPE', 400);
+      }
+      
+      // 将费用转换为数字
+      const parsedFee = parseFloat(fee) || 0;
+      
+      // 将字符串转换为数字，如果转换后不是有效数字则返回错误
+      const parsedPrice = parseFloat(price);
+      const parsedQuantity = parseFloat(quantity);
+      
+      if (isNaN(parsedPrice) || parsedPrice <= 0) {
+        throw new AppError('价格必须为正数', 'INVALID_PRICE', 400);
+      }
+      if (isNaN(parsedQuantity) || parsedQuantity <= 0) {
+        throw new AppError('数量必须为正数', 'INVALID_QUANTITY', 400);
+      }
+      
+      return await positionDao.create({
+        userId,
+        assetType,
+        code,
+        name,
+        operation,
+        price: parsedPrice,
+        quantity: parsedQuantity,
+        timestamp: timestamp || new Date().toISOString(),
+        fee: parsedFee
       });
-  });
-};
-
-/**
- * 计算持仓收益服务
- * @param {number} userId - 用户ID
- * @returns {Promise} 收益计算结果Promise
- */
-exports.calculatePositionProfit = (userId) => {
-  return new Promise((resolve, reject) => {
-    db.all("SELECT * FROM positions WHERE user_id = ? ORDER BY timestamp ASC", [userId], async (err, rows) => {
-      if (err) {
-        reject(new AppError(err.message, 'DATABASE_ERROR'));
-        return;
+    } catch (error) {
+      if (error instanceof AppError) {
+        throw error;
       }
+      throw new AppError('添加持仓操作失败', 'ADD_POSITION_FAILED', 500);
+    }
+  }
 
+  async calculatePositionProfit(userId) {
+    try {
+      const transactions = await positionDao.findByUserId(userId);
+      
       const positionsMap = {};
-      rows.forEach(row => {
+      transactions.forEach(row => {
         if (!positionsMap[row.code]) {
           positionsMap[row.code] = [];
         }
@@ -89,17 +72,18 @@ exports.calculatePositionProfit = (userId) => {
 
       for (const [code, transactions] of Object.entries(positionsMap)) {
         let realizedPnL = 0;
-        let totalFee = 0;
+        let totalFee = 0; // 新增总费用统计
         const queue = [];
 
         transactions.forEach(tx => {
           const quantity = tx.quantity;
           const price = tx.price;
-          const fee = tx.fee || 0;
-          totalFee += fee;
+          const fee = tx.fee || 0; // 获取交易费用
+          totalFee += fee; // 累计买入费用
+
 
           if (tx.operation === 'buy') {
-            queue.push({ quantity, price, fee });
+            queue.push({ quantity, price, fee }); // 将费用加入队列
           } else if (tx.operation === 'sell') {
             let remaining = quantity;
 
@@ -108,17 +92,17 @@ exports.calculatePositionProfit = (userId) => {
 
               if (head.quantity <= remaining) {
                 const tradeQuantity = head.quantity;
-                const cost = head.price * tradeQuantity;
-                const revenue = price * tradeQuantity;
-                realizedPnL += revenue - cost;
+                const cost = head.price * tradeQuantity ; // 成本包含费用
+                const revenue = price * tradeQuantity; // 收入扣除费用
+                realizedPnL += revenue - cost; // 计算盈亏
                 
                 remaining -= tradeQuantity;
                 queue.shift();
               } else {
                 const tradeQuantity = remaining;
-                const cost = head.price * tradeQuantity;
-                const revenue = price * tradeQuantity;
-                realizedPnL += revenue - cost;
+                const cost = head.price * tradeQuantity; // 按比例分配费用
+                const revenue = price * tradeQuantity; // 收入扣除费用
+                realizedPnL += revenue - cost; // 计算盈亏
                 
                 head.quantity -= tradeQuantity;
                 remaining = 0;
@@ -133,7 +117,8 @@ exports.calculatePositionProfit = (userId) => {
         let unrealizedPnL = 0;
 
         if (currentQuantity > 0) {
-          latestPrice = await getDbLatestPrice(code, transactions[0].asset_type);
+          latestPrice = await priceService.getLatestPrice(code, transactions[0].asset_type);
+          // 计算平均成本包含费用
           const totalCost = queue.reduce((sum, item) => sum + item.price * item.quantity, 0);
           const averageCost = totalCost / currentQuantity;
           unrealizedPnL = currentQuantity * (latestPrice - averageCost);
@@ -148,28 +133,22 @@ exports.calculatePositionProfit = (userId) => {
           realizedPnL,
           unrealizedPnL,
           latestPrice,
-          fee: totalFee
+          fee: totalFee // 返回总费用
         });
       }
 
-      resolve(results);
-    });
-  });
-};
+      return results;
+    } catch (error) {
+      throw new AppError('计算持仓收益失败', 'CALCULATE_PROFIT_FAILED', 500);
+    }
+  }
 
-/**
- * 删除用户持仓服务
- * @param {number} userId - 用户ID
- * @returns {Promise} 删除结果Promise
- */
-exports.deletePositions = (userId) => {
-  return new Promise((resolve, reject) => {
-    db.run("DELETE FROM positions WHERE user_id = ?", [userId], function(err) {
-      if (err) {
-        reject(new AppError(err.message, 'DATABASE_ERROR'));
-      } else {
-        resolve({ message: `成功清除用户${userId}的${this.changes}条交易记录` });
-      }
-    });
-  });
-};
+  async deletePositions(userId) {
+    try {
+      await positionDao.deleteByUserId(userId);
+    } catch (error) {
+      throw new AppError('删除持仓失败', 'DELETE_POSITIONS_FAILED', 500);
+    }
+  }
+}
+module.exports = new PositionService();

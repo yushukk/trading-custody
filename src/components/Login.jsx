@@ -1,39 +1,56 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Toast } from 'antd-mobile';
+import { useAuth } from '../contexts/AuthContext';
+import { handleError } from '../utils/errorHandler';
+import { ROLES, ROUTES, KEYS } from '../constants';
 import './Login.css';
 
-// 设置API基础URL，统一使用window.API_BASE_URL
-const API_BASE_URL = window.API_BASE_URL || 'http://localhost:3001';
-
-const Login = ({ onLogin }) => {
+const Login = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
+  const { login: authLogin } = useAuth();
 
-  const handleLogin = async () => {
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/login`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ username, password }),
+  const handleLogin = useCallback(async () => {
+    if (!username || !password) {
+      Toast.show({
+        icon: 'fail',
+        content: '请输入用户名和密码'
       });
-
-      if (!response.ok) {
-        throw new Error('Invalid credentials');
-      }
-
-      const data = await response.json();
-      onLogin(data.token, data.role, username, data.id);
-    } catch (error) {
-      alert(error.message);
+      return;
     }
-  };
 
-  const handleKeyPress = (e) => {
-    if (e.key === 'Enter') {
+    setLoading(true);
+    try {
+      const data = await authLogin(username, password);
+      
+      if (data.success && data.user) {
+        Toast.show({
+          icon: 'success',
+          content: '登录成功'
+        });
+        
+        // 根据用户角色导航到不同页面
+        if (data.user.role === ROLES.ADMIN) {
+          navigate(ROUTES.ADMIN_DASHBOARD);
+        } else {
+          navigate(ROUTES.USER_FUND_POSITION);
+        }
+      }
+    } catch (error) {
+      handleError(error, navigate);
+    } finally {
+      setLoading(false);
+    }
+  }, [username, password, authLogin, navigate]);
+
+  const handleKeyPress = useCallback((e) => {
+    if (e.key === KEYS.ENTER) {
       handleLogin();
     }
-  };
+  }, [handleLogin]);
 
   return (
     <div className="login-container">
@@ -61,14 +78,15 @@ const Login = ({ onLogin }) => {
           className="login-input"
         />
       </div>
-      <button 
+      <button
         onClick={handleLogin}
         className="login-button"
+        disabled={loading}
       >
-        登录
+        {loading ? '登录中...' : '登录'}
       </button>
     </div>
   );
 };
 
-export default Login;
+export default React.memo(Login);

@@ -1,42 +1,39 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
+import { useAuth } from '../contexts/AuthContext';
+import apiClient from '../api/apiClient';
+import { handleError } from '../utils/errorHandler';
+import { KEYS } from '../constants';
 import './ChangePassword.css';
 
-const ChangePassword = ({ username, onBack }) => {
+const ChangePassword = ({ onBack }) => {
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
+  const { user } = useAuth();
 
-  const handleUpdatePassword = async () => {
+  const handleUpdatePassword = useCallback(async () => {
     if (newPassword !== confirmPassword) {
       setError('两次输入的密码不一致');
       return;
     }
 
     try {
-      const response = await fetch(`${window.API_BASE_URL}/api/update-password`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ username, newPassword }),
+      await apiClient.put('/api/users/password', {
+        newPassword
       });
-
-      if (!response.ok) {
-        throw new Error('修改密码失败');
-      }
 
       alert('密码修改成功');
       onBack();
     } catch (error) {
-      setError(error.message);
+      handleError(error);
     }
-  };
+  }, [newPassword, confirmPassword, onBack]);
 
-  const handleKeyPress = (e) => {
-    if (e.key === 'Enter') {
+  const handleKeyPress = useCallback((e) => {
+    if (e.key === KEYS.ENTER) {
       handleUpdatePassword();
     }
-  };
+  }, [handleUpdatePassword]);
 
   return (
     <div className="change-password-container">
@@ -80,4 +77,4 @@ const ChangePassword = ({ username, onBack }) => {
   );
 };
 
-export default ChangePassword;
+export default React.memo(ChangePassword);
