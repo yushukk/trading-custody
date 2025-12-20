@@ -5,6 +5,10 @@ class UserDao {
     return await db.get('SELECT * FROM users WHERE email = ?', [email]);
   }
 
+  async findByName(name) {
+    return await db.get('SELECT * FROM users WHERE name = ?', [name]);
+  }
+
   async findById(id) {
     return await db.get('SELECT * FROM users WHERE id = ?', [id]);
   }

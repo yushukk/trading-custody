@@ -60,7 +60,7 @@ const VALIDATION = {
 
   // 密码
   PASSWORD: {
-    MIN_LENGTH: 6,
+    MIN_LENGTH: 4,
     MAX_LENGTH: 50,
   },
 
@@ -115,7 +115,7 @@ const ERROR_MESSAGES = {
 
   // 验证相关
   INVALID_EMAIL: '邮箱格式不正确',
-  INVALID_PASSWORD: '密码长度必须在6-50个字符之间',
+  INVALID_PASSWORD: '密码长度必须在4-50个字符之间',
   INVALID_USER_ID: '用户ID必须为正整数',
   EMAIL_REQUIRED: '邮箱不能为空',
   PASSWORD_REQUIRED: '密码不能为空',

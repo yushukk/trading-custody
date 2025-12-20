@@ -5,15 +5,13 @@ const { VALIDATION, ERROR_MESSAGES } = require('../constants');
  * 登录验证规则
  */
 const loginValidation = [
-  body('email')
+  body('username')
     .trim()
     .notEmpty()
-    .withMessage(ERROR_MESSAGES.EMAIL_REQUIRED)
-    .isEmail()
-    .withMessage(ERROR_MESSAGES.INVALID_EMAIL)
-    .isLength({ min: VALIDATION.EMAIL.MIN_LENGTH, max: VALIDATION.EMAIL.MAX_LENGTH })
+    .withMessage('用户名不能为空')
+    .isLength({ min: VALIDATION.USERNAME.MIN_LENGTH, max: VALIDATION.USERNAME.MAX_LENGTH })
     .withMessage(
-      `邮箱长度必须在${VALIDATION.EMAIL.MIN_LENGTH}-${VALIDATION.EMAIL.MAX_LENGTH}个字符之间`
+      `用户名长度必须在${VALIDATION.USERNAME.MIN_LENGTH}-${VALIDATION.USERNAME.MAX_LENGTH}个字符之间`
     ),
 
   body('password')

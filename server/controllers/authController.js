@@ -8,8 +8,8 @@ class AuthController {
 
   async login(req, res, next) {
     try {
-      const { email, password } = req.body;
-      const { accessToken, refreshToken, user } = await this.authService.login(email, password);
+      const { username, password } = req.body;
+      const { accessToken, refreshToken, user } = await this.authService.login(username, password);
 
       // 设置 HttpOnly Cookie
       res.cookie('accessToken', accessToken, COOKIE_OPTIONS.ACCESS_TOKEN);

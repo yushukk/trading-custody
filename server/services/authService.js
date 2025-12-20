@@ -7,8 +7,8 @@ class AuthService {
     this.userDao = userDao;
   }
 
-  async login(email, password) {
-    const user = await this.userDao.findByEmail(email);
+  async login(username, password) {
+    const user = await this.userDao.findByName(username);
     if (!user) {
       throw new AppError('用户不存在', 'USER_NOT_FOUND', 404);
     }

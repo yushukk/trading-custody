@@ -33,9 +33,13 @@ server/logs/
 
 # Database
 *.db
+*.db-wal
+*.db-shm
 *.sqlite
 *.sqlite3
 server/database.db
+server/database.db-wal
+server/database.db-shm
 trading_custody.db
 
 # IDE
