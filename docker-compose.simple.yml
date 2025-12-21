@@ -17,8 +17,8 @@ services:
     image: yushu/trading-custody-backend:latest
     container_name: trading-custody-backend
     restart: unless-stopped
-    ports:
-      - "3001:3001"
+    # ports:
+    #   - "3001:3001"  
     volumes:
       - backend-data:/app/server/data
       - backend-logs:/app/logs
@@ -82,8 +82,7 @@ services:
     ports:
       - "80:80"
     depends_on:
-      backend:
-        condition: service_healthy
+      - backend  # 简化依赖，不等待健康检查
     healthcheck:
       test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:80/"]
       interval: 30s
