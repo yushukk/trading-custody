@@ -33,7 +33,7 @@ describe('Auth API Integration', () => {
     process.env.DATABASE_PATH = ':memory:';
 
     // 创建一个新的内存数据库实例用于测试
-    const Database = require('../../utils/database');
+    const { Database } = require('../../utils/database');
     db = new Database(':memory:');
 
     // 直接创建所需的表
@@ -52,6 +52,7 @@ describe('Auth API Integration', () => {
     // 创建测试用的DAO和Service
     const testUserDao = {
       findByEmail: async email => await db.get('SELECT * FROM users WHERE email = ?', [email]),
+      findByName: async name => await db.get('SELECT * FROM users WHERE name = ?', [name]),
       findById: async id => await db.get('SELECT * FROM users WHERE id = ?', [id]),
       create: async userData => {
         const { name, email, password, role } = userData;
@@ -105,23 +106,27 @@ describe('Auth API Integration', () => {
     };
 
     // 创建测试用的服务和控制器
-    const AuthService = require('../../services/authService').constructor;
-    const AuthController = require('../../controllers/authController').constructor;
+    const { AuthService } = require('../../services/authService');
+    const { AuthController } = require('../../controllers/authController');
+
+    // 创建一个使用测试DAO的AuthService实例
     const testAuthService = new AuthService(testUserDao);
-    const authController = new AuthController(testAuthService);
+
+    // 创建使用测试服务的AuthController实例
+    const testAuthController = new AuthController(testAuthService);
 
     // 导入中间件
     const logMiddleware = require('../../middleware/logMiddleware');
     const errorMiddleware = require('../../middleware/errorMiddleware');
     const { authenticateToken } = require('../../middleware/authMiddleware');
 
-    // 设置中间件和路由
+    // 设置中间件和路由 - 使用测试控制器和服务
     app.use(logMiddleware);
-    app.post('/api/auth/login', (req, res, next) => authController.login(req, res, next));
-    app.post('/api/auth/register', (req, res, next) => authController.register(req, res, next));
-    app.post('/api/auth/refresh', (req, res, next) => authController.refresh(req, res, next));
-    app.post('/api/auth/logout', (req, res) => authController.logout(req, res));
-    app.get('/auth/me', authenticateToken, (req, res) => authController.me(req, res));
+    app.post('/api/auth/login', (req, res, next) => testAuthController.login(req, res, next));
+    app.post('/api/auth/register', (req, res, next) => testAuthController.register(req, res, next));
+    app.post('/api/auth/refresh', (req, res, next) => testAuthController.refresh(req, res, next));
+    app.post('/api/auth/logout', (req, res) => testAuthController.logout(req, res));
+    app.get('/api/auth/me', authenticateToken, (req, res) => testAuthController.me(req, res));
     app.use(errorMiddleware);
 
     // 插入测试数据
@@ -172,11 +177,11 @@ describe('Auth API Integration', () => {
     it('should login with correct credentials', async () => {
       const response = await request(app)
         .post('/api/auth/login')
-        .send({ email: 'alice@example.com', password: 'password123' })
+        .send({ username: 'Alice', password: 'password123' })
         .expect(200);
 
       expect(response.body.success).toBe(true);
-      expect(response.body.user.email).toBe('alice@example.com');
+      expect(response.body.user.name).toBe('Alice');
       expect(response.body.user.role).toBe('user');
       expect(response.headers['set-cookie']).toBeDefined();
     });
@@ -184,7 +189,7 @@ describe('Auth API Integration', () => {
     it('should return 401 for invalid credentials', async () => {
       const response = await request(app)
         .post('/api/auth/login')
-        .send({ email: 'alice@example.com', password: 'wrongpassword' })
+        .send({ username: 'Alice', password: 'wrongpassword' })
         .expect(401);
 
       expect(response.body.message).toContain('密码错误');
@@ -193,7 +198,7 @@ describe('Auth API Integration', () => {
     it('should return 404 for non-existent user', async () => {
       const response = await request(app)
         .post('/api/auth/login')
-        .send({ email: 'nonexistent@example.com', password: 'password123' })
+        .send({ username: 'NonExistentUser', password: 'password123' })
         .expect(404);
 
       expect(response.body.message).toContain('用户不存在');
@@ -234,7 +239,7 @@ describe('Auth API Integration', () => {
       // First login to get refresh token
       const loginResponse = await request(app)
         .post('/api/auth/login')
-        .send({ email: 'alice@example.com', password: 'password123' })
+        .send({ username: 'Alice', password: 'password123' })
         .expect(200);
 
       // Extract refresh token from cookie
@@ -264,7 +269,7 @@ describe('Auth API Integration', () => {
       // First login to get token
       await request(app)
         .post('/api/auth/login')
-        .send({ email: 'alice@example.com', password: 'password123' })
+        .send({ username: 'Alice', password: 'password123' })
         .expect(200);
 
       const response = await request(app).post('/api/auth/logout').expect(200);
@@ -281,13 +286,13 @@ describe('Auth API Integration', () => {
       // First login to get token
       const loginResponse = await request(app)
         .post('/api/auth/login')
-        .send({ email: 'alice@example.com', password: 'password123' })
+        .send({ username: 'Alice', password: 'password123' })
         .expect(200);
 
       // Extract cookies from login response
       const cookies = loginResponse.headers['set-cookie'];
 
-      const response = await request(app).get('/auth/me').set('Cookie', cookies).expect(200);
+      const response = await request(app).get('/api/auth/me').set('Cookie', cookies).expect(200);
 
       expect(response.body.success).toBe(true);
       expect(response.body.user).toBeDefined();
@@ -298,7 +303,7 @@ describe('Auth API Integration', () => {
     });
 
     it('should return 401 when not authenticated', async () => {
-      const response = await request(app).get('/auth/me').expect(401);
+      const response = await request(app).get('/api/auth/me').expect(401);
 
       expect(response.body.error).toContain('Access token required');
     });

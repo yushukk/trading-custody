@@ -5,6 +5,7 @@ const AppError = require('../../utils/AppError');
 jest.mock('../../dao/userDao', () => {
   return {
     findByEmail: jest.fn(),
+    findByName: jest.fn(),
     findById: jest.fn(),
     create: jest.fn(),
     update: jest.fn(),
@@ -130,6 +131,26 @@ describe('UserService', () => {
       };
 
       userDao.findByEmail.mockResolvedValue(existingUser);
+      userDao.findByName.mockResolvedValue(null); // No existing user with same name
+
+      await expect(userService.createUser(userData)).rejects.toThrow(AppError);
+    });
+
+    it('should throw error if name already exists', async () => {
+      const userData = {
+        name: 'New User',
+        email: 'newuser@example.com',
+        password: 'password123',
+        role: 'user',
+      };
+      const existingUser = {
+        id: 1,
+        name: 'New User',
+        email: 'different@example.com',
+        role: 'user',
+      };
+
+      userDao.findByName.mockResolvedValue(existingUser); // Existing user with same name
 
       await expect(userService.createUser(userData)).rejects.toThrow(AppError);
     });
@@ -142,6 +163,7 @@ describe('UserService', () => {
         role: 'user',
       };
 
+      userDao.findByName.mockResolvedValue(null); // No existing user with same name
       userDao.findByEmail.mockRejectedValue(new Error('Database error'));
 
       await expect(userService.createUser(userData)).rejects.toThrow(AppError);

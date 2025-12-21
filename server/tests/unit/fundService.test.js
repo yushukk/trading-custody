@@ -90,6 +90,17 @@ describe('FundService', () => {
 
       const result = await fundService.handleFundOperation(1, 'initial', 1000, 'Initial deposit');
       expect(result).toEqual({ message: '操作成功', balance: 1000 });
+      // 确保 mock 函数被正确调用
+      expect(fundDao.getBalance).toHaveBeenCalledWith(1);
+      expect(fundDao.addFunds).toHaveBeenCalledWith(1, 1000, expect.any(String));
+      expect(fundDao.addFundLog).toHaveBeenCalledWith(
+        1,
+        'initial',
+        1000,
+        1000,
+        expect.any(String),
+        'Initial deposit'
+      );
     });
 
     it('should throw error when database query fails', async () => {
@@ -118,12 +129,13 @@ describe('FundService', () => {
       expect(result).toEqual({ message: '操作成功', balance: 800 });
     });
 
-    it('should throw error for insufficient balance on withdrawal', async () => {
+    it('should allow withdrawal even with insufficient balance (balance can go negative)', async () => {
       fundDao.getBalance.mockResolvedValue(100);
+      fundDao.addFunds.mockResolvedValue(1);
+      fundDao.addFundLog.mockResolvedValue(1);
 
-      await expect(
-        fundService.handleFundOperation(1, 'withdraw', 200, 'Withdrawal')
-      ).rejects.toThrow(AppError);
+      const result = await fundService.handleFundOperation(1, 'withdraw', 200, 'Withdrawal');
+      expect(result).toEqual({ message: '操作成功', balance: -100 });
     });
   });
 });

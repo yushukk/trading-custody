@@ -33,7 +33,7 @@ describe('Position API Integration', () => {
     process.env.DATABASE_PATH = ':memory:';
 
     // 创建一个新的内存数据库实例用于测试
-    const Database = require('../../utils/database');
+    const { Database } = require('../../utils/database');
     db = new Database(':memory:');
 
     // 直接创建所需的表
@@ -422,9 +422,29 @@ describe('Position API Integration', () => {
       const logMiddleware = require('../../middleware/logMiddleware');
       const errorMiddleware = require('../../middleware/errorMiddleware');
 
+      // 使用绕过认证的版本
+      const authenticateToken = (req, _res, next) => {
+        req.user = { userId: 1, role: 'user', email: 'alice@example.com' }; // 模拟认证用户
+        next();
+      };
+      const checkResourceOwnership = (req, _res, next) => {
+        // 允许访问，因为已经在 authenticateToken 中设置了用户
+        next();
+      };
+
       appWithAuth.use(logMiddleware);
-      appWithAuth.get('/api/positions/:userId', (req, res, next) =>
-        positionController.getPositions(req, res, next)
+
+      // Mock authentication by adding user to request
+      appWithAuth.use((req, res, next) => {
+        req.user = { userId: 1, role: 'user' }; // Mock user for testing with correct property name
+        next();
+      });
+
+      appWithAuth.get(
+        '/api/positions/:userId',
+        authenticateToken,
+        checkResourceOwnership,
+        (req, res, next) => positionController.getPositions(req, res, next)
       );
       appWithAuth.use(errorMiddleware);
 
@@ -591,9 +611,30 @@ describe('Position API Integration', () => {
       const logMiddleware = require('../../middleware/logMiddleware');
       const errorMiddleware = require('../../middleware/errorMiddleware');
 
+      // 使用绕过认证的版本
+      const authenticateToken = (req, _res, next) => {
+        req.user = { userId: 1, role: 'admin', email: 'alice@example.com' }; // 模拟认证用户，使用admin角色允许访问任何用户资源
+        next();
+      };
+      const checkResourceOwnership = (req, _res, next) => {
+        // 允许访问，因为已经在 authenticateToken 中设置了用户
+        next();
+      };
+
       appWithAuth.use(logMiddleware);
-      appWithAuth.get('/api/positions/:userId', (req, res, next) =>
-        positionController.getPositions(req, res, next)
+
+      // Mock authentication by adding user to request
+      appWithAuth.use((req, res, next) => {
+        // For the non-existing user test case, make the mock user an admin so they can access any user's positions
+        req.user = { userId: 1, role: 'admin' }; // Mock user for testing with correct property name and admin role
+        next();
+      });
+
+      appWithAuth.get(
+        '/api/positions/:userId',
+        authenticateToken,
+        checkResourceOwnership,
+        (req, res, next) => positionController.getPositions(req, res, next)
       );
       appWithAuth.use(errorMiddleware);
 
@@ -1141,7 +1182,7 @@ describe('Position API Integration', () => {
       appWithAuth.use(errorMiddleware);
 
       const invalidPosition = {
-        assetType: 'invalid',
+        assetType: 'invalid', // 无效的资产类型
         code: 'AAPL',
         name: 'Apple',
         operation: 'buy',

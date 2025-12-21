@@ -1,6 +1,6 @@
 const AppError = require('../utils/AppError');
 const logger = require('../utils/logger');
-const { FUND_OPERATION_TYPE_VALUES, ERROR_MESSAGES } = require('../constants');
+const { FUND_OPERATION_TYPE_VALUES, ERROR_MESSAGES, SUCCESS_MESSAGES } = require('../constants');
 
 class FundService {
   constructor(fundDao) {
@@ -83,8 +83,6 @@ class FundService {
         newBalance += numericAmount;
         fundAmount = numericAmount;
       } else if (type === 'withdraw') {
-        // 取出资金：允许超额取出，因为可能投资赚到钱了
-        // 这里的余额只是资金的余额，不是账户的实际余额
         newBalance -= numericAmount;
         fundAmount = -numericAmount;
       }
@@ -110,7 +108,7 @@ class FundService {
       await this.addFundLog(userId, type, numericAmount, newBalance, timestamp, remark);
 
       logger.info('Fund operation completed', { userId, type, amount: numericAmount, newBalance });
-      return { message: ERROR_MESSAGES.OPERATION_SUCCESS, balance: newBalance };
+      return { message: SUCCESS_MESSAGES.OPERATION_SUCCESS, balance: newBalance };
     } catch (error) {
       logger.error('handleFundOperation error', { error: error.message, stack: error.stack });
       if (error instanceof AppError) {

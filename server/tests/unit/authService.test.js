@@ -6,6 +6,7 @@ const JwtHelper = require('../../utils/jwtHelper');
 // Mock DAO and utils
 jest.mock('../../dao/userDao', () => ({
   findByEmail: jest.fn(),
+  findByName: jest.fn(),
   create: jest.fn(),
 }));
 
@@ -24,8 +25,8 @@ describe('AuthService', () => {
   let authService;
 
   beforeEach(() => {
-    // 创建AuthService实例
-    authService = new AuthService(userDao);
+    // 使用AuthService实例
+    authService = AuthService;
     // 清除所有mock调用
     jest.clearAllMocks();
   });
@@ -40,25 +41,23 @@ describe('AuthService', () => {
         role: 'user',
       };
 
-      userDao.findByEmail.mockResolvedValue(mockUser);
+      userDao.findByName.mockResolvedValue(mockUser);
       PasswordHelper.verify.mockResolvedValue(true);
       JwtHelper.generateAccessToken.mockReturnValue('access_token');
       JwtHelper.generateRefreshToken.mockReturnValue('refresh_token');
 
-      const result = await authService.login('test@example.com', 'password');
+      const result = await authService.login('Test User', 'password');
 
       expect(result).toHaveProperty('accessToken');
       expect(result).toHaveProperty('refreshToken');
-      expect(result.user.email).toBe('test@example.com');
+      expect(result.user.name).toBe('Test User');
       expect(PasswordHelper.verify).toHaveBeenCalledWith('password', 'hashedPassword');
     });
 
     it('should throw error when user not found', async () => {
-      userDao.findByEmail.mockResolvedValue(null);
+      userDao.findByName.mockResolvedValue(null);
 
-      await expect(authService.login('nonexistent@example.com', 'password')).rejects.toThrow(
-        '用户不存在'
-      );
+      await expect(authService.login('NonExistentUser', 'password')).rejects.toThrow('用户不存在');
     });
 
     it('should throw error when password is invalid', async () => {
@@ -68,12 +67,10 @@ describe('AuthService', () => {
         password: 'hashedPassword',
       };
 
-      userDao.findByEmail.mockResolvedValue(mockUser);
+      userDao.findByName.mockResolvedValue(mockUser);
       PasswordHelper.verify.mockResolvedValue(false);
 
-      await expect(authService.login('test@example.com', 'wrongpassword')).rejects.toThrow(
-        '密码错误'
-      );
+      await expect(authService.login('Test User', 'wrongpassword')).rejects.toThrow('密码错误');
     });
   });
 

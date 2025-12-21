@@ -42,7 +42,7 @@ describe('User API Integration', () => {
     process.env.DATABASE_PATH = ':memory:';
 
     // 创建一个新的内存数据库实例用于测试
-    const Database = require('../../utils/database');
+    const { Database } = require('../../utils/database');
     db = new Database(':memory:');
 
     // 确保方法被正确绑定到数据库实例
@@ -108,6 +108,7 @@ describe('User API Integration', () => {
     // 创建测试用的DAO
     const testUserDao = {
       findByEmail: async email => await dbGet('SELECT * FROM users WHERE email = ?', [email]),
+      findByName: async name => await dbGet('SELECT * FROM users WHERE name = ?', [name]),
       findById: async id => await dbGet('SELECT * FROM users WHERE id = ?', [id]),
       create: async userData => {
         const { name, email, password, role } = userData;
@@ -233,9 +234,9 @@ describe('User API Integration', () => {
 
     // 模拟AuthService
     const mockAuthService = {
-      login: jest.fn().mockImplementation(async (email, password) => {
+      login: jest.fn().mockImplementation(async (username, password) => {
         // 检查用户是否存在并验证密码
-        const user = await testUserDao.findByEmail(email);
+        const user = await testUserDao.findByName(username);
         if (!user) {
           const AppError = require('../../utils/AppError');
           throw new AppError('用户不存在', 'USER_NOT_FOUND', 404);
@@ -253,6 +254,7 @@ describe('User API Integration', () => {
         const payload = {
           userId: user.id,
           username: user.name,
+          email: user.email,
           role: user.role,
         };
 
@@ -281,10 +283,12 @@ describe('User API Integration', () => {
     };
 
     const UserController = require('../../controllers/userController');
-    const AuthController = require('../../controllers/authController');
+    const { AuthController } = require('../../controllers/authController');
+
+    // 创建使用测试服务的控制器实例
+    const authController = new AuthController(mockAuthService);
 
     const userController = new UserController(mockUserService);
-    const authController = new AuthController(mockAuthService);
 
     // 在测试中直接替换方法实现
     originalUserDao = require('../../dao/userDao');
@@ -306,7 +310,7 @@ describe('User API Integration', () => {
     originalUserDao.updatePassword = testUserDao.updatePassword;
     originalUserDao.findByEmail = testUserDao.findByEmail;
 
-    // 保存原始方法引用
+    // 保存原始服务方法引用
     originalLogin = originalAuthService.login;
 
     // 配置UserService的模拟实现 - updatePassword 只接受 userId 和 newPassword 两个参数
@@ -316,9 +320,11 @@ describe('User API Integration', () => {
       const hashedNewPassword = await PasswordHelper.hash(newPassword);
       await testUserDao.updatePassword(userId, hashedNewPassword);
     });
-    originalAuthService.login = jest.fn().mockImplementation(async (email, password) => {
+
+    // 配置AuthService使用测试DAO
+    originalAuthService.login = async (username, password) => {
       // 检查用户是否存在并验证密码
-      const user = await testUserDao.findByEmail(email);
+      const user = await testUserDao.findByName(username);
       if (!user) {
         const AppError = require('../../utils/AppError');
         throw new AppError('用户不存在', 'USER_NOT_FOUND', 404);
@@ -336,6 +342,7 @@ describe('User API Integration', () => {
       const payload = {
         userId: user.id,
         username: user.name,
+        email: user.email,
         role: user.role,
       };
 
@@ -344,11 +351,17 @@ describe('User API Integration', () => {
         refreshToken: JwtHelper.generateRefreshToken(payload),
         user,
       };
-    });
+    };
 
-    // 配置其他AuthService方法
-    originalAuthService.register = jest.fn().mockImplementation(async userData => {
-      // 模拟注册逻辑
+    originalAuthService.register = async userData => {
+      // 检查用户是否已存在
+      const existingUser = await testUserDao.findByEmail(userData.email);
+      if (existingUser) {
+        const AppError = require('../../utils/AppError');
+        throw new AppError('邮箱已被注册', 'EMAIL_EXISTS', 400);
+      }
+
+      // 注册新用户
       const { name, email, password, role } = userData;
       const PasswordHelper = require('../../utils/passwordHelper');
       const hashedPassword = await PasswordHelper.hash(password);
@@ -361,7 +374,25 @@ describe('User API Integration', () => {
       });
 
       return userId;
-    });
+    };
+
+    originalAuthService.refreshToken = async refreshToken => {
+      const JwtHelper = require('../../utils/jwtHelper');
+      try {
+        const decoded = JwtHelper.verifyRefreshToken(refreshToken);
+        const payload = {
+          userId: decoded.userId,
+          username: decoded.username,
+          role: decoded.role,
+        };
+
+        const newAccessToken = JwtHelper.generateAccessToken(payload);
+        return newAccessToken;
+      } catch (error) {
+        const AppError = require('../../utils/AppError');
+        throw new AppError('Refresh token 无效', 'INVALID_REFRESH_TOKEN', 401);
+      }
+    };
 
     // 导入中间件
     const logMiddleware = require('../../middleware/logMiddleware');
@@ -422,12 +453,15 @@ describe('User API Integration', () => {
     }
   };
 
-  afterAll(() => {
+  afterAll(async () => {
     restoreOriginalMethods();
     // 关闭数据库连接
     if (db && db.db) {
-      db.close(() => {
-        console.log('Test database connection closed');
+      await new Promise(resolve => {
+        db.close(() => {
+          // Test database connection closed
+          resolve();
+        });
       });
     }
   });
@@ -436,7 +470,7 @@ describe('User API Integration', () => {
     it('should login with correct credentials', async () => {
       const response = await request(app)
         .post('/api/auth/login')
-        .send({ email: 'alice@example.com', password: 'password123' })
+        .send({ username: 'Alice', password: 'password123' })
         .expect(200);
 
       expect(response.body.success).toBe(true);
@@ -448,7 +482,7 @@ describe('User API Integration', () => {
     it('should return 401 for invalid credentials', async () => {
       const response = await request(app)
         .post('/api/auth/login')
-        .send({ email: 'alice@example.com', password: 'wrongpassword' })
+        .send({ username: 'Alice', password: 'wrongpassword' })
         .expect(401);
 
       expect(response.body.message).toBe('密码错误');
@@ -460,7 +494,7 @@ describe('User API Integration', () => {
       // 首先登录作为管理员
       const loginResponse = await request(app)
         .post('/api/auth/login')
-        .send({ email: 'bob@example.com', password: 'password123' })
+        .send({ username: 'Bob', password: 'password123' })
         .expect(200);
 
       // 从响应中获取cookie（如果需要）
@@ -485,7 +519,7 @@ describe('User API Integration', () => {
       // 首先登录作为管理员
       const loginResponse = await request(app)
         .post('/api/auth/login')
-        .send({ email: 'bob@example.com', password: 'password123' })
+        .send({ username: 'Bob', password: 'password123' })
         .expect(200);
 
       // 从响应中获取cookie
@@ -513,7 +547,7 @@ describe('User API Integration', () => {
       // 首先登录
       const loginResponse = await request(app)
         .post('/api/auth/login')
-        .send({ email: 'alice@example.com', password: 'password123' })
+        .send({ username: 'Alice', password: 'password123' })
         .expect(200);
 
       // 从响应中获取cookie
@@ -534,7 +568,7 @@ describe('User API Integration', () => {
       // 首先我们需要创建一个用户来删除（id=3）
       const loginResponse = await request(app)
         .post('/api/auth/login')
-        .send({ email: 'bob@example.com', password: 'password123' }) // 使用管理员账户登录
+        .send({ username: 'Bob', password: 'password123' }) // 使用管理员账户登录
         .expect(200);
 
       // 从响应中获取cookie
