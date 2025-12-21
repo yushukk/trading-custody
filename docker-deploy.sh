@@ -134,7 +134,7 @@ build_images() {
     print_header "构建 Docker 镜像"
     
     print_info "开始构建镜像（这可能需要几分钟）..."
-    docker-compose --env-file .env.production build --no-cache
+    docker-compose --env-file .env.production build
     print_success "镜像构建完成"
 }
 

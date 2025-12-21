@@ -27,19 +27,18 @@ RUN npm run build
 # 生产阶段
 FROM nginx:alpine AS production
 
-# 创建非 root 用户
-RUN getent group nginx || addgroup -g 1001 -S nginx && \
-    getent passwd nginx || adduser -S nginx -u 1001 -G nginx
-
-# 复制构建产物到 nginx 默认目录
-COPY --from=builder --chown=nginx:nginx /app/build /usr/share/nginx/html
-
 # 复制 nginx 配置
 COPY nginx.conf /etc/nginx/nginx.conf
 
-# 创建 nginx 运行所需的目录
-RUN mkdir -p /var/cache/nginx /var/log/nginx /var/run && \
-    chown -R nginx:nginx /var/cache/nginx /var/log/nginx /var/run
+# 创建 nginx 运行所需的目录并设置正确的权限
+RUN mkdir -p /var/cache/nginx /var/log/nginx /var/run/nginx && \
+    chown -R nginx:nginx /var/cache/nginx /var/log/nginx /var/run/nginx && \
+    touch /var/run/nginx/nginx.pid && \
+    chown nginx:nginx /var/run/nginx/nginx.pid && \
+    chown nginx:nginx /etc/nginx/nginx.conf
+
+# 复制构建产物到 nginx 默认目录
+COPY --from=builder --chown=nginx:nginx /app/build /usr/share/nginx/html
 
 # 切换到非 root 用户
 USER nginx

@@ -27,20 +27,20 @@ RUN getent group nginx || addgroup -g 1001 -S nginx && \
 # 复制 package 文件
 COPY package*.json ./
 
-# 仅安装生产依赖（忽略脚本以避免 husky 错误）
-RUN npm ci --only=production --ignore-scripts && \
+# 仅安装生产依赖（不加 --ignore-scripts，确保 sqlite3 能正确编译）
+RUN npm ci --only=production && \
     npm cache clean --force
 
 # 从构建阶段复制必要文件
-COPY --from=builder --chown=nodejs:nodejs /app/server ./server
-COPY --from=builder --chown=nodejs:nodejs /app/scripts ./scripts
+COPY --from=builder --chown=node:node /app/server ./server
+COPY --from=builder --chown=node:node /app/scripts ./scripts
 
 # 创建必要的目录并设置权限
 RUN mkdir -p ./server/data ./logs && \
     chown -R node:node ./server/data ./logs
 
 # 切换到非 root 用户
-USER nodejs
+USER node
 
 # 暴露端口
 EXPOSE 3001

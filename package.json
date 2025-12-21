@@ -48,7 +48,7 @@
     "lint:fix": "eslint src server --ext .js,.jsx --fix",
     "format": "prettier --write \"src/**/*.{js,jsx,css}\" \"server/**/*.js\"",
     "format:check": "prettier --check \"src/**/*.{js,jsx,css}\" \"server/**/*.js\"",
-    "prepare": "husky install"
+    "prepare": "if [ \"$NODE_ENV\" != \"production\" ]; then husky install; fi"
   },
   "lint-staged": {
     "*.{js,jsx}": [
