@@ -116,7 +116,7 @@ END;
 INSERT OR IGNORE INTO users (name, email, password, role) VALUES (
   'admin',
   'admin@example.com',
-  '$2b$10$9Z5P5314p4w3h734243434oWJy7s861v8.234567890123456789012',
+  '$2b$10$Fdi5yvGmnXEyRGji4r2MNuzKVnqoYVASqm0A9dOrCnyKAJuhC.CL2',
   'admin'
 );
 
