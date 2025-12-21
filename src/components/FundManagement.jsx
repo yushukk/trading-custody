@@ -16,6 +16,7 @@ const FundManagement = () => {
   const [amount, setAmount] = useState('');
   const [remark, setRemark] = useState('');
   const [logs, setLogs] = useState([]);
+  const [totalPnL, setTotalPnL] = useState(0);
 
   useEffect(() => {
     let isMounted = true;
@@ -40,17 +41,36 @@ const FundManagement = () => {
     };
   }, []);
 
-  const fetchFundInfo = useCallback(async userId => {
+  const fetchPositions = useCallback(async userId => {
     try {
-      const balanceData = await apiClient.get(`/api/funds/${userId}`);
-      const logsData = await apiClient.get(`/api/funds/${userId}/logs`);
+      const data = await apiClient.get(`/api/positions/profit/${userId}`);
+      const positionsData = Array.isArray(data) ? data : data.results || data.positions || [];
 
-      setBalance(balanceData.balance || 0);
-      setLogs(logsData.logs || []);
+      // 计算总盈亏
+      const pnl = positionsData.reduce((sum, pos) => sum + (pos.totalPnL || 0), 0);
+      setTotalPnL(pnl);
     } catch (error) {
       handleError(error);
     }
   }, []);
+
+  const fetchFundInfo = useCallback(
+    async userId => {
+      try {
+        const balanceData = await apiClient.get(`/api/funds/${userId}`);
+        const logsData = await apiClient.get(`/api/funds/${userId}/logs`);
+
+        setBalance(balanceData.balance || 0);
+        setLogs(logsData.logs || []);
+
+        // 获取持仓数据以计算总盈亏
+        fetchPositions(userId);
+      } catch (error) {
+        handleError(error);
+      }
+    },
+    [fetchPositions]
+  );
 
   const handleUserSelect = useCallback(
     userId => {
@@ -109,16 +129,46 @@ const FundManagement = () => {
         <UserSelect users={users} onSelect={handleUserSelect} />
       </div>
 
-      {/* 余额显示 */}
+      {/* 资产总览显示 */}
       {selectedUserId && (
         <div className="balance-card">
-          <div className="balance-label">当前余额</div>
-          <div className="balance-amount">￥{balance.toFixed(2)}</div>
+          <div className="balance-label">资产总额</div>
+          <div className="balance-amount">￥{(balance + totalPnL).toFixed(2)}</div>
+
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              marginTop: '16px',
+              paddingTop: '16px',
+              borderTop: '1px solid #f0f0f0',
+            }}
+          >
+            <div style={{ textAlign: 'left', flex: 1 }}>
+              <div style={{ fontSize: '13px', color: '#666', marginBottom: '4px' }}>投入金额</div>
+              <div style={{ fontSize: '16px', color: '#333', fontWeight: 500 }}>
+                ￥{balance.toFixed(2)}
+              </div>
+            </div>
+            <div style={{ textAlign: 'right', flex: 1 }}>
+              <div style={{ fontSize: '13px', color: '#666', marginBottom: '4px' }}>总盈亏</div>
+              <div
+                style={{
+                  fontSize: '16px',
+                  fontWeight: 500,
+                  color: totalPnL >= 0 ? '#f5222d' : '#52c41a',
+                }}
+              >
+                {totalPnL >= 0 ? '+' : ''}￥{totalPnL.toFixed(2)}
+              </div>
+            </div>
+          </div>
+
           <Button
             color="primary"
             fill="outline"
             size="small"
-            style={{ marginTop: '12px' }}
+            style={{ marginTop: '16px', width: '100%' }}
             onClick={() => navigate(`/user-fund-position?userId=${selectedUserId}`)}
           >
             👁️ 查看用户资金和持仓
