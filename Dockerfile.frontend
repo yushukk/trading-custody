@@ -28,8 +28,8 @@ RUN npm run build
 FROM nginx:alpine AS production
 
 # 创建非 root 用户
-RUN addgroup -g 1001 -S nginx && \
-    adduser -S nginx -u 1001 -G nginx
+RUN getent group nginx || addgroup -g 1001 -S nginx && \
+    getent passwd nginx || adduser -S nginx -u 1001 -G nginx
 
 # 复制构建产物到 nginx 默认目录
 COPY --from=builder --chown=nginx:nginx /app/build /usr/share/nginx/html

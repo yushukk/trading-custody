@@ -202,8 +202,8 @@ main() {
     # 执行发布步骤
     check_docker
     check_config
-    docker_login
     build_images
+    docker_login
     push_images
     show_image_info
     cleanup_local

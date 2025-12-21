@@ -21,8 +21,8 @@ FROM node:18-alpine AS production
 WORKDIR /app
 
 # 创建非 root 用户
-RUN addgroup -g 1001 -S nodejs && \
-    adduser -S nodejs -u 1001
+RUN getent group nginx || addgroup -g 1001 -S nginx && \
+    adduser -S nginx -u 1001 -G nginx
 
 # 复制 package 文件
 COPY package*.json ./
@@ -37,7 +37,7 @@ COPY --from=builder --chown=nodejs:nodejs /app/scripts ./scripts
 
 # 创建必要的目录并设置权限
 RUN mkdir -p ./server/data ./logs && \
-    chown -R nodejs:nodejs ./server/data ./logs
+    chown -R node:node ./server/data ./logs
 
 # 切换到非 root 用户
 USER nodejs
