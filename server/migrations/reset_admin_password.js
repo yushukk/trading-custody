@@ -1,12 +1,12 @@
 const sqlite3 = require('sqlite3').verbose();
 const PasswordHelper = require('../utils/passwordHelper');
-const path = require('path');
+const config = require('../config');
 
 /**
  * 重置 admin 用户密码为 "admin"
  */
 
-const dbPath = path.join(__dirname, '../database.db');
+const dbPath = config.DATABASE_PATH;
 const db = new sqlite3.Database(dbPath);
 
 async function resetAdminPassword() {
