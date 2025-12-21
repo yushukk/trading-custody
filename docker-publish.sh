@@ -120,8 +120,9 @@ build_images() {
     
     # 构建前端镜像
     print_info "构建前端镜像..."
+    print_warning "前端使用空 API 地址，通过 Nginx 反向代理访问后端"
     docker build -f Dockerfile.frontend \
-        --build-arg REACT_APP_API_BASE_URL=http://localhost:3001 \
+        --build-arg REACT_APP_API_BASE_URL= \
         -t ${DOCKER_REGISTRY}/${DOCKER_USERNAME}/${IMAGE_NAME_FRONTEND}:${VERSION} \
         -t ${DOCKER_REGISTRY}/${DOCKER_USERNAME}/${IMAGE_NAME_FRONTEND}:latest \
         .
@@ -169,8 +170,10 @@ show_image_info() {
     echo "  docker pull ${DOCKER_REGISTRY}/${DOCKER_USERNAME}/${IMAGE_NAME_BACKEND}:${VERSION}"
     echo "  docker pull ${DOCKER_REGISTRY}/${DOCKER_USERNAME}/${IMAGE_NAME_FRONTEND}:${VERSION}"
     echo ""
-    echo "部署命令："
-    echo "  使用 docker-compose.simple.yml 进行部署"
+    echo "部署说明："
+    echo "  1. 使用 docker-compose.simple.yml 进行部署"
+    echo "  2. 前端通过 Nginx 反向代理访问后端（/api -> backend:3001）"
+    echo "  3. 无需配置 REACT_APP_API_BASE_URL 环境变量"
     echo ""
 }
 
