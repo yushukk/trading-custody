@@ -25,8 +25,17 @@ class Database {
     return this._db;
   }
 
-  get run() {
-    return promisify(this.db.run.bind(this.db));
+  run(sql, params = []) {
+    return new Promise((resolve, reject) => {
+      this.db.run(sql, params, function (err) {
+        if (err) {
+          reject(err);
+        } else {
+          // 使用 function 而不是箭头函数，这样 this 指向 Statement 对象
+          resolve({ lastID: this.lastID, changes: this.changes });
+        }
+      });
+    });
   }
 
   get get() {

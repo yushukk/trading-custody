@@ -15,19 +15,11 @@ const userIdParamValidation = [
  * 创建用户验证规则
  */
 const createUserValidation = [
-  body('name')
-    .trim()
-    .notEmpty()
-    .withMessage('用户名不能为空')
-    .isLength({ min: VALIDATION.USERNAME.MIN_LENGTH, max: VALIDATION.USERNAME.MAX_LENGTH })
-    .withMessage(
-      `用户名长度必须在${VALIDATION.USERNAME.MIN_LENGTH}-${VALIDATION.USERNAME.MAX_LENGTH}个字符之间`
-    ),
+  body('name').trim().notEmpty().withMessage('用户名不能为空'),
 
   body('email')
+    .optional({ checkFalsy: true })
     .trim()
-    .notEmpty()
-    .withMessage(ERROR_MESSAGES.EMAIL_REQUIRED)
     .isEmail()
     .withMessage(ERROR_MESSAGES.INVALID_EMAIL)
     .isLength({ min: VALIDATION.EMAIL.MIN_LENGTH, max: VALIDATION.EMAIL.MAX_LENGTH })

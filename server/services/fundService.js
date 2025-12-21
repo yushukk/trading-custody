@@ -37,9 +37,16 @@ class FundService {
     }
   }
 
-  async addFundLog(userId, type, amount, balanceAfter, timestamp) {
+  async addFundLog(userId, type, amount, balanceAfter, timestamp, remark = null) {
     try {
-      const logId = await this.fundDao.addFundLog(userId, type, amount, balanceAfter, timestamp);
+      const logId = await this.fundDao.addFundLog(
+        userId,
+        type,
+        amount,
+        balanceAfter,
+        timestamp,
+        remark
+      );
       return { id: logId };
     } catch (error) {
       throw new AppError('添加资金日志失败', 'DATABASE_ERROR', 500);
@@ -65,27 +72,31 @@ class FundService {
       logger.debug('Current balance', { userId, currentBalance });
 
       let newBalance = currentBalance;
+      let fundAmount = 0; // 实际要添加到 funds 表的金额
 
       // 根据操作类型更新余额
       if (type === 'initial') {
+        // 设置初始资金：直接重置为设置的金额
         newBalance = numericAmount;
+        fundAmount = numericAmount - currentBalance; // 计算需要调整的差额
       } else if (type === 'deposit') {
         newBalance += numericAmount;
+        fundAmount = numericAmount;
       } else if (type === 'withdraw') {
-        if (currentBalance < numericAmount) {
-          throw new AppError(ERROR_MESSAGES.INSUFFICIENT_BALANCE, 'INSUFFICIENT_BALANCE', 400);
-        }
+        // 取出资金：允许超额取出，因为可能投资赚到钱了
+        // 这里的余额只是资金的余额，不是账户的实际余额
         newBalance -= numericAmount;
+        fundAmount = -numericAmount;
       }
 
       // 添加资金记录
       const timestamp = new Date().toISOString();
       logger.debug('Adding funds', {
         userId,
-        amount: type === 'withdraw' ? -numericAmount : numericAmount,
+        amount: fundAmount,
         timestamp,
       });
-      await this.addFunds(userId, type === 'withdraw' ? -numericAmount : numericAmount, timestamp);
+      await this.addFunds(userId, fundAmount, timestamp);
 
       // 添加资金日志
       logger.debug('Adding fund log', {
@@ -94,8 +105,9 @@ class FundService {
         amount: numericAmount,
         balanceAfter: newBalance,
         timestamp,
+        remark,
       });
-      await this.addFundLog(userId, type, numericAmount, newBalance, timestamp);
+      await this.addFundLog(userId, type, numericAmount, newBalance, timestamp, remark);
 
       logger.info('Fund operation completed', { userId, type, amount: numericAmount, newBalance });
       return { message: ERROR_MESSAGES.OPERATION_SUCCESS, balance: newBalance };

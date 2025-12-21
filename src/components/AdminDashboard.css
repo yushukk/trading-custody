@@ -1,28 +1,146 @@
-@import '../styles/variables.css';
-
 .admin-dashboard {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background: #f5f7fa;
+}
+
+.admin-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  padding: 76px 20px 40px;
+}
+
+.welcome-section {
   text-align: center;
-  padding: 50px;
-  background-color: var(--color-background);
+  margin-bottom: 30px;
+  color: #2c3e50;
 }
 
-.admin-dashboard h1 {
-  color: var(--color-primary);
-  margin-bottom: var(--spacing-lg);
+.welcome-section h1 {
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin: 0;
 }
 
-.admin-dashboard button {
-  margin: var(--spacing-sm);
-  padding: var(--spacing-sm) var(--spacing-md);
-  background-color: var(--color-primary);
-  color: white;
+.admin-actions {
+  width: 100%;
+  max-width: 900px;
+}
+
+.action-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+  padding: 20px;
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+.admin-action-button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 30px 20px;
   border: none;
-  border-radius: var(--border-radius);
+  border-radius: 12px;
   cursor: pointer;
-  font-size: var(--font-size-base);
-  transition: background-color var(--transition-duration);
+  font-size: 16px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  min-height: 140px;
+  background: white;
+  color: #333;
 }
 
-.admin-dashboard button:hover {
-  background-color: var(--color-primary-hover);
+.admin-action-button:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
+}
+
+.admin-action-button:active {
+  transform: translateY(-2px);
+}
+
+.button-icon {
+  font-size: 3rem;
+  margin-bottom: 12px;
+  display: block;
+}
+
+.button-text {
+  font-size: 1rem;
+  letter-spacing: 0.5px;
+}
+
+/* 主要功能按钮 */
+.admin-action-button.primary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.admin-action-button.primary:hover {
+  background: linear-gradient(135deg, #5568d3 0%, #6a3f8f 100%);
+}
+
+/* 次要功能按钮 */
+.admin-action-button.secondary {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  color: white;
+}
+
+.admin-action-button.secondary:hover {
+  background: linear-gradient(135deg, #e082ea 0%, #e4465b 100%);
+}
+
+/* 危险操作按钮 */
+.admin-action-button.danger {
+  background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+  color: white;
+}
+
+.admin-action-button.danger:hover {
+  background: linear-gradient(135deg, #e95f89 0%, #edd02f 100%);
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .welcome-section h1 {
+    font-size: 2rem;
+  }
+
+  .action-grid {
+    gap: 15px;
+    padding: 15px;
+  }
+
+  .admin-action-button {
+    padding: 25px 15px;
+    min-height: 120px;
+  }
+
+  .button-icon {
+    font-size: 2.5rem;
+    margin-bottom: 10px;
+  }
+
+  .button-text {
+    font-size: 0.9rem;
+  }
+}
+
+@media (max-width: 360px) {
+  .action-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .admin-action-button {
+    min-height: 100px;
+  }
 }

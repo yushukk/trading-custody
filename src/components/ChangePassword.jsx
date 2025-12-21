@@ -4,6 +4,7 @@ import { Toast } from 'antd-mobile';
 import apiClient from '../api/apiClient';
 import { handleError } from '../utils/errorHandler';
 import { KEYS } from '../constants';
+import NavBar from './NavBar';
 import './ChangePassword.css';
 
 const ChangePassword = ({ onBack }) => {
@@ -55,7 +56,7 @@ const ChangePassword = ({ onBack }) => {
 
   return (
     <div className="change-password-container">
-      <h1 className="change-password-title">修改密码</h1>
+      <NavBar title="修改密码" />
       <div className="change-password-input-group">
         <label className="change-password-input-label">旧密码</label>
         <input
@@ -92,12 +93,6 @@ const ChangePassword = ({ onBack }) => {
       {error && <p className="change-password-error">{error}</p>}
       <button onClick={handleUpdatePassword} className="change-password-button">
         确认修改
-      </button>
-      <button
-        onClick={() => (onBack ? onBack() : navigate(-1))}
-        className="change-password-back-button"
-      >
-        返回
       </button>
     </div>
   );

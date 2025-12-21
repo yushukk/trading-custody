@@ -7,7 +7,7 @@
 const TIME = {
   // Token 过期时间（毫秒）
   ACCESS_TOKEN_EXPIRES: 15 * 60 * 1000, // 15分钟
-  REFRESH_TOKEN_EXPIRES: 7 * 24 * 60 * 60 * 1000, // 7天
+  REFRESH_TOKEN_EXPIRES: 60 * 24 * 60 * 60 * 1000, // 60天
 
   // 限流时间窗口（毫秒）
   RATE_LIMIT_WINDOW: 15 * 60 * 1000, // 15分钟

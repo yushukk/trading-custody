@@ -112,6 +112,9 @@ router.delete(
   validate,
   (req, res, next) => userController.deleteUser(req, res, next)
 );
+router.put('/users/:id/password', authenticateToken, adminOnly, (req, res, next) =>
+  userController.updateUserPassword(req, res, next)
+);
 
 // 资金管理路由（需要认证和资源所有权验证）
 router.get(
@@ -156,8 +159,8 @@ router.delete('/positions/:userId', authenticateToken, checkResourceOwnership, (
   positionController.deletePositions(req, res, next)
 );
 
-// 价格同步路由（需要管理员权限）
-router.get('/syncPriceData', authenticateToken, adminOnly, async (req, res, next) => {
+// 价格同步路由（需要认证）
+router.get('/syncPriceData', authenticateToken, async (req, res, next) => {
   try {
     const result = await priceService.syncPriceData();
     res.json(result);

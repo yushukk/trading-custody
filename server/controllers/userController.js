@@ -76,7 +76,7 @@ class UserController {
     }
   }
 
-  // 更新密码
+  // 更新密码（用户修改自己的密码）
   async updatePassword(req, res, next) {
     try {
       const { oldPassword, newPassword } = req.body;
@@ -96,6 +96,29 @@ class UserController {
       // 更新密码
       await this.userService.updatePassword(userId, newPassword);
       res.json({ message: '密码更新成功' });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  // 管理员修改用户密码
+  async updateUserPassword(req, res, next) {
+    try {
+      const { newPassword } = req.body;
+      const userId = req.params.id;
+
+      // 验证用户是否存在
+      const user = await this.userService.getUserById(userId);
+      if (!user) {
+        throw new AppError('用户不存在', 'USER_NOT_FOUND', 404);
+      }
+
+      // 更新密码
+      await this.userService.updatePassword(userId, newPassword);
+      res.json({
+        success: true,
+        message: '密码更新成功',
+      });
     } catch (error) {
       next(error);
     }

@@ -1,41 +1,58 @@
+/* eslint-disable no-unused-vars */
 import React, { useState, useEffect, useMemo } from 'react';
 import { Card, Badge, Toast, Button } from 'antd-mobile';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import apiClient from '../api/apiClient';
+import { syncPriceData } from '../api/positionApi';
 import { LIMITS } from '../constants';
+import NavBar from './NavBar';
 
 const UserFundPosition = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { user, logout } = useAuth();
   const [fundInfo, setFundInfo] = useState({ balance: 0, logs: [] });
   const [positions, setPositions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [consolidatedPositions, setConsolidatedPositions] = useState([]);
   const [tradeHistory, setTradeHistory] = useState([]);
+  const [syncing, setSyncing] = useState(false);
+  const [viewUserName, setViewUserName] = useState('');
+
+  // 获取要查看的用户ID：优先使用URL参数中的userId（管理员查看模式），否则使用当前登录用户的ID
+  const viewUserId = searchParams.get('userId') || (user ? user.id : null);
+  // 判断是否为管理员查看模式（有userId参数）
+  const isAdminView = !!searchParams.get('userId');
 
   useEffect(() => {
     const abortController = new AbortController();
 
-    if (user) {
-      fetchFundInfo(user.id, abortController.signal);
-      fetchPositions(user.id, abortController.signal);
-      fetchTradeHistory(user.id, abortController.signal);
+    if (viewUserId) {
+      fetchFundInfo(viewUserId, abortController.signal);
+      fetchPositions(viewUserId, abortController.signal);
+      fetchTradeHistory(viewUserId, abortController.signal);
+
+      // 如果是管理员查看模式，获取被查看用户的用户名
+      if (isAdminView) {
+        fetchUserName(viewUserId, abortController.signal);
+      }
     }
 
     return () => {
       abortController.abort();
     };
-  }, [user]);
+  }, [viewUserId, isAdminView]);
 
   const fetchFundInfo = async (userId, signal) => {
     try {
       const balanceData = await apiClient.get(`/api/funds/${userId}`, { signal });
       const logsData = await apiClient.get(`/api/funds/${userId}/logs`, { signal });
 
+      const logs = Array.isArray(logsData) ? logsData : logsData.logs || [];
       setFundInfo({
         balance: balanceData.balance || 0,
-        logs: logsData.slice(0, LIMITS.FUND_LOGS),
+        logs: logs.slice(0, LIMITS.FUND_LOGS),
       });
     } catch (error) {
       if (error.name !== 'AbortError') {
@@ -49,7 +66,7 @@ const UserFundPosition = () => {
   const fetchPositions = async (userId, signal) => {
     try {
       const data = await apiClient.get(`/api/positions/profit/${userId}`, { signal });
-      setPositions(data);
+      setPositions(Array.isArray(data) ? data : data.results || data.positions || []);
     } catch (error) {
       if (error.name !== 'AbortError') {
         console.error(error.message);
@@ -60,10 +77,25 @@ const UserFundPosition = () => {
   const fetchTradeHistory = async (userId, signal) => {
     try {
       const data = await apiClient.get(`/api/positions/${userId}`, { signal });
-      setTradeHistory(data);
+      setTradeHistory(Array.isArray(data) ? data : data.positions || []);
     } catch (error) {
       if (error.name !== 'AbortError') {
         console.error('获取历史交易记录失败:', error);
+      }
+    }
+  };
+
+  const fetchUserName = async (userId, signal) => {
+    try {
+      const data = await apiClient.get('/api/users', { signal });
+      const users = data.users || [];
+      const targetUser = users.find(u => u.id === parseInt(userId));
+      if (targetUser) {
+        setViewUserName(targetUser.name);
+      }
+    } catch (error) {
+      if (error.name !== 'AbortError') {
+        console.error('获取用户名失败:', error);
       }
     }
   };
@@ -90,9 +122,9 @@ const UserFundPosition = () => {
   const getOperationText = operation => {
     switch (operation) {
       case 'buy':
-        return '买入';
+        return '买';
       case 'sell':
-        return '卖出';
+        return '卖';
       default:
         return operation;
     }
@@ -127,31 +159,49 @@ const UserFundPosition = () => {
   // 格式化时间显示
   const formatTime = timestamp => {
     const date = new Date(timestamp);
-    const now = new Date();
 
-    // 如果是今天，只显示时间
-    if (date.toDateString() === now.toDateString()) {
-      return date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
-    }
-
-    // 如果是今年，显示月日和时间
-    if (date.getFullYear() === now.getFullYear()) {
-      return date.toLocaleString('zh-CN', {
-        month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit',
-      });
-    }
-
-    // 其他情况显示完整日期
+    // 始终显示完整的年月日和时分秒
     return date.toLocaleString('zh-CN', {
-      year: '2-digit',
+      year: 'numeric',
       month: '2-digit',
       day: '2-digit',
       hour: '2-digit',
       minute: '2-digit',
+      second: '2-digit',
     });
+  };
+
+  // 刷新价格数据
+  const handleSyncPrice = async () => {
+    setSyncing(true);
+    Toast.show({
+      icon: 'loading',
+      content: '正在同步价格...',
+      duration: 0,
+    });
+
+    try {
+      await syncPriceData();
+      Toast.show({
+        icon: 'success',
+        content: '价格同步成功',
+        duration: 2000,
+      });
+
+      // 重新获取持仓数据以更新价格
+      if (viewUserId) {
+        await fetchPositions(viewUserId);
+      }
+    } catch (error) {
+      console.error('同步价格失败:', error);
+      Toast.show({
+        icon: 'fail',
+        content: '价格同步失败',
+        duration: 2000,
+      });
+    } finally {
+      setSyncing(false);
+    }
   };
 
   return (
@@ -160,23 +210,13 @@ const UserFundPosition = () => {
         width: '100%',
         backgroundColor: '#f0f2f5',
         minHeight: '100vh',
-        padding: '6px', // 减少左右留白
+        padding: isAdminView ? '60px 6px 6px' : '6px',
         fontFamily:
           '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
       }}
     >
-      <div
-        style={{
-          textAlign: 'center',
-          marginBottom: '12px',
-          color: '#1890ff',
-          fontSize: '20px',
-          fontWeight: '600',
-          paddingTop: '8px',
-        }}
-      >
-        我的资金与持仓
-      </div>
+      {/* 管理员查看模式时显示导航栏 */}
+      {isAdminView && <NavBar title={viewUserName ? `${viewUserName}-资金和持仓` : '资金和持仓'} />}
 
       {loading ? null : (
         <>
@@ -194,14 +234,37 @@ const UserFundPosition = () => {
             <div>
               <div
                 style={{
-                  fontSize: '16px',
-                  fontWeight: 500,
-                  textAlign: 'left',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
                   marginBottom: '10px',
-                  color: '#333',
                 }}
               >
-                资产总览
+                <div
+                  style={{
+                    fontSize: '16px',
+                    fontWeight: 500,
+                    color: '#333',
+                  }}
+                >
+                  资产总览
+                </div>
+                <Button
+                  size="small"
+                  disabled={syncing}
+                  style={{
+                    backgroundColor: syncing ? '#f5f5f5' : '#1890ff',
+                    color: syncing ? '#999' : 'white',
+                    border: 'none',
+                    padding: '4px 12px',
+                    fontSize: '12px',
+                    borderRadius: '4px',
+                    height: 'auto',
+                  }}
+                  onClick={handleSyncPrice}
+                >
+                  {syncing ? '同步中...' : '刷新价格'}
+                </Button>
               </div>
 
               <div
@@ -289,7 +352,7 @@ const UserFundPosition = () => {
                         alignItems: 'center',
                       }}
                     >
-                      <div style={{ flex: 1.5 }}>
+                      <div style={{ flex: 1.5, textAlign: 'left' }}>
                         {' '}
                         {/* 增加标的名称区域宽度 */}
                         <div
@@ -300,6 +363,7 @@ const UserFundPosition = () => {
                             marginBottom: '4px',
                             display: 'flex',
                             alignItems: 'center',
+                            justifyContent: 'flex-start',
                           }}
                         >
                           <span style={{ marginRight: '8px' }}>{position.name}</span>
@@ -329,6 +393,7 @@ const UserFundPosition = () => {
                           style={{
                             fontSize: '12px',
                             color: '#999',
+                            textAlign: 'left',
                           }}
                         >
                           {position.code}
@@ -400,7 +465,8 @@ const UserFundPosition = () => {
                           textAlign: 'right',
                         }}
                       >
-                        现价: ¥{position.price.toFixed(2)} | 成本: ¥{position.costBasis.toFixed(2)}
+                        现价: ¥{position.price.toFixed(2)} | 成本:{' '}
+                        {position.quantity > 0 ? `¥${position.costBasis.toFixed(2)}` : '-'}
                       </div>
                     </div>
                   </div>
@@ -447,7 +513,7 @@ const UserFundPosition = () => {
                         alignItems: 'center',
                       }}
                     >
-                      <div style={{ flex: 1.5 }}>
+                      <div style={{ flex: 1.5, textAlign: 'left' }}>
                         {' '}
                         {/* 增加标的名称区域宽度以对齐持仓明细 */}
                         <div
@@ -458,6 +524,7 @@ const UserFundPosition = () => {
                             marginBottom: '4px',
                             display: 'flex',
                             alignItems: 'center',
+                            justifyContent: 'flex-start',
                           }}
                         >
                           <span style={{ marginRight: '8px' }}>{record.name}</span>
@@ -480,13 +547,27 @@ const UserFundPosition = () => {
                               padding: '0 4px',
                               borderRadius: '4px',
                               fontWeight: 500,
+                              marginRight: '8px',
                             }}
                           />
+                          <span
+                            style={{
+                              fontSize: '10px',
+                              fontWeight: 500,
+                              color: '#ffffff',
+                              backgroundColor: record.operation === 'buy' ? '#f5222d' : '#52c41a',
+                              padding: '2px 6px',
+                              borderRadius: '4px',
+                            }}
+                          >
+                            {getOperationText(record.operation)}
+                          </span>
                         </div>
                         <div
                           style={{
                             fontSize: '12px',
                             color: '#999',
+                            textAlign: 'left',
                           }}
                         >
                           {record.code}
@@ -503,17 +584,19 @@ const UserFundPosition = () => {
                           style={{
                             fontSize: '15px',
                             fontWeight: 500,
-                            color: record.operation === 'buy' ? '#f5222d' : '#52c41a',
+                            color: '#333',
                           }}
                         >
-                          {getOperationText(record.operation)}
+                          {record.quantity}
                         </div>
                         <div
                           style={{
                             fontSize: '12px',
                             color: '#999',
                           }}
-                        ></div>
+                        >
+                          数量
+                        </div>
                       </div>
 
                       <div
@@ -555,7 +638,7 @@ const UserFundPosition = () => {
                           color: '#999',
                         }}
                       >
-                        数量: {record.quantity}
+                        {formatTime(record.timestamp)}
                       </div>
                       <div
                         style={{
@@ -564,14 +647,6 @@ const UserFundPosition = () => {
                         }}
                       >
                         交易费用: ¥{record.fee.toFixed(2)}
-                      </div>
-                      <div
-                        style={{
-                          fontSize: '12px',
-                          color: '#999',
-                        }}
-                      >
-                        {formatTime(record.timestamp)}
                       </div>
                     </div>
                   </div>

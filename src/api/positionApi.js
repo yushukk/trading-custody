@@ -2,6 +2,8 @@
  * 持仓相关API调用封装
  */
 
+import apiClient from './apiClient';
+
 // 使用空字符串，通过 proxy 转发
 const API_BASE_URL = window.API_BASE_URL || '';
 
@@ -75,15 +77,9 @@ export const deletePositions = async (userId, options = {}) => {
 
 /**
  * 同步价格数据
- * @param {Object} options - fetch选项
+ * @param {Object} options - 请求选项
  * @returns {Promise} 同步结果Promise
  */
 export const syncPriceData = async (options = {}) => {
-  const response = await fetch(`${API_BASE_URL}/api/syncPriceData`, options);
-
-  if (!response.ok) {
-    throw new Error('同步价格数据失败');
-  }
-
-  return response.json();
+  return apiClient.get('/api/syncPriceData', options);
 };

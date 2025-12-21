@@ -5,14 +5,7 @@ const { VALIDATION, ERROR_MESSAGES } = require('../constants');
  * 登录验证规则
  */
 const loginValidation = [
-  body('username')
-    .trim()
-    .notEmpty()
-    .withMessage('用户名不能为空')
-    .isLength({ min: VALIDATION.USERNAME.MIN_LENGTH, max: VALIDATION.USERNAME.MAX_LENGTH })
-    .withMessage(
-      `用户名长度必须在${VALIDATION.USERNAME.MIN_LENGTH}-${VALIDATION.USERNAME.MAX_LENGTH}个字符之间`
-    ),
+  body('username').trim().notEmpty().withMessage('用户名不能为空'),
 
   body('password')
     .notEmpty()
@@ -25,14 +18,7 @@ const loginValidation = [
  * 注册验证规则
  */
 const registerValidation = [
-  body('name')
-    .trim()
-    .notEmpty()
-    .withMessage('用户名不能为空')
-    .isLength({ min: VALIDATION.USERNAME.MIN_LENGTH, max: VALIDATION.USERNAME.MAX_LENGTH })
-    .withMessage(
-      `用户名长度必须在${VALIDATION.USERNAME.MIN_LENGTH}-${VALIDATION.USERNAME.MAX_LENGTH}个字符之间`
-    ),
+  body('name').trim().notEmpty().withMessage('用户名不能为空'),
 
   body('email')
     .trim()

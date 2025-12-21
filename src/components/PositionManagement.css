@@ -1,0 +1,401 @@
+@import '../styles/variables.css';
+
+.position-management {
+  padding: 60px 5px 5px;
+  max-width: 1200px;
+  margin: 0 auto;
+  background-color: #f5f5f5;
+  min-height: 100vh;
+}
+
+/* 用户选择卡片 */
+.user-select-card {
+  background: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 0;
+  margin-bottom: var(--spacing-md);
+  overflow: hidden;
+}
+
+.user-select-card h2 {
+  color: #333;
+  font-size: 15px;
+  margin: 0;
+  padding: 10px 16px;
+  font-weight: 600;
+  background: #f8f8f8;
+  line-height: 1.3;
+}
+
+/* 用户选择卡片内的选择器样式 */
+.user-select-card .adm-selector {
+  --border-radius: 8px;
+  --border: 1px solid #e5e5e5;
+  --checked-border: 1px solid #1890ff;
+  --checked-color: #1890ff;
+  --padding: 5px 14px;
+  --checked-background-color: #e6f7ff;
+  gap: 8px;
+  justify-content: flex-start;
+  text-align: left;
+}
+
+.user-select-card .adm-selector-item {
+  font-size: 14px;
+  background-color: #fff;
+  color: #666;
+  border: 1px solid #e5e5e5;
+  border-radius: 8px;
+  transition: all 0.2s;
+  min-height: auto;
+  line-height: 1.3;
+  text-align: left;
+}
+
+.user-select-card .adm-selector-item-active {
+  background-color: #e6f7ff !important;
+  color: #1890ff !important;
+  border-color: #1890ff !important;
+}
+
+/* 添加持仓表单样式 */
+.add-position-card {
+  background: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 0;
+  margin-bottom: var(--spacing-md);
+  overflow: hidden;
+}
+
+.add-position-card h2 {
+  color: #333;
+  font-size: 15px;
+  margin: 0;
+  padding: 10px 16px;
+  font-weight: 600;
+  background: #f8f8f8;
+  line-height: 1.3;
+}
+
+.add-position-form {
+  margin: 0;
+  padding: 0;
+}
+
+/* Form.Item 样式 */
+.add-position-form .adm-list {
+  border: none;
+  background: transparent;
+  padding: 0;
+  margin: 0;
+}
+
+.add-position-form .adm-list-item {
+  padding: 8px 16px;
+  background: #fff;
+  min-height: auto;
+  line-height: 1.3;
+}
+.add-position-form .adm-list-item:not(:last-child) {
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.add-position-form .adm-list-item-content {
+  display: flex;
+  align-items: center;
+  padding: 0;
+  min-height: auto;
+  border-top: none !important;
+}
+
+.add-position-form .adm-list-item-content-prefix {
+  flex: 0 0 75px;
+  font-size: 15px;
+  color: #666;
+  font-weight: normal;
+  padding: 0 12px 0 0 !important;
+  line-height: 1.3;
+}
+
+.add-position-form .adm-list-item-content-main {
+  flex: 1;
+  padding: 0;
+}
+
+/* 输入框样式 */
+.add-position-form .adm-input {
+  --font-size: 15px;
+  --color: #333;
+  --placeholder-color: #ccc;
+  --text-align: left;
+  padding: 0;
+  border: none;
+  background: transparent;
+  min-height: auto;
+}
+
+.add-position-form .adm-input-element {
+  border: none !important;
+  background: transparent !important;
+  padding: 0 !important;
+  font-size: 15px;
+  color: #333;
+  outline: none !important;
+  box-shadow: none !important;
+  min-height: auto !important;
+  height: auto !important;
+  line-height: 1.3;
+}
+
+.add-position-form .adm-input-element::placeholder {
+  color: #ccc;
+}
+
+/* 选择器样式 */
+.add-position-form .adm-selector {
+  --border-radius: 8px;
+  --border: 1px solid #e5e5e5;
+  --checked-border: 1px solid #1890ff;
+  --checked-color: #1890ff;
+  --padding: 5px 14px;
+  --checked-background-color: #e6f7ff;
+  gap: 8px;
+  justify-content: flex-start;
+  text-align: left;
+}
+
+.add-position-form .adm-selector-item {
+  font-size: 14px;
+  background-color: #fff;
+  color: #666;
+  border: 1px solid #e5e5e5;
+  border-radius: 8px;
+  transition: all 0.2s;
+  min-height: auto;
+  line-height: 1.3;
+  text-align: left;
+}
+
+.add-position-form .adm-selector-item-active {
+  background-color: #e6f7ff !important;
+  color: #1890ff !important;
+  border-color: #1890ff !important;
+}
+
+/* 日期选择器触发器 */
+.date-picker-trigger {
+  padding: 0;
+  font-size: 15px;
+  color: #333;
+  cursor: pointer;
+  line-height: 1.3;
+  text-align: left;
+}
+
+/* 添加持仓按钮 */
+.add-position-button {
+  margin: 10px 10px 16px 10px;
+  --background-color: #1890ff;
+  --border-radius: 6px;
+  --border-color: #1890ff;
+  font-size: 16px;
+  font-weight: 500;
+  height: 44px;
+  width: calc(100% - 20px);
+  box-sizing: border-box;
+}
+
+.add-position-button:active {
+  --background-color: #096dd9;
+}
+
+/* 持仓记录列表样式 */
+.position-list-section {
+  background: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: var(--border-radius);
+  padding: var(--spacing-md);
+}
+
+.position-list-section h2 {
+  font-size: var(--font-size-base);
+  color: #333;
+  margin-bottom: var(--spacing-sm);
+  font-weight: var(--font-weight-bold);
+  padding-bottom: var(--spacing-sm);
+  border-bottom: 1px solid #f0f0f0;
+}
+
+/* 空状态 */
+.empty-state {
+  text-align: center;
+  padding: 40px 20px;
+}
+
+.empty-state-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+}
+
+.empty-state-text {
+  color: #999;
+  font-size: 14px;
+}
+
+/* 持仓卡片列表 */
+.position-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.position-card {
+  background: #fafafa;
+  border: 1px solid #e8e8e8;
+  border-radius: var(--border-radius);
+  padding: var(--spacing-sm);
+  transition: all var(--transition-duration);
+}
+
+.position-card:hover {
+  border-color: #ccc;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+/* 持仓卡片头部 */
+.position-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: var(--spacing-sm);
+  border-bottom: 1px solid #e0e0e0;
+  margin-bottom: var(--spacing-sm);
+}
+
+.position-name-code {
+  font-size: 16px;
+  color: #333;
+  font-weight: 600;
+}
+
+.position-time {
+  font-size: var(--font-size-sm);
+  color: #888;
+  margin-top: var(--spacing-sm);
+  text-align: right;
+}
+
+.position-type-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 4px;
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.position-type-badge.stock {
+  background-color: #e6f7ff;
+  color: #1890ff;
+  border: 1px solid #91d5ff;
+}
+
+.position-type-badge.future {
+  background-color: #fff7e6;
+  color: #fa8c16;
+  border: 1px solid #ffd591;
+}
+
+.position-type-badge.fund {
+  background-color: #f6ffed;
+  color: #52c41a;
+  border: 1px solid #b7eb8f;
+}
+
+/* 持仓信息 */
+.position-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  margin-bottom: var(--spacing-sm);
+}
+
+.position-info-item {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: var(--font-size-sm);
+}
+
+.position-info-label {
+  color: #888;
+  font-weight: var(--font-weight-medium);
+}
+
+.position-info-value {
+  color: #333;
+  font-weight: var(--font-weight-medium);
+}
+
+/* 持仓详情 */
+.position-details {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.3rem;
+}
+
+.position-operation {
+  display: flex;
+  align-items: center;
+}
+
+.operation-badge {
+  display: inline-block;
+  padding: 0.15rem 0.5rem;
+  border-radius: 3px;
+  font-size: 0.75rem;
+  font-weight: var(--font-weight-medium);
+}
+
+.operation-badge.buy {
+  background-color: #f6ffed;
+  color: #52c41a;
+}
+
+.operation-badge.sell {
+  background-color: #fff1f0;
+  color: #ff4d4f;
+}
+
+.position-amount {
+  display: flex;
+  align-items: center;
+}
+
+.amount-text {
+  font-size: var(--font-size-sm);
+  color: #333;
+  font-weight: var(--font-weight-medium);
+}
+
+/* 交易费用 */
+.position-fee {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: var(--font-size-sm);
+}
+
+.fee-label {
+  color: #888;
+}
+
+.fee-value {
+  color: #666;
+  font-weight: var(--font-weight-medium);
+}

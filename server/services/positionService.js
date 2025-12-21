@@ -8,7 +8,9 @@ class PositionService {
 
   async getPositions(userId) {
     try {
-      return await this.positionDao.findByUserId(userId);
+      const positions = await this.positionDao.findByUserId(userId);
+      // 返回倒序排列的交易记录（最新的在前面）
+      return positions.reverse();
     } catch (error) {
       throw new AppError('获取持仓失败', 'GET_POSITIONS_FAILED', 500);
     }
@@ -87,17 +89,14 @@ class PositionService {
         let totalFee = 0; // 新增总费用统计
         const queue = [];
 
-        transactions.forEach(tx => {
-          const quantity = tx.quantity;
-          const price = tx.price;
-          const fee = tx.fee || 0; // 获取交易费用
-          totalFee += fee; // 累计买入费用
+        transactions.forEach(transaction => {
+          const { operation, price, quantity, fee = 0 } = transaction;
+          totalFee += fee; // 累加费用
 
-          if (tx.operation === 'buy') {
-            queue.push({ quantity, price, fee }); // 将费用加入队列
-          } else if (tx.operation === 'sell') {
+          if (operation === 'buy') {
+            queue.push({ price, quantity });
+          } else if (operation === 'sell') {
             let remaining = quantity;
-
             while (remaining > 0 && queue.length > 0) {
               const head = queue[0];
 
@@ -124,14 +123,16 @@ class PositionService {
         realizedPnL -= totalFee;
 
         const currentQuantity = queue.reduce((sum, item) => sum + item.quantity, 0);
-        let latestPrice = 0;
-        let unrealizedPnL = 0;
 
+        // 获取最新价格（无论持仓数量是否为0都要获取）
+        const latestPrice = await this.priceService.getLatestPrice(
+          code,
+          transactions[0].assetType || transactions[0].asset_type
+        );
+
+        // 计算未实现盈亏（只有持仓数量>0时才计算）
+        let unrealizedPnL = 0;
         if (currentQuantity > 0) {
-          latestPrice = await this.priceService.getLatestPrice(
-            code,
-            transactions[0].assetType || transactions[0].asset_type
-          );
           // 计算平均成本包含费用
           const totalCost = queue.reduce((sum, item) => sum + item.price * item.quantity, 0);
           const averageCost = totalCost / currentQuantity;

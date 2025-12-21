@@ -1,0 +1,306 @@
+@import '../styles/variables.css';
+
+.user-management {
+  padding: 60px 5px 5px;
+  max-width: 1200px;
+  margin: 0 auto;
+  background-color: #f5f5f5;
+  min-height: 100vh;
+}
+
+/* 添加用户表单样式 - 极致紧凑 */
+.add-user-card {
+  background: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 0;
+  margin-bottom: var(--spacing-md);
+  overflow: hidden;
+}
+
+.add-user-card h2 {
+  color: #333;
+  font-size: 15px;
+  margin: 0;
+  padding: 10px 16px;
+  font-weight: 600;
+  background: #f8f8f8;
+  line-height: 1.3;
+}
+
+.add-user-form {
+  margin: 0;
+  padding: 0;
+}
+
+/* 完全重写 Form.Item 样式 - 更紧凑 */
+.add-user-form .adm-list {
+  border: none;
+  background: transparent;
+  padding: 0;
+  margin: 0;
+}
+
+.add-user-form .adm-list-item {
+  padding: 8px 16px;
+  background: #fff;
+  min-height: auto;
+  line-height: 1.3;
+}
+
+.add-user-form .adm-list-item:not(:last-child) {
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.add-user-form .adm-list-item-content {
+  display: flex;
+  align-items: center;
+  padding: 0;
+  min-height: auto;
+}
+
+.add-user-form .adm-list-item-content-prefix {
+  flex: 0 0 65px;
+  font-size: 15px;
+  color: #666;
+  font-weight: normal;
+  padding: 0 12px 0 0 !important;
+  line-height: 1.3;
+}
+
+.add-user-form .adm-list-item-content-main {
+  flex: 1;
+  padding: 0;
+}
+
+/* 输入框样式 - 完全无边框 */
+.add-user-form .adm-input {
+  --font-size: 15px;
+  --color: #333;
+  --placeholder-color: #ccc;
+  --text-align: left;
+  padding: 0;
+  border: none;
+  background: transparent;
+  min-height: auto;
+}
+
+.add-user-form .adm-input-element {
+  border: none !important;
+  background: transparent !important;
+  padding: 0 !important;
+  font-size: 15px;
+  color: #333;
+  outline: none !important;
+  box-shadow: none !important;
+  min-height: auto !important;
+  height: auto !important;
+  line-height: 1.3;
+}
+
+.add-user-form .adm-input-element::placeholder {
+  color: #ccc;
+}
+/* 选择器样式 */
+.add-user-form .adm-selector {
+  --border-radius: 8px;
+  --border: 1px solid #e5e5e5;
+  --checked-border: 1px solid #1890ff;
+  --checked-color: #1890ff;
+  --padding: 5px 14px;
+  --checked-background-color: #e6f7ff;
+  gap: 8px;
+  justify-content: flex-start;
+  text-align: left;
+}
+
+.add-user-form .adm-selector-item {
+  font-size: 14px;
+  background-color: #fff;
+  color: #666;
+  border: 1px solid #e5e5e5;
+  border-radius: 8px;
+  transition: all 0.2s;
+  min-height: auto;
+  line-height: 1.3;
+  text-align: left;
+}
+.add-user-form .adm-selector-item-active {
+  background-color: #e6f7ff !important;
+  color: #1890ff !important;
+  border-color: #1890ff !important;
+}
+
+/* 添加用户按钮 */
+.add-user-button {
+  margin: 10px 16px 16px 16px;
+  --background-color: #1890ff;
+  --border-radius: 6px;
+  --border-color: #1890ff;
+  font-size: 16px;
+  font-weight: 500;
+  height: 44px;
+}
+
+.add-user-button:active {
+  --background-color: #096dd9;
+}
+
+/* 用户列表样式 */
+.user-list-section {
+  background: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: var(--border-radius);
+  padding: var(--spacing-md);
+}
+
+.user-list-section h2 {
+  font-size: var(--font-size-base);
+  color: #333;
+  margin-bottom: var(--spacing-sm);
+  font-weight: var(--font-weight-bold);
+  padding-bottom: var(--spacing-sm);
+  border-bottom: 1px solid #f0f0f0;
+}
+
+/* 用户卡片列表 */
+.user-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.user-card {
+  background: #fafafa;
+  border: 1px solid #e8e8e8;
+  border-radius: var(--border-radius);
+  padding: var(--spacing-sm);
+  transition: all var(--transition-duration);
+}
+
+.user-card:hover {
+  border-color: #ccc;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.user-info {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-sm);
+  padding-bottom: var(--spacing-sm);
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.user-info-item {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: var(--font-size-sm);
+}
+
+.user-info-label {
+  color: #888;
+  font-weight: var(--font-weight-medium);
+}
+
+.user-info-value {
+  color: #333;
+  font-weight: var(--font-weight-medium);
+}
+
+.user-role-badge {
+  display: inline-block;
+  padding: 0.15rem 0.5rem;
+  border-radius: 3px;
+  font-size: 0.75rem;
+  font-weight: var(--font-weight-medium);
+}
+
+.user-role-badge.admin {
+  background-color: #333;
+  color: white;
+}
+
+.user-role-badge.user {
+  background-color: #e8e8e8;
+  color: #666;
+}
+
+.password-section {
+  display: flex;
+  gap: var(--spacing-sm);
+  align-items: center;
+}
+
+.password-input {
+  flex: 1;
+  padding: 0.35rem 0.5rem;
+  border: 1px solid #ddd;
+  border-radius: var(--border-radius);
+  font-size: var(--font-size-sm);
+  transition: all var(--transition-duration);
+}
+
+.password-input:focus {
+  outline: none;
+  border-color: #999;
+  background-color: #fff;
+}
+
+.user-actions {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.action-button {
+  padding: 0.35rem 0.7rem;
+  border: 1px solid #ddd;
+  border-radius: var(--border-radius);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+  transition: all var(--transition-duration);
+  background-color: #fff;
+  color: #666;
+  white-space: nowrap;
+}
+
+.action-button.update {
+  background-color: #333;
+  color: white;
+  border-color: #333;
+}
+
+.action-button.update:hover {
+  background-color: #555;
+  border-color: #555;
+}
+
+.action-button.delete {
+  background-color: #fff;
+  color: #d32f2f;
+  border-color: #d32f2f;
+}
+
+.action-button.delete:hover {
+  background-color: #d32f2f;
+  color: white;
+}
+
+/* 空状态样式 */
+.empty-state {
+  text-align: center;
+  padding: var(--spacing-xl) var(--spacing-md);
+  color: #999;
+}
+
+.empty-state-icon {
+  font-size: 3rem;
+  margin-bottom: var(--spacing-sm);
+}
+
+.empty-state-text {
+  font-size: var(--font-size-sm);
+  color: #999;
+}

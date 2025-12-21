@@ -25,10 +25,10 @@ class FundDao {
     );
   }
 
-  async addFundLog(userId, type, amount, balanceAfter, timestamp) {
+  async addFundLog(userId, type, amount, balanceAfter, timestamp, remark = null) {
     const result = await db.run(
-      'INSERT INTO fund_logs (user_id, type, amount, balance_after, timestamp) VALUES (?, ?, ?, ?, ?)',
-      [userId, type, amount, balanceAfter, timestamp]
+      'INSERT INTO fund_logs (user_id, type, amount, balance_after, timestamp, remark) VALUES (?, ?, ?, ?, ?, ?)',
+      [userId, type, amount, balanceAfter, timestamp, remark]
     );
     return result.lastID;
   }

@@ -3,7 +3,7 @@ const db = require('../utils/database');
 class PositionDao {
   async findByUserId(userId) {
     return await db.all(
-      `SELECT id, user_id as userId, code, name, asset_type as assetType, operation, price, quantity, timestamp, fee FROM positions WHERE user_id = ? ORDER BY timestamp DESC`,
+      `SELECT id, user_id as userId, code, name, asset_type as assetType, operation, price, quantity, timestamp, fee FROM positions WHERE user_id = ? ORDER BY timestamp ASC`,
       [userId]
     );
   }
