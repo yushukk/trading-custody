@@ -1,0 +1,106 @@
+version: '3.8'
+
+# ==========================================
+# Trading Custody - 简化部署配置
+# ==========================================
+# 适用于飞牛等容器平台，无需任何脚本，开箱即用
+# 
+# 使用方法：
+#   1. 修改下方的环境变量配置（必改项已标注 ⚠️）
+#   2. 上传此文件到容器平台
+#   3. 点击部署即可
+# ==========================================
+
+services:
+  # 后端服务
+  backend:
+    image: yushu/trading-custody-backend:latest
+    container_name: trading-custody-backend
+    restart: unless-stopped
+    ports:
+      - "3001:3001"
+    volumes:
+      - backend-data:/app/server/data
+      - backend-logs:/app/logs
+    environment:
+      # ==========================================
+      # ⚠️ 必须修改的配置项
+      # ==========================================
+      # JWT 访问令牌密钥（必须改成随机字符串，至少 32 位）
+      - JWT_ACCESS_SECRET=PLEASE_CHANGE_THIS_TO_RANDOM_STRING_AT_LEAST_32_CHARS_ACCESS_SECRET
+      
+      # JWT 刷新令牌密钥（必须改成随机字符串，至少 32 位）
+      - JWT_REFRESH_SECRET=PLEASE_CHANGE_THIS_TO_RANDOM_STRING_AT_LEAST_32_CHARS_REFRESH_SECRET
+      
+      # ==========================================
+      # 可选配置项（根据需要修改）
+      # ==========================================
+      # 运行环境
+      - NODE_ENV=production
+      
+      # 数据库路径（容器内路径，无需修改）
+      - DATABASE_PATH=/app/server/data/database.db
+      
+      # 服务器端口（容器内端口，无需修改）
+      - SERVER_PORT=3001
+      
+      # JWT 令牌过期时间
+      - JWT_ACCESS_EXPIRES_IN=15m
+      - JWT_REFRESH_EXPIRES_IN=7d
+      
+      # CORS 跨域配置（* 表示允许所有来源，生产环境建议改为具体域名）
+      - CORS_ORIGIN=*
+      
+      # 股票数据 API
+      - STOCK_API_URL=http://23.95.205.223:18201/api/public/stock_zh_a_hist
+      
+      # 期货数据 API
+      - FUTURE_API_URL=http://23.95.205.223:18201/api/public/futures_hist_em
+      
+      # 价格同步定时任务（每天下午 5 点）
+      - PRICE_SYNC_CRON=0 17 * * *
+      
+      # 日志级别（debug/info/warn/error）
+      - LOG_LEVEL=info
+      
+      # 日志文件路径（容器内路径，无需修改）
+      - LOG_FILE_PATH=/app/logs/app.log
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3001/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - app-network
+
+  # 前端服务
+  frontend:
+    image: yushu/trading-custody:latest
+    container_name: trading-custody-frontend
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:80/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    networks:
+      - app-network
+
+# 数据卷（持久化存储）
+volumes:
+  backend-data:
+    driver: local
+  backend-logs:
+    driver: local
+
+# 网络配置
+networks:
+  app-network:
+    driver: bridge

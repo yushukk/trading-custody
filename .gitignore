@@ -87,3 +87,4 @@ cookies.txt
 *.css.map
 *.sass.map
 *.scss.map
+server/logs/
