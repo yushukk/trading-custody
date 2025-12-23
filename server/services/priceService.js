@@ -62,14 +62,31 @@ class PriceService {
     logger.debug('API URL constructed', { code, asset_type, apiUrl });
 
     try {
-      // 使用Promise封装http请求
+      // 使用Promise封装http请求，添加超时和状态码检查
       const data = await new Promise((resolve, reject) => {
-        http
+        const request = http
           .get(apiUrl, res => {
+            // 检查 HTTP 状态码
+            if (res.statusCode !== 200) {
+              logger.error('HTTP request failed', {
+                code,
+                asset_type,
+                statusCode: res.statusCode,
+                statusMessage: res.statusMessage,
+              });
+              reject(new Error(`HTTP ${res.statusCode}: ${res.statusMessage}`));
+              return;
+            }
+
             let body = '';
             res.on('data', chunk => (body += chunk));
             res.on('end', () => {
               try {
+                // 记录原始响应以便调试
+                if (body.length > 0 && body.length < 200) {
+                  logger.debug('API response body', { code, asset_type, body });
+                }
+
                 const jsonData = JSON.parse(body);
                 logger.debug('API response received', {
                   code,
@@ -78,7 +95,12 @@ class PriceService {
                 });
                 resolve(jsonData);
               } catch (err) {
-                logger.error('JSON parse failed', { code, asset_type, error: err.message });
+                logger.error('JSON parse failed', {
+                  code,
+                  asset_type,
+                  error: err.message,
+                  bodyPreview: body.substring(0, 100),
+                });
                 reject(err);
               }
             });
@@ -86,7 +108,16 @@ class PriceService {
           .on('error', err => {
             logger.error('HTTP request error', { code, asset_type, error: err.message });
             reject(err);
+          })
+          .on('timeout', () => {
+            request.destroy();
+            const timeoutError = new Error('Request timeout after 30 seconds');
+            logger.error('HTTP request timeout', { code, asset_type });
+            reject(timeoutError);
           });
+
+        // 设置 30 秒超时
+        request.setTimeout(30000);
       });
 
       if (!Array.isArray(data) || data.length === 0) {
@@ -134,15 +165,69 @@ class PriceService {
   }
 
   async syncPriceData() {
-    // 迁移自 server.js 的 getLatestPrice 函数逻辑
-    // 此处保留原有逻辑的框架，具体实现根据业务需求定制
     logger.info('Starting price data synchronization');
 
     try {
-      // 模拟同步过程 - 实际应用中应从数据库中获取所有需要同步的资产代码
-      logger.info('Price data synchronization completed');
-      return { success: true, message: '价格数据同步任务已完成' };
+      // 从数据库获取所有持仓中的资产代码（去重）
+      const positionDao = require('../dao/positionDao');
+      const positions = await positionDao.findAll();
+
+      if (!positions || positions.length === 0) {
+        logger.info('No positions found, skipping price sync');
+        return { success: true, message: '没有持仓数据，无需同步价格' };
+      }
+
+      // 去重获取所有唯一的资产代码
+      const uniqueAssets = new Map();
+      positions.forEach(pos => {
+        const key = `${pos.code}_${pos.assetType || pos.asset_type}`;
+        if (!uniqueAssets.has(key)) {
+          uniqueAssets.set(key, {
+            code: pos.code,
+            assetType: pos.assetType || pos.asset_type,
+          });
+        }
+      });
+
+      logger.info(`Found ${uniqueAssets.size} unique assets to sync`);
+
+      // 同步每个资产的价格
+      let successCount = 0;
+      let failCount = 0;
+      const timestamp = new Date().toISOString();
+
+      for (const [, asset] of uniqueAssets) {
+        try {
+          const price = await this.fetchLatestPrice(asset.code, asset.assetType);
+
+          if (price > 0) {
+            // 保存价格到数据库
+            await this.priceDao.createPriceData(asset.code, asset.assetType, price, timestamp);
+            successCount++;
+            logger.info(`Synced price for ${asset.code}: ${price}`);
+          } else {
+            failCount++;
+            logger.warn(`Failed to fetch price for ${asset.code}, got 0`);
+          }
+        } catch (error) {
+          failCount++;
+          logger.error(`Error syncing price for ${asset.code}:`, error);
+        }
+      }
+
+      logger.info(`Price sync completed: ${successCount} success, ${failCount} failed`);
+
+      return {
+        success: true,
+        message: `价格同步完成：成功 ${successCount} 个，失败 ${failCount} 个`,
+        details: {
+          total: uniqueAssets.size,
+          success: successCount,
+          failed: failCount,
+        },
+      };
     } catch (error) {
+      logger.error('Price sync failed:', error);
       throw new AppError('同步价格数据失败', 'SYNC_PRICE_DATA_FAILED', 500);
     }
   }

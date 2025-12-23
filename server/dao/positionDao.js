@@ -8,6 +8,12 @@ class PositionDao {
     );
   }
 
+  async findAll() {
+    return await db.all(
+      `SELECT id, user_id as userId, code, name, asset_type as assetType, operation, price, quantity, timestamp, fee FROM positions ORDER BY timestamp ASC`
+    );
+  }
+
   async create(positionData) {
     const { userId, assetType, code, name, operation, price, quantity, timestamp, fee } =
       positionData;

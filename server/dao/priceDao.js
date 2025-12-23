@@ -9,8 +9,9 @@ class PriceDao {
   }
 
   async createPriceData(code, assetType, current_price, timestamp) {
+    // 使用 INSERT OR REPLACE 实现 UPSERT（插入或更新）
     await db.run(
-      'INSERT INTO price_data (code, asset_type, current_price, timestamp) VALUES (?, ?, ?, ?)',
+      'INSERT OR REPLACE INTO price_data (code, asset_type, current_price, timestamp) VALUES (?, ?, ?, ?)',
       [code, assetType, current_price, timestamp]
     );
   }

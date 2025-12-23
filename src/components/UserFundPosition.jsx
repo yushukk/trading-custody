@@ -181,22 +181,57 @@ const UserFundPosition = () => {
     });
 
     try {
-      await syncPriceData();
-      Toast.show({
-        icon: 'success',
-        content: '价格同步成功',
-        duration: 2000,
-      });
+      const result = await syncPriceData();
 
-      // 重新获取持仓数据以更新价格
-      if (viewUserId) {
-        await fetchPositions(viewUserId);
+      // 根据同步结果显示不同的提示
+      const details = result?.details || {};
+      const successCount = details.success || 0;
+      const failedCount = details.failed || 0;
+      const total = details.total || 0;
+
+      if (successCount > 0 && failedCount === 0) {
+        // 全部成功
+        Toast.show({
+          icon: 'success',
+          content: `价格同步成功：${successCount} 个`,
+          duration: 2000,
+        });
+      } else if (successCount > 0 && failedCount > 0) {
+        // 部分成功
+        Toast.show({
+          icon: 'success',
+          content: `价格同步完成：成功 ${successCount} 个，失败 ${failedCount} 个`,
+          duration: 3000,
+        });
+      } else if (failedCount > 0) {
+        // 全部失败
+        Toast.show({
+          icon: 'fail',
+          content: `价格同步失败：${failedCount} 个资产同步失败`,
+          duration: 3000,
+        });
+      } else {
+        // 没有资产需要同步
+        Toast.show({
+          icon: 'success',
+          content: result?.message || '价格同步完成',
+          duration: 2000,
+        });
+      }
+
+      // 只有在有成功的情况下才重新获取数据
+      if (successCount > 0 && viewUserId) {
+        await Promise.all([
+          fetchFundInfo(viewUserId),
+          fetchPositions(viewUserId),
+          fetchTradeHistory(viewUserId),
+        ]);
       }
     } catch (error) {
       console.error('同步价格失败:', error);
       Toast.show({
         icon: 'fail',
-        content: '价格同步失败',
+        content: error.message || '价格同步失败',
         duration: 2000,
       });
     } finally {
