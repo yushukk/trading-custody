@@ -1,4 +1,4 @@
-一天# 📊 Trading Custody - 交易托管管理平台
+# 📊 Trading Custody - 交易托管管理平台
 
 <div align="center">
 
