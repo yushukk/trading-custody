@@ -1,5 +1,5 @@
 // 从项目根目录加载环境变量
-require('dotenv').config({ path: '../.env' });
+require('dotenv').config();
 
 const path = require('path');
 const SecretsManager = require('../utils/secretsManager');
