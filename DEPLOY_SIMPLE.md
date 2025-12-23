@@ -4,9 +4,16 @@
 
 ## 📋 部署前准备
 
-### 1. 生成 JWT 密钥
+### 🎉 好消息：JWT 密钥现已支持自动生成！
 
-**方式一：在线生成（推荐）**
+**从 v2.0 版本开始，系统会在首次启动时自动生成 JWT 密钥，无需手动配置！**
+
+如果你希望使用自定义密钥（推荐生产环境），可以通过以下方式生成：
+
+<details>
+<summary>点击展开：手动生成 JWT 密钥的方法（可选）</summary>
+
+**方式一：在线生成**
 - 访问：https://www.random.org/strings/
 - 设置：长度 32，数量 2，字符集选择 Alphanumeric
 - 点击生成，得到两个随机字符串
@@ -22,17 +29,26 @@ node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"
 node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"
 ```
 
-**方式三：手动编写**
-- 随便敲键盘，至少 32 个字符
-- 例如：`my_super_secret_key_2024_abc123xyz`
+**方式三：使用项目自带脚本**
+```bash
+node scripts/generate-secrets.js
+```
+
+</details>
 
 ---
 
 ## 🎯 部署步骤
 
-### 步骤 1：修改配置文件
+### 步骤 1：准备配置文件（可选）
 
-打开 `docker-compose.simple.yml`，找到以下两行：
+**选项 A：使用自动生成的密钥（推荐快速部署）**
+
+直接使用 `docker-compose.simple.yml`，无需修改任何配置。系统会在首次启动时自动生成安全的 JWT 密钥并保存到 `.env` 文件。
+
+**选项 B：使用自定义密钥（推荐生产环境）**
+
+如果你希望使用自定义密钥，打开 `docker-compose.simple.yml`，找到以下两行：
 
 ```yaml
 - JWT_ACCESS_SECRET=PLEASE_CHANGE_THIS_TO_RANDOM_STRING_AT_LEAST_32_CHARS_ACCESS_SECRET

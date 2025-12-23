@@ -1,6 +1,18 @@
 // 从项目根目录加载环境变量
 require('dotenv').config({ path: '../.env' });
 
+const path = require('path');
+const SecretsManager = require('../utils/secretsManager');
+const logger = require('../utils/logger');
+
+// 自动生成缺失的 JWT 密钥 (跳过测试环境)
+if (process.env.NODE_ENV !== 'test') {
+  SecretsManager.ensureSecrets({
+    envFilePath: path.join(__dirname, '../../.env'),
+    logger,
+  });
+}
+
 const config = {
   env: process.env.NODE_ENV || 'development',
   port: parseInt(process.env.SERVER_PORT) || 3001,
@@ -35,15 +47,5 @@ const config = {
     filePath: process.env.LOG_FILE_PATH || './logs/app.log',
   },
 };
-
-// 验证必需的环境变量 (跳过测试环境)
-if (process.env.NODE_ENV !== 'test') {
-  const requiredEnvVars = ['JWT_ACCESS_SECRET', 'JWT_REFRESH_SECRET'];
-  const missingEnvVars = requiredEnvVars.filter(key => !process.env[key]);
-
-  if (missingEnvVars.length > 0) {
-    throw new Error(`缺少必需的环境变量: ${missingEnvVars.join(', ')}`);
-  }
-}
 
 module.exports = config;

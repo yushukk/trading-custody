@@ -6,9 +6,9 @@ version: '3.8'
 # 适用于飞牛等容器平台，无需任何脚本，开箱即用
 # 
 # 使用方法：
-#   1. 修改下方的环境变量配置（必改项已标注 ⚠️）
-#   2. 上传此文件到容器平台
-#   3. 点击部署即可
+#   1. 直接上传此文件到容器平台（无需修改任何配置）
+#   2. 点击部署即可
+#   3. 系统会自动生成 JWT 密钥并启动
 # ==========================================
 
 services:
@@ -24,13 +24,19 @@ services:
       - backend-logs:/app/logs
     environment:
       # ==========================================
-      # ⚠️ 必须修改的配置项
+      # JWT 密钥配置（可选）
       # ==========================================
-      # JWT 访问令牌密钥（必须改成随机字符串，至少 32 位）
-      - JWT_ACCESS_SECRET=PLEASE_CHANGE_THIS_TO_RANDOM_STRING_AT_LEAST_32_CHARS_ACCESS_SECRET
+      # 说明：
+      #   - 默认不配置，系统会在首次启动时自动生成安全的随机密钥
+      #   - 如需自定义密钥，取消下方注释并填写自己的密钥
+      #   - 生产环境建议使用自定义密钥（运行 node scripts/generate-secrets.js 生成）
+      # ==========================================
       
-      # JWT 刷新令牌密钥（必须改成随机字符串，至少 32 位）
-      - JWT_REFRESH_SECRET=PLEASE_CHANGE_THIS_TO_RANDOM_STRING_AT_LEAST_32_CHARS_REFRESH_SECRET
+      # JWT 访问令牌密钥（可选，不配置则自动生成）
+      # - JWT_ACCESS_SECRET=your-custom-access-secret-here
+      
+      # JWT 刷新令牌密钥（可选，不配置则自动生成）
+      # - JWT_REFRESH_SECRET=your-custom-refresh-secret-here
       
       # ==========================================
       # 可选配置项（根据需要修改）
@@ -46,7 +52,7 @@ services:
       
       # JWT 令牌过期时间
       - JWT_ACCESS_EXPIRES_IN=15m
-      - JWT_REFRESH_EXPIRES_IN=7d
+      - JWT_REFRESH_EXPIRES_IN=60d
       
       # CORS 跨域配置（* 表示允许所有来源，生产环境建议改为具体域名）
       - CORS_ORIGIN=*
