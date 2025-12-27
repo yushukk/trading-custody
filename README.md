@@ -238,6 +238,25 @@ chmod +x deploy.sh
   3. 将密钥复制到其他节点的 `.env` 文件中
   4. 在其他节点运行部署脚本
 
+**前端构建建议（生产环境）**
+
+为了获得最佳性能和安全性，建议在本地或 CI/CD 环境构建前端：
+
+```bash
+# 方式 1：本地构建后上传（推荐）
+# 在本地开发机器上
+npm run build
+
+# 将 build 目录上传到服务器
+scp -r build/ user@server:/path/to/trading-custody/
+
+# 方式 2：使用 GitHub Actions 自动构建
+# 在 .github/workflows 中配置自动构建和部署
+
+# 方式 3：服务器构建（不推荐）
+# 部署脚本会检测 build 目录，如果不存在会提示是否构建
+```
+
 
 #### 进程管理
 

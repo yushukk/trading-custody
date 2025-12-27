@@ -138,7 +138,7 @@ extract_project() {
     rm -f "$DOWNLOAD_FILE"
 }
 
-# 运行部署脚本
+# 运行部署脚本 
 run_deploy() {
     print_header "运行部署脚本"
     
@@ -173,11 +173,13 @@ main() {
         exit 0
     fi
     
-    # 执行部署步骤
+    # 执行下载和解压步骤
     check_download_tool
     check_unzip
     download_project
     extract_project
+    
+    # 调用主部署脚本完成实际部署
     run_deploy
     
     echo ""

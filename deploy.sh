@@ -86,7 +86,13 @@ install_dependencies() {
     print_header "安装项目依赖"
     
     print_info "正在安装依赖（这可能需要几分钟）..."
-    npm install --production
+    # 跳过 husky 的 prepare 脚本，避免在生产环境报错
+    npm install --production --ignore-scripts
+    
+    # 重新编译 sqlite3（原生模块需要编译）
+    print_info "编译 sqlite3 原生模块..."
+    npm rebuild sqlite3
+    
     print_success "依赖安装完成"
 }
 
@@ -123,8 +129,10 @@ setup_env() {
     echo ""
     
     # 提示用户检查配置
-    print_info "当前配置："
-    grep -E "^(PORT|CORS_ORIGIN|PRICE_SYNC_CRON)=" .env || true
+    print_info "当前完整配置："
+    echo "----------------------------------------"
+    cat .env | grep -v "^#" | grep -v "^$"
+    echo "----------------------------------------"
     echo ""
     read -p "是否继续部署？(y/n) " -n 1 -r
     echo
@@ -144,16 +152,38 @@ select_deploy_mode() {
 
 # 构建前端
 build_frontend() {
-    print_header "构建前端"
+    print_header "检查前端构建"
     
-    print_info "正在构建前端（这可能需要几分钟，请耐心等待）..."
-    npm run build
-    print_success "前端构建完成"
-    
-    # 安装 serve
-    if ! command_exists serve; then
-        print_info "安装 serve..."
-        npm install -g serve
+    if [ -d "build" ]; then
+        print_success "发现已构建的前端文件"
+        print_info "跳过前端构建步骤"
+    else
+        print_warning "未找到 build 目录"
+        print_info "生产环境建议："
+        echo "  1. 在本地运行: npm run build"
+        echo "  2. 将 build 目录上传到服务器"
+        echo "  3. 或使用 CI/CD 自动构建"
+        echo ""
+        read -p "是否在服务器上构建前端？(y/n) " -n 1 -r
+        echo
+        if [[ $REPLY =~ ^[Yy]$ ]]; then
+            print_warning "正在服务器上构建（不推荐用于生产环境）..."
+            
+            print_info "安装构建工具..."
+            npm install --ignore-scripts
+            
+            print_info "正在构建前端（这可能需要几分钟）..."
+            npm run build
+            
+            print_info "清理开发依赖..."
+            npm prune --production
+            
+            print_success "前端构建完成"
+        else
+            print_error "部署已取消"
+            print_info "请先构建前端后再运行部署脚本"
+            exit 1
+        fi
     fi
 }
 

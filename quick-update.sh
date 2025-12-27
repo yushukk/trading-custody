@@ -212,35 +212,21 @@ replace_old() {
     print_success "新版本已安装"
 }
 
-# 安装依赖
-install_dependencies() {
-    print_header "安装依赖"
+# 运行部署脚本
+run_deploy_script() {
+    print_header "运行部署脚本"
     
-    print_info "正在安装依赖..."
-    npm install --production
-    print_success "依赖安装完成"
-}
-
-# 构建前端
-build_frontend() {
-    print_header "构建前端"
-    
-    print_info "正在构建前端..."
-    npm run build
-    print_success "前端构建完成"
-}
-
-# 启动服务
-start_services() {
-    if [ "$HAS_PM2" = true ]; then
-        print_header "启动服务"
-        
-        print_info "启动服务..."
-        pm2 restart all
-        print_success "服务已启动"
-    else
-        print_warning "请手动启动服务"
+    if [ ! -f "deploy.sh" ]; then
+        print_error "未找到 deploy.sh 脚本"
+        exit 1
     fi
+    
+    chmod +x deploy.sh
+    
+    print_info "开始执行部署..."
+    echo ""
+    
+    ./deploy.sh
 }
 
 # 清理备份
@@ -302,9 +288,10 @@ main() {
     extract_latest
     restore_config
     replace_old
-    install_dependencies
-    build_frontend
-    start_services
+    
+    # 调用主部署脚本完成实际部署
+    run_deploy_script
+    
     cleanup_backup
     show_update_info
     
