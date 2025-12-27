@@ -89,7 +89,7 @@ check_env_file() {
             if [[ $REPLY =~ ^[Yy]$ ]]; then
                 cp .env.example .env
                 print_success ".env 文件已创建"
-                print_warning "请检查并修改 .env 文件中的配置（特别是 JWT 密钥和 API 地址）"
+                print_warning "请检查并修改 .env 文件中的配置（特别是API 地址）"
                 print_info "按任意键继续..."
                 read -n 1 -s -r
             else
@@ -241,3 +241,5 @@ main() {
     
     print_success "部署流程完成！"
 }
+
+main
