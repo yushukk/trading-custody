@@ -76,34 +76,56 @@ check_docker() {
 check_env_file() {
     print_header "检查环境变量配置"
     
-    if [ ! -f .env.production ]; then
-        print_error ".env.production 文件不存在！"
-        exit 1
+    ENV_FILE=".env"
+    
+    if [ ! -f "$ENV_FILE" ]; then
+        print_error ".env 文件不存在！"
+        
+        # 检查 .env.example 是否存在
+        if [ -f .env.example ]; then
+            print_info "检测到 .env.example 文件"
+            read -p "是否从 .env.example 创建 .env 文件？(y/n) " -n 1 -r
+            echo
+            if [[ $REPLY =~ ^[Yy]$ ]]; then
+                cp .env.example .env
+                print_success ".env 文件已创建"
+                print_warning "请检查并修改 .env 文件中的配置（特别是 JWT 密钥和 API 地址）"
+                print_info "按任意键继续..."
+                read -n 1 -s -r
+            else
+                print_error "部署已取消"
+                exit 1
+            fi
+        else
+            print_error "未找到 .env.example 文件"
+            print_info "请手动创建 .env 文件"
+            exit 1
+        fi
     fi
     
     # 检查 JWT 密钥是否已修改
-    if grep -q "CHANGE_THIS_TO_SECURE_RANDOM_STRING" .env.production; then
+    if grep -q "CHANGE_THIS_TO_SECURE_RANDOM_STRING" "$ENV_FILE"; then
         print_warning "检测到 JWT 密钥未修改！"
         print_info "正在生成安全的 JWT 密钥..."
         
         if [ -f scripts/generate-secrets.js ]; then
             if command_exists node; then
                 node scripts/generate-secrets.js
-                print_success "JWT 密钥已生成，请查看 .env.production 文件"
+                print_success "JWT 密钥已生成，请查看 $ENV_FILE 文件"
             else
                 print_error "Node.js 未安装，无法自动生成密钥"
-                print_info "请手动修改 .env.production 中的 JWT_ACCESS_SECRET 和 JWT_REFRESH_SECRET"
+                print_info "请手动修改 $ENV_FILE 中的 JWT_ACCESS_SECRET 和 JWT_REFRESH_SECRET"
                 exit 1
             fi
         else
             print_error "找不到密钥生成脚本"
-            print_info "请手动修改 .env.production 中的 JWT_ACCESS_SECRET 和 JWT_REFRESH_SECRET"
+            print_info "请手动修改 $ENV_FILE 中的 JWT_ACCESS_SECRET 和 JWT_REFRESH_SECRET"
             exit 1
         fi
     fi
     
     # 检查 API 地址配置
-    if grep -q "http://localhost:3001" .env.production; then
+    if grep -q "http://localhost:3001" "$ENV_FILE"; then
         print_warning "前端 API 地址配置为 localhost"
         print_info "如果部署到服务器，请修改 REACT_APP_API_BASE_URL 为实际地址"
         read -p "是否继续部署？(y/n) " -n 1 -r
@@ -122,7 +144,7 @@ stop_containers() {
     
     if docker ps -a | grep -q "trading-custody"; then
         print_info "发现现有容器，正在停止..."
-        docker-compose --env-file .env.production down
+        docker-compose --env-file "$ENV_FILE" down
         print_success "现有容器已停止"
     else
         print_info "没有发现运行中的容器"
@@ -134,7 +156,7 @@ build_images() {
     print_header "构建 Docker 镜像"
     
     print_info "开始构建镜像（这可能需要几分钟）..."
-    docker-compose --env-file .env.production build --no-cache
+    docker-compose --env-file "$ENV_FILE" build --no-cache
     print_success "镜像构建完成"
 }
 
@@ -143,7 +165,7 @@ start_services() {
     print_header "启动服务"
     
     print_info "启动所有服务..."
-    docker-compose --env-file .env.production up -d
+    docker-compose --env-file "$ENV_FILE" up -d
     print_success "服务启动完成"
 }
 
@@ -156,7 +178,7 @@ wait_for_services() {
     attempt=0
     
     while [ $attempt -lt $max_attempts ]; do
-        if docker-compose --env-file .env.production ps | grep -q "healthy"; then
+        if docker-compose --env-file "$ENV_FILE" ps | grep -q "healthy"; then
             print_success "后端服务已就绪"
             break
         fi
@@ -177,17 +199,17 @@ wait_for_services() {
 show_status() {
     print_header "服务状态"
     
-    docker-compose --env-file .env.production ps
+    docker-compose --env-file "$ENV_FILE" ps
     
     echo ""
     print_info "查看日志命令："
-    echo "  docker-compose --env-file .env.production logs -f"
+    echo "  docker-compose --env-file $ENV_FILE logs -f"
     echo ""
     print_info "查看后端日志："
-    echo "  docker-compose --env-file .env.production logs -f backend"
+    echo "  docker-compose --env-file $ENV_FILE logs -f backend"
     echo ""
     print_info "查看前端日志："
-    echo "  docker-compose --env-file .env.production logs -f frontend"
+    echo "  docker-compose --env-file $ENV_FILE logs -f frontend"
 }
 
 # 显示访问信息
@@ -195,29 +217,30 @@ show_access_info() {
     print_header "部署完成"
     
     # 获取配置的端口
-    BACKEND_PORT=$(grep "^BACKEND_PORT=" .env.production | cut -d '=' -f2)
-    FRONTEND_PORT=$(grep "^FRONTEND_PORT=" .env.production | cut -d '=' -f2)
+    SERVER_PORT=$(grep "^SERVER_PORT=" "$ENV_FILE" | cut -d '=' -f2)
+    APP_PORT=$(grep "^APP_PORT=" "$ENV_FILE" | cut -d '=' -f2)
     
-    BACKEND_PORT=${BACKEND_PORT:-3001}
-    FRONTEND_PORT=${FRONTEND_PORT:-80}
+    # 设置默认值
+    SERVER_PORT=${SERVER_PORT:-3001}
+    APP_PORT=${APP_PORT:-80}
     
     print_success "Trading Custody System 已成功部署！"
     echo ""
     echo "访问地址："
-    echo "  前端应用: http://localhost:${FRONTEND_PORT}"
-    echo "  后端 API: http://localhost:${BACKEND_PORT}"
-    echo "  健康检查: http://localhost:${BACKEND_PORT}/health"
+    echo "  前端应用: http://localhost:${APP_PORT}"
+    echo "  后端 API: http://localhost:${SERVER_PORT}"
+    echo "  健康检查: http://localhost:${SERVER_PORT}/health"
     echo ""
     
-    if [ "$FRONTEND_PORT" != "80" ]; then
-        print_warning "前端端口不是 80，请使用 http://localhost:${FRONTEND_PORT} 访问"
+    if [ "$APP_PORT" != "80" ]; then
+        print_warning "前端端口不是 80，请使用 http://localhost:${APP_PORT} 访问"
     fi
     
     echo "常用命令："
-    echo "  停止服务: docker-compose --env-file .env.production down"
-    echo "  重启服务: docker-compose --env-file .env.production restart"
-    echo "  查看日志: docker-compose --env-file .env.production logs -f"
-    echo "  进入容器: docker-compose --env-file .env.production exec backend sh"
+    echo "  停止服务: docker-compose --env-file $ENV_FILE down"
+    echo "  重启服务: docker-compose --env-file $ENV_FILE restart"
+    echo "  查看日志: docker-compose --env-file $ENV_FILE logs -f"
+    echo "  进入容器: docker-compose --env-file $ENV_FILE exec backend sh"
     echo ""
 }
 
