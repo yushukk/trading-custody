@@ -90,9 +90,10 @@
 ## 🚀 快速开始
 
 ### 前置要求
-- Node.js 18+ 
+- Node.js 16+ （推荐 18+）
 - npm 或 yarn
 - （可选）Docker 和 Docker Compose
+- （推荐）PM2 进程管理器
 
 ### 本地开发
 
@@ -145,9 +146,183 @@ npm run client
 - 用户名：`admin`
 - 密码：`admin`（首次登录后请及时修改）
 
+## 📦 部署方式
+
+### 方式一：传统服务器部署
+
+**适用场景**：传统服务器、VPS、无 Docker 环境
+
+**特点**：
+- ✅ 无需 Docker，直接在服务器上运行
+- ✅ 完全控制进程和配置
+- ✅ 适合传统运维环境
+
+#### 一键部署脚本（推荐）⭐
+
+> 💡 **无需任何前置准备**：部署脚本会自动检查并安装所需的环境（Node.js、PM2 等）
+
+我们提供了自动化部署脚本，支持多种获取代码的方式：
+
+**方式 A：ß快速部署（推荐，无需 Git）**
+
+一条命令完成所有操作，自动下载、解压并部署：
+
+```bash
+# 下载并运行快速部署脚本
+wget -O quick-deploy.sh https://raw.githubusercontent.com/yushukk/trading-custody/main/quick-deploy.sh && chmod +x quick-deploy.sh && ./quick-deploy.sh
+
+# 或使用 curl
+curl -o quick-deploy.sh https://raw.githubusercontent.com/yushukk/trading-custody/main/quick-deploy.sh && chmod +x quick-deploy.sh && ./quick-deploy.sh
+```
+
+**特点**：
+- ✅ 无需安装 Git
+- ✅ 自动下载最新版本
+- ✅ 自动解压和部署
+- ✅ 一条命令搞定一切
+
+---
+
+**方式 B：使用 Git 克隆**
+
+适合已安装 Git 的环境，方便后续更新：
+
+```bash
+# 克隆项目
+git clone https://github.com/yushukk/trading-custody.git
+cd trading-custody
+
+# 运行部署脚本
+chmod +x deploy.sh
+./deploy.sh
+```
+
+---
+
+**方式 C：手动下载部署**
+
+适合网络受限或需要离线部署的场景：
+
+```bash
+# 1. 下载压缩包
+wget https://github.com/yushukk/trading-custody/archive/refs/heads/main.zip
+# 或使用 curl
+curl -L https://github.com/yushukk/trading-custody/archive/refs/heads/main.zip -o main.zip
+
+# 2. 解压
+unzip main.zip
+cd trading-custody-main
+
+# 3. 运行部署脚本
+chmod +x deploy.sh
+./deploy.sh
+```
+
+> 💡 **提示**：如果服务器没有安装 wget 或 curl，可以在本地下载后通过 scp 或 FTP 上传到服务器
+
+**脚本功能**
+- ✅ 自动检查 Node.js 和 PM2 环境
+- ✅ 自动安装依赖
+- ✅ 自动配置环境变量
+- ✅ 自动编译前端
+- ✅ 使用 PM2 管理进程
+- ✅ 自动配置开机自启
+- ✅ 可选生成 Nginx 配置文件
+
+**重要提示**
+- 💡 系统会在首次启动时自动生成 JWT 密钥
+- ⚠️ 集群部署时，请确保所有节点使用相同的 JWT 密钥
+- 📝 集群部署步骤：
+  1. 在首个节点运行部署脚本
+  2. 启动后查看生成的 JWT 密钥（在 `.env` 文件中）
+  3. 将密钥复制到其他节点的 `.env` 文件中
+  4. 在其他节点运行部署脚本
+
+
+#### 进程管理
+
+使用 PM2 管理进程：
+```bash
+# 查看进程状态
+pm2 status
+
+# 查看日志
+pm2 logs trading-custody-backend
+
+# 重启服务
+pm2 restart trading-custody-backend
+
+# 停止服务
+pm2 stop trading-custody-backend
+
+# 删除进程
+pm2 delete trading-custody-backend
+```
+
+#### 更新部署
+
+**方式 A：一键更新（推荐，无需 Git）**
+
+使用快速更新脚本，自动下载最新版本并更新：
+
+```bash
+# 下载并运行快速更新脚本
+wget -O quick-update.sh https://raw.githubusercontent.com/yushukk/trading-custody/main/quick-update.sh && chmod +x quick-update.sh && ./quick-update.sh
+
+# 或使用 curl
+curl -o quick-update.sh https://raw.githubusercontent.com/yushukk/trading-custody/main/quick-update.sh && chmod +x quick-update.sh && ./quick-update.sh
+```
+
+**特点**：
+- ✅ 无需 Git
+- ✅ 自动备份当前版本
+- ✅ 自动下载最新代码
+- ✅ 保留配置文件和数据
+- ✅ 自动重启服务
+
+---
+
+**方式 B：使用 Git 更新**
+
+适合使用 Git 克隆的部署：
+
+```bash
+# 拉取最新代码
+git pull
+
+# 重新运行部署脚本
+./deploy.sh
+```
+
+---
+
+**方式 C：手动更新**
+
+适合需要精确控制的场景：
+
+```bash
+# 1. 备份当前版本
+cp -r . ../trading-custody-backup
+
+# 2. 下载最新版本
+wget https://github.com/yushukk/trading-custody/archive/refs/heads/main.zip
+unzip main.zip
+
+# 3. 保留配置和数据
+cp .env trading-custody-main/
+cp -r database.sqlite trading-custody-main/ 2>/dev/null || true
+
+# 4. 替换旧版本
+cd trading-custody-main
+chmod +x deploy.sh
+./deploy.sh
+```
+
+---
+
 ## 🐳 Docker 部署
 
-### 方式一：生产服务器部署（推荐）⭐
+### 方式二：生产服务器部署（推荐）⭐
 
 **适用场景**：生产环境、容器平台（如飞牛）、快速部署
 
@@ -194,7 +369,7 @@ environment:
   - PRICE_SYNC_CRON=0 9,17 * * *  # 每天 9:00 和 17:00
 ```
 
-### 方式二：本地开发部署
+### 方式三：本地开发部署
 
 **适用场景**：本地开发、需要自定义构建、调试
 
