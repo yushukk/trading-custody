@@ -103,31 +103,26 @@ check_env_file() {
         fi
     fi
     
-    # 检查 JWT 密钥是否已修改
-    if grep -q "CHANGE_THIS_TO_SECURE_RANDOM_STRING" "$ENV_FILE"; then
-        print_warning "检测到 JWT 密钥未修改！"
-        print_info "正在生成安全的 JWT 密钥..."
-        
-        if [ -f scripts/generate-secrets.js ]; then
-            if command_exists node; then
-                node scripts/generate-secrets.js
-                print_success "JWT 密钥已生成，请查看 $ENV_FILE 文件"
-            else
-                print_error "Node.js 未安装，无法自动生成密钥"
-                print_info "请手动修改 $ENV_FILE 中的 JWT_ACCESS_SECRET 和 JWT_REFRESH_SECRET"
-                exit 1
-            fi
-        else
-            print_error "找不到密钥生成脚本"
-            print_info "请手动修改 $ENV_FILE 中的 JWT_ACCESS_SECRET 和 JWT_REFRESH_SECRET"
-            exit 1
-        fi
-    fi
     
     # 检查 API 地址配置
-    if grep -q "http://localhost:3001" "$ENV_FILE"; then
-        print_warning "前端 API 地址配置为 localhost"
-        print_info "如果部署到服务器，请修改 REACT_APP_API_BASE_URL 为实际地址"
+    if grep -q "http://localhost" "$ENV_FILE"; then
+        # 读取API_BASE_URL的值
+        API_BASE_URL=$(grep "REACT_APP_API_BASE_URL" "$ENV_FILE" | cut -d'=' -f2-)
+        
+        # 读取SERVER_PORT的值
+        SERVER_PORT_VALUE=$(grep "^SERVER_PORT=" "$ENV_FILE" | cut -d'=' -f2-)
+        
+        # 使用sed替换变量，处理可能的变量替换格式
+        if [[ "$API_BASE_URL" == *"\${SERVER_PORT}"* ]]; then
+            DISPLAY_URL=$(echo "$API_BASE_URL" | sed "s/\${SERVER_PORT}/$SERVER_PORT_VALUE/g")
+        elif [[ "$API_BASE_URL" == *"SERVER_PORT"* ]]; then
+            DISPLAY_URL=$(echo "$API_BASE_URL" | sed "s/\$SERVER_PORT/$SERVER_PORT_VALUE/g")
+        else
+            DISPLAY_URL="$API_BASE_URL"
+        fi
+        
+        print_warning "前端 API 地址配置为: $DISPLAY_URL"
+        print_info "检测到本地开发地址，如果部署到服务器，请确保 API 地址配置正确"
         read -p "是否继续部署？(y/n) " -n 1 -r
         echo
         if [[ ! $REPLY =~ ^[Yy]$ ]]; then

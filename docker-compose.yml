@@ -1,3 +1,5 @@
+version: '3.8'
+
 services:
   backend:
     build:
@@ -52,17 +54,14 @@ services:
       timeout: 10s
       retries: 3
       start_period: 10s
-      start_interval: 5s
     networks:
       - app-network
 
 volumes:
   backend-data:
     driver: local
-    # 该卷映射到容器内的 /app/server/data 目录
   backend-logs:
     driver: local
-    # 该卷映射到容器内的 /app/logs 目录
 
 networks:
   app-network:
