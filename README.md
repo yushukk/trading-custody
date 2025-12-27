@@ -204,58 +204,19 @@ environment:
 - ✅ 后端端口对外暴露，方便调试
 - ✅ 可修改源码后重新构建
 
-#### 配置环境变量（可选）
-
-所有环境变量都有默认值或会自动生成，可以根据需要自定义配置：
-
-**方式1：直接在 `docker-compose.yml` 中修改**（推荐）
-```yaml
-environment:
-  # 可选配置
-  - CORS_ORIGIN=http://localhost:3000
-  - PRICE_SYNC_CRON=0 17 * * *
-```
-
-**方式2：使用 `.env` 文件**
-```bash
-# 复制环境变量模板
-cp .env.example .env
-
-# 编辑 .env 文件（所有配置都是可选的）
-```
-
-#### 启动服务
 ```bash
 # 克隆项目
 git clone https://github.com/yushukk/trading-custody.git
 cd trading-custody
 
 # 启动服务（会自动构建镜像）
-docker-compose up -d
+sh docker-deploy.sh
 ```
 
 服务将在以下端口启动：
 - 前端：`http://localhost:3000`
 - 后端 API：`http://localhost:3001`
 
-#### 重新构建
-```bash
-# 修改代码后重新构建
-docker-compose build
-
-# 重新启动服务
-docker-compose up -d
-```
-
-#### 查看日志
-```bash
-docker-compose logs -f
-```
-
-#### 停止服务
-```bash
-docker-compose down
-```
 
 ### 数据持久化
 
