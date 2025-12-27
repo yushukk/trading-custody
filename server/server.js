@@ -33,6 +33,16 @@ app.use(cookieParser()); // 添加 cookie-parser 中间件
 // 添加日志中间件
 app.use(logMiddleware);
 
+// 健康检查接口
+app.get('/health', (req, res) => {
+  res.status(200).json({
+    status: 'OK',
+    timestamp: new Date().toISOString(),
+    service: 'Trading Custody Backend API',
+    version: process.env.npm_package_version || '1.0.0',
+  });
+});
+
 // 使用路由
 app.use('/api', routes);
 
