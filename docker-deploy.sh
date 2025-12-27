@@ -89,7 +89,7 @@ check_env_file() {
             if [[ $REPLY =~ ^[Yy]$ ]]; then
                 cp .env.example .env
                 print_success ".env 文件已创建"
-                print_warning "请检查并修改 .env 文件中的配置（特别是API 地址）"
+                print_warning "请检查并修改 .env 文件中的配置（特别是 JWT 密钥和 API 地址）"
                 print_info "按任意键继续..."
                 read -n 1 -s -r
             else
@@ -103,6 +103,26 @@ check_env_file() {
         fi
     fi
     
+    # 检查 JWT 密钥是否已修改
+    if grep -q "CHANGE_THIS_TO_SECURE_RANDOM_STRING" "$ENV_FILE"; then
+        print_warning "检测到 JWT 密钥未修改！"
+        print_info "正在生成安全的 JWT 密钥..."
+        
+        if [ -f scripts/generate-secrets.js ]; then
+            if command_exists node; then
+                node scripts/generate-secrets.js
+                print_success "JWT 密钥已生成，请查看 $ENV_FILE 文件"
+            else
+                print_error "Node.js 未安装，无法自动生成密钥"
+                print_info "请手动修改 $ENV_FILE 中的 JWT_ACCESS_SECRET 和 JWT_REFRESH_SECRET"
+                exit 1
+            fi
+        else
+            print_error "找不到密钥生成脚本"
+            print_info "请手动修改 $ENV_FILE 中的 JWT_ACCESS_SECRET 和 JWT_REFRESH_SECRET"
+            exit 1
+        fi
+    fi
     
     # 检查 API 地址配置
     if grep -q "http://localhost:3001" "$ENV_FILE"; then
@@ -242,4 +262,5 @@ main() {
     print_success "部署流程完成！"
 }
 
+# 运行主函数
 main

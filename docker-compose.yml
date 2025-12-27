@@ -14,8 +14,8 @@ services:
       - NODE_ENV=${NODE_ENV:-production}
       - DATABASE_PATH=/app/server/data/database.db
       - SERVER_PORT=3001
-      - JWT_ACCESS_SECRET=${JWT_ACCESS_SECRET}
-      - JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET}
+      # - JWT_ACCESS_SECRET=${JWT_ACCESS_SECRET}
+      # - JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET}
       - JWT_ACCESS_EXPIRES_IN=${JWT_ACCESS_EXPIRES_IN:-15m}
       - JWT_REFRESH_EXPIRES_IN=${JWT_REFRESH_EXPIRES_IN:-7d}
       - CORS_ORIGIN=${CORS_ORIGIN:-*}
@@ -52,14 +52,17 @@ services:
       timeout: 10s
       retries: 3
       start_period: 10s
+      start_interval: 5s
     networks:
       - app-network
 
 volumes:
   backend-data:
     driver: local
+    # 该卷映射到容器内的 /app/server/data 目录
   backend-logs:
     driver: local
+    # 该卷映射到容器内的 /app/logs 目录
 
 networks:
   app-network:
