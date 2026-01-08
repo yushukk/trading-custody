@@ -8,7 +8,10 @@ WORKDIR /app
 COPY package*.json ./
 
 # 安装所有依赖（跳过 prepare 脚本以避免 husky 错误）
-RUN npm ci --ignore-scripts && \
+# 添加更详细的日志和错误处理
+RUN npm ci --ignore-scripts --loglevel=verbose || \
+    (echo "npm ci failed, trying with legacy-peer-deps" && \
+     npm ci --ignore-scripts --legacy-peer-deps) && \
     npm cache clean --force
 
 # 复制源代码（只复制必要的文件）
