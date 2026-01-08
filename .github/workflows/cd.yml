@@ -2,7 +2,6 @@ name: CD
 
 on:
   push:
-    branches: [ main ]
     tags:
       - 'v*'
 
@@ -10,7 +9,6 @@ jobs:
   docker-build:
     name: Build and Push Docker Images
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     steps:
       - uses: actions/checkout@v4
       
@@ -23,18 +21,11 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
       
-      - name: Extract metadata
-        id: meta
-        uses: docker/metadata-action@v4
-        with:
-          images: |
-            ${{ secrets.DOCKER_USERNAME }}/trading-custody
-            ${{ secrets.DOCKER_USERNAME }}/trading-custody-backend
-          tags: |
-            type=ref,event=branch
-            type=ref,event=tag
-            type=sha,prefix={{branch}}-
-            type=raw,value=latest,enable={{is_default_branch}}
+      - name: Extract version
+        id: version
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/}
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
       
       - name: Build and push frontend image
         uses: docker/build-push-action@v4
@@ -44,7 +35,9 @@ jobs:
           push: true
           build-args: |
             REACT_APP_API_BASE_URL=
-          tags: ${{ secrets.DOCKER_USERNAME }}/trading-custody:latest,${{ secrets.DOCKER_USERNAME }}/trading-custody:${{ github.sha }}
+          tags: |
+            ${{ secrets.DOCKER_USERNAME }}/trading-custody:${{ steps.version.outputs.version }}
+            ${{ secrets.DOCKER_USERNAME }}/trading-custody:latest
           cache-from: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/trading-custody:buildcache
           cache-to: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/trading-custody:buildcache,mode=max
       
@@ -54,20 +47,19 @@ jobs:
           context: .
           file: ./Dockerfile.backend
           push: true
-          tags: ${{ secrets.DOCKER_USERNAME }}/trading-custody-backend:latest,${{ secrets.DOCKER_USERNAME }}/trading-custody-backend:${{ github.sha }}
+          tags: |
+            ${{ secrets.DOCKER_USERNAME }}/trading-custody-backend:${{ steps.version.outputs.version }}
+            ${{ secrets.DOCKER_USERNAME }}/trading-custody-backend:latest
           cache-from: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/trading-custody-backend:buildcache
           cache-to: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/trading-custody-backend:buildcache,mode=max
       
       - name: Image digest
         run: |
-          echo "Frontend image pushed with tags:"
-          echo "- latest"
-          echo "- ${{ github.sha }}"
-          echo ""
-          echo "Backend image pushed with tags:"
-          echo "- latest"
-          echo "- ${{ github.sha }}"
-          echo ""
           echo "Images published successfully!"
-          echo "Frontend: ${{ secrets.DOCKER_USERNAME }}/trading-custody:latest"
-          echo "Backend: ${{ secrets.DOCKER_USERNAME }}/trading-custody-backend:latest"
+          echo ""
+          echo "Version: ${{ steps.version.outputs.version }}"
+          echo ""
+          echo "Frontend: ${{ secrets.DOCKER_USERNAME }}/trading-custody:${{ steps.version.outputs.version }}"
+          echo "Backend: ${{ secrets.DOCKER_USERNAME }}/trading-custody-backend:${{ steps.version.outputs.version }}"
+          echo ""
+          echo "Also tagged as: latest"
