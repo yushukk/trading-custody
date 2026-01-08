@@ -6,8 +6,11 @@ class UserService {
     this.userDao = userDao;
   }
 
-  async getAllUsers() {
+  async getAllUsers(excludeAdmin = false) {
     try {
+      if (excludeAdmin) {
+        return await this.userDao.findAllNonAdmins();
+      }
       return await this.userDao.findAll();
     } catch (error) {
       throw new AppError('获取用户列表失败', 'DATABASE_ERROR', 500);

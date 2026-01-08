@@ -107,7 +107,10 @@ const UserFundPosition = () => {
       ...pos,
       asset_type: pos.assetType,
       price: pos.latestPrice ?? 0,
-      costBasis: (pos.latestPrice ?? 0) - (pos.totalPnL ?? 0) / (pos.quantity ?? 1),
+      // 成本基础计算：现价 - (未实现盈亏 / 持仓数量)
+      // 对于多仓和空仓都适用
+      costBasis:
+        pos.quantity !== 0 ? (pos.latestPrice ?? 0) - (pos.unrealizedPnL ?? 0) / pos.quantity : 0,
       quantity: pos.quantity ?? 0,
       unrealizedPnL: pos.unrealizedPnL ?? 0,
     }));
@@ -445,7 +448,8 @@ const UserFundPosition = () => {
                           style={{
                             fontSize: '15px',
                             fontWeight: 500,
-                            color: '#333',
+                            // 空仓（负数）用绿色标识，多仓用黑色
+                            color: position.quantity < 0 ? '#52c41a' : '#333',
                           }}
                         >
                           {position.quantity}
@@ -500,8 +504,13 @@ const UserFundPosition = () => {
                           textAlign: 'right',
                         }}
                       >
-                        现价: ¥{position.price.toFixed(2)} | 成本:{' '}
-                        {position.quantity > 0 ? `¥${position.costBasis.toFixed(2)}` : '-'}
+                        现价: ¥{position.price.toFixed(2)} |{' '}
+                        {position.quantity > 0
+                          ? '成本'
+                          : position.quantity < 0
+                            ? '开仓均价'
+                            : '成本'}
+                        : {position.quantity !== 0 ? `¥${position.costBasis.toFixed(2)}` : '-'}
                       </div>
                     </div>
                   </div>

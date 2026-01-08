@@ -23,7 +23,8 @@ const FundManagement = () => {
 
     const loadUsers = async () => {
       try {
-        const data = await apiClient.get('/api/users');
+        // 过滤掉管理员账号
+        const data = await apiClient.get('/api/users?excludeAdmin=true');
         if (isMounted) {
           setUsers(data.users || []);
         }

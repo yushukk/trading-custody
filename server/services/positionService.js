@@ -86,57 +86,111 @@ class PositionService {
 
       for (const [code, transactions] of Object.entries(positionsMap)) {
         let realizedPnL = 0;
-        let totalFee = 0; // 新增总费用统计
-        const queue = [];
+        let totalFee = 0;
+        // 双队列：分别管理多仓和空仓
+        const longQueue = []; // 多仓队列（买入建立）
+        const shortQueue = []; // 空仓队列（卖出建立）
 
         transactions.forEach(transaction => {
           const { operation, price, quantity, fee = 0 } = transaction;
-          totalFee += fee; // 累加费用
+          totalFee += fee;
 
           if (operation === 'buy') {
-            queue.push({ price, quantity });
-          } else if (operation === 'sell') {
             let remaining = quantity;
-            while (remaining > 0 && queue.length > 0) {
-              const head = queue[0];
+
+            // 买入时，优先平空仓
+            while (remaining > 0 && shortQueue.length > 0) {
+              const head = shortQueue[0];
 
               if (head.quantity <= remaining) {
+                // 完全平掉这笔空仓
                 const tradeQuantity = head.quantity;
-                const cost = head.price * tradeQuantity; // 成本包含费用
-                const revenue = price * tradeQuantity; // 收入扣除费用
-                realizedPnL += revenue - cost; // 计算盈亏
+                const revenue = head.price * tradeQuantity; // 空仓开仓时的卖出收入
+                const cost = price * tradeQuantity; // 平仓时的买入成本
+                realizedPnL += revenue - cost; // 空仓盈亏 = 卖出价 - 买入价
 
                 remaining -= tradeQuantity;
-                queue.shift();
+                shortQueue.shift();
               } else {
+                // 部分平仓
                 const tradeQuantity = remaining;
-                const cost = head.price * tradeQuantity; // 按比例分配费用
-                const revenue = price * tradeQuantity; // 收入扣除费用
-                realizedPnL += revenue - cost; // 计算盈亏
+                const revenue = head.price * tradeQuantity;
+                const cost = price * tradeQuantity;
+                realizedPnL += revenue - cost;
 
                 head.quantity -= tradeQuantity;
                 remaining = 0;
               }
             }
+
+            // 剩余数量建立多仓
+            if (remaining > 0) {
+              longQueue.push({ price, quantity: remaining });
+            }
+          } else if (operation === 'sell') {
+            let remaining = quantity;
+
+            // 卖出时，优先平多仓
+            while (remaining > 0 && longQueue.length > 0) {
+              const head = longQueue[0];
+
+              if (head.quantity <= remaining) {
+                // 完全平掉这笔多仓
+                const tradeQuantity = head.quantity;
+                const cost = head.price * tradeQuantity; // 多仓开仓时的买入成本
+                const revenue = price * tradeQuantity; // 平仓时的卖出收入
+                realizedPnL += revenue - cost; // 多仓盈亏 = 卖出价 - 买入价
+
+                remaining -= tradeQuantity;
+                longQueue.shift();
+              } else {
+                // 部分平仓
+                const tradeQuantity = remaining;
+                const cost = head.price * tradeQuantity;
+                const revenue = price * tradeQuantity;
+                realizedPnL += revenue - cost;
+
+                head.quantity -= tradeQuantity;
+                remaining = 0;
+              }
+            }
+
+            // 剩余数量建立空仓
+            if (remaining > 0) {
+              shortQueue.push({ price, quantity: remaining });
+            }
           }
         });
+
+        // 扣除总费用
         realizedPnL -= totalFee;
 
-        const currentQuantity = queue.reduce((sum, item) => sum + item.quantity, 0);
+        // 计算当前持仓数量（多仓为正，空仓为负）
+        const longQuantity = longQueue.reduce((sum, item) => sum + item.quantity, 0);
+        const shortQuantity = shortQueue.reduce((sum, item) => sum + item.quantity, 0);
+        const currentQuantity = longQuantity - shortQuantity;
 
-        // 获取最新价格（无论持仓数量是否为0都要获取）
+        // 获取最新价格
         const latestPrice = await this.priceService.getLatestPrice(
           code,
           transactions[0].assetType || transactions[0].asset_type
         );
 
-        // 计算未实现盈亏（只有持仓数量>0时才计算）
+        // 计算未实现盈亏
         let unrealizedPnL = 0;
         if (currentQuantity > 0) {
-          // 计算平均成本包含费用
-          const totalCost = queue.reduce((sum, item) => sum + item.price * item.quantity, 0);
+          // 多仓未实现盈亏
+          const totalCost = longQueue.reduce((sum, item) => sum + item.price * item.quantity, 0);
           const averageCost = totalCost / currentQuantity;
           unrealizedPnL = currentQuantity * (latestPrice - averageCost);
+        } else if (currentQuantity < 0) {
+          // 空仓未实现盈亏
+          const totalRevenue = shortQueue.reduce(
+            (sum, item) => sum + item.price * item.quantity,
+            0
+          );
+          const averagePrice = totalRevenue / shortQuantity;
+          unrealizedPnL = shortQuantity * (averagePrice - latestPrice);
         }
 
         results.push({
@@ -148,7 +202,7 @@ class PositionService {
           realizedPnL,
           unrealizedPnL,
           latestPrice,
-          fee: totalFee, // 返回总费用
+          fee: totalFee,
         });
       }
 

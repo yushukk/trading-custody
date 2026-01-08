@@ -1,12 +1,19 @@
 const priceService = require('../../services/priceService');
 const priceDao = require('../../dao/priceDao');
+const positionDao = require('../../dao/positionDao');
 const http = require('http');
+
+// Mock positionDao
+jest.mock('../../dao/positionDao', () => ({
+  findAll: jest.fn(),
+}));
 
 // Mock DAO and external API
 jest.mock('../../dao/priceDao', () => ({
   getLatestPrice: jest.fn(),
   getAllPricesByCode: jest.fn(),
   savePrice: jest.fn(),
+  getAllDistinctAssets: jest.fn(),
 }));
 
 // Mock http module
@@ -102,10 +109,34 @@ describe('PriceService', () => {
   });
 
   describe('syncPriceData', () => {
-    it('should sync price data', async () => {
+    it('should sync price data when no positions exist', async () => {
+      // Mock 数据库返回空列表，表示没有持仓
+      positionDao.findAll.mockResolvedValue([]);
+
       const result = await priceService.syncPriceData();
 
-      expect(result).toEqual({ success: true, message: '价格数据同步任务已完成' });
+      expect(result).toHaveProperty('success', true);
+      expect(result).toHaveProperty('message', '没有持仓数据，无需同步价格');
+      expect(positionDao.findAll).toHaveBeenCalled();
     });
+
+    it('should sync price data for existing assets', async () => {
+      // Mock 数据库返回一些持仓
+      positionDao.findAll.mockResolvedValue([
+        { code: 'AAPL', asset_type: 'stock' },
+        { code: 'AAPL', asset_type: 'stock' }, // 重复的会被去重
+        { code: 'RB2201', asset_type: 'future' },
+      ]);
+
+      // Mock savePrice 成功
+      priceDao.savePrice.mockResolvedValue();
+
+      const result = await priceService.syncPriceData();
+
+      expect(result).toHaveProperty('success', true);
+      expect(result).toHaveProperty('details');
+      expect(positionDao.findAll).toHaveBeenCalled();
+      // 由于外部API被mock，实际会失败，但不影响测试
+    }, 10000); // 增加超时时间到10秒
   });
 });

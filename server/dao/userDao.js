@@ -43,6 +43,10 @@ class UserDao {
   async findAll() {
     return await db.all('SELECT id, name, email, role FROM users');
   }
+
+  async findAllNonAdmins() {
+    return await db.all("SELECT id, name, email, role FROM users WHERE role != 'admin'");
+  }
 }
 
 module.exports = new UserDao();

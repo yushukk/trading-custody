@@ -9,7 +9,9 @@ class UserController {
   // 获取所有用户
   async getAllUsers(req, res, next) {
     try {
-      const users = await this.userService.getAllUsers();
+      // 支持通过查询参数 excludeAdmin=true 来过滤管理员
+      const excludeAdmin = req.query.excludeAdmin === 'true';
+      const users = await this.userService.getAllUsers(excludeAdmin);
       res.json({
         success: true,
         users,
