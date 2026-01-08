@@ -31,7 +31,7 @@ RUN getent group nginx || addgroup -g 1001 -S nginx && \
 COPY package*.json ./
 
 # 仅安装生产依赖（跳过 prepare 脚本以避免 husky 错误）
-RUN npm ci --only=production --ignore-scripts && \
+RUN npm ci --omit=dev --ignore-scripts && \
     npm rebuild sqlite3 && \
     npm cache clean --force
 
