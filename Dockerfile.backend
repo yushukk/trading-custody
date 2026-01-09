@@ -31,11 +31,9 @@ RUN getent group nginx || addgroup -g 1001 -S nginx && \
 COPY package*.json ./
 
 # 仅安装生产依赖（跳过 prepare 脚本以避免 husky 错误）
-# 先删除 lock 文件重新生成，避免本地镜像源问题
+# 直接使用 npm install 避免 lock 文件同步问题
 RUN echo "Installing production dependencies..." && \
-    rm -f package-lock.json && \
-    npm install --omit=dev --ignore-scripts --package-lock-only && \
-    npm ci --omit=dev --ignore-scripts && \
+    npm install --omit=dev --ignore-scripts && \
     echo "Rebuilding sqlite3..." && \
     npm rebuild sqlite3 && \
     echo "Cleaning cache..." && \
