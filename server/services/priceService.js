@@ -38,8 +38,8 @@ class PriceService {
     const endDate = new Date();
     const startDate = new Date();
     startDate.setDate(endDate.getDate() - 10);
-    // 解决服务器时区问题
-    endDate.setDate(endDate.getDate() + 1);
+    // 解决服务器时区问题，并考虑期货夜盘交易及节假日（最多覆盖5天假期）
+    endDate.setDate(endDate.getDate() + 5);
 
     // 格式化日期为YYYYMMDD
     const formatDate = date => {
@@ -194,6 +194,8 @@ class PriceService {
       // 同步每个资产的价格
       let successCount = 0;
       let failCount = 0;
+      let skippedCount = 0;
+      const skippedAssets = [];
       const timestamp = new Date().toISOString();
 
       for (const [, asset] of uniqueAssets) {
@@ -206,23 +208,62 @@ class PriceService {
             successCount++;
             logger.info(`Synced price for ${asset.code}: ${price}`);
           } else {
-            failCount++;
-            logger.warn(`Failed to fetch price for ${asset.code}, got 0`);
+            // 价格获取失败，检查是否有历史价格数据
+            const existingPrice = await this.priceDao.getLatestPrice(asset.code, asset.assetType);
+
+            if (existingPrice > 0) {
+              // 有历史价格，说明可能是期货合约已过期，跳过更新，保留最后有效价格
+              skippedCount++;
+              skippedAssets.push(asset.code);
+              logger.info(
+                `Skipped expired/inactive asset ${asset.code}, keeping last price: ${existingPrice}`
+              );
+            } else {
+              // 没有历史价格，记录为真正的失败
+              failCount++;
+              logger.warn(`Failed to fetch price for ${asset.code}, no historical data available`);
+            }
           }
         } catch (error) {
-          failCount++;
-          logger.error(`Error syncing price for ${asset.code}:`, error);
+          // 发生错误时也检查是否有历史价格
+          const existingPrice = await this.priceDao.getLatestPrice(asset.code, asset.assetType);
+
+          if (existingPrice > 0) {
+            skippedCount++;
+            skippedAssets.push(asset.code);
+            logger.info(
+              `Skipped asset ${asset.code} due to error, keeping last price: ${existingPrice}`
+            );
+          } else {
+            failCount++;
+            logger.error(`Error syncing price for ${asset.code}:`, error);
+          }
         }
       }
 
-      logger.info(`Price sync completed: ${successCount} success, ${failCount} failed`);
+      const summaryParts = [`成功 ${successCount} 个`];
+      if (skippedCount > 0) {
+        summaryParts.push(`跳过 ${skippedCount} 个（可能已过期）`);
+      }
+      if (failCount > 0) {
+        summaryParts.push(`失败 ${failCount} 个`);
+      }
+
+      logger.info(
+        `Price sync completed: ${successCount} success, ${skippedCount} skipped, ${failCount} failed`
+      );
+      if (skippedAssets.length > 0) {
+        logger.info(`Skipped assets (possibly expired): ${skippedAssets.join(', ')}`);
+      }
 
       return {
         success: true,
-        message: `价格同步完成：成功 ${successCount} 个，失败 ${failCount} 个`,
+        message: `价格同步完成：${summaryParts.join('，')}`,
         details: {
           total: uniqueAssets.size,
           success: successCount,
+          skipped: skippedCount,
+          skippedAssets: skippedAssets,
           failed: failCount,
         },
       };

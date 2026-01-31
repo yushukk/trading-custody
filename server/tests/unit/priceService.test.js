@@ -12,7 +12,7 @@ jest.mock('../../dao/positionDao', () => ({
 jest.mock('../../dao/priceDao', () => ({
   getLatestPrice: jest.fn(),
   getAllPricesByCode: jest.fn(),
-  savePrice: jest.fn(),
+  createPriceData: jest.fn(),
   getAllDistinctAssets: jest.fn(),
 }));
 
@@ -128,8 +128,8 @@ describe('PriceService', () => {
         { code: 'RB2201', asset_type: 'future' },
       ]);
 
-      // Mock savePrice 成功
-      priceDao.savePrice.mockResolvedValue();
+      // Mock createPriceData 成功
+      priceDao.createPriceData.mockResolvedValue();
 
       const result = await priceService.syncPriceData();
 
@@ -138,5 +138,46 @@ describe('PriceService', () => {
       expect(positionDao.findAll).toHaveBeenCalled();
       // 由于外部API被mock，实际会失败，但不影响测试
     }, 10000); // 增加超时时间到10秒
+
+    it('should skip expired futures with existing price data', async () => {
+      // Mock 数据库返回一个期货持仓
+      positionDao.findAll.mockResolvedValue([{ code: 'SC2412', asset_type: 'future' }]);
+
+      // Mock fetchLatestPrice 返回 0（模拟过期合约）
+      jest.spyOn(priceService, 'fetchLatestPrice').mockResolvedValue(0);
+
+      // Mock 有历史价格数据
+      priceDao.getLatestPrice.mockResolvedValue(75.5);
+
+      const result = await priceService.syncPriceData();
+
+      expect(result).toHaveProperty('success', true);
+      expect(result.details.skipped).toBe(1);
+      expect(result.details.skippedAssets).toContain('SC2412');
+      expect(result.details.failed).toBe(0);
+
+      // 恢复 mock
+      priceService.fetchLatestPrice.mockRestore();
+    });
+
+    it('should count as failed when no historical price exists', async () => {
+      // Mock 数据库返回一个新的期货持仓
+      positionDao.findAll.mockResolvedValue([{ code: 'NEW2501', asset_type: 'future' }]);
+
+      // Mock fetchLatestPrice 返回 0
+      jest.spyOn(priceService, 'fetchLatestPrice').mockResolvedValue(0);
+
+      // Mock 没有历史价格数据
+      priceDao.getLatestPrice.mockResolvedValue(0);
+
+      const result = await priceService.syncPriceData();
+
+      expect(result).toHaveProperty('success', true);
+      expect(result.details.skipped).toBe(0);
+      expect(result.details.failed).toBe(1);
+
+      // 恢复 mock
+      priceService.fetchLatestPrice.mockRestore();
+    });
   });
 });
