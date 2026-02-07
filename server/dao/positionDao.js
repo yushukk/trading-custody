@@ -55,6 +55,15 @@ class PositionDao {
        ORDER BY p.user_id, p.timestamp DESC`
     );
   }
+
+  // 添加批量更新code的方法
+  async updateCodeByOriginalCode(originalCode, newCode) {
+    const result = await db.run('UPDATE positions SET code = ? WHERE code = ?', [
+      newCode,
+      originalCode,
+    ]);
+    return result.changes; // 返回受影响的行数
+  }
 }
 
 module.exports = new PositionDao();

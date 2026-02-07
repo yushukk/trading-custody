@@ -383,7 +383,6 @@ Client → Routes → Middleware → Controller → Service → DAO → Database
 | **logger.js** | Winston 日志工具 |
 | **jwtHelper.js** | JWT Token 工具 |
 | **passwordHelper.js** | 密码加密工具 |
-| **priceUtils.js** | 价格计算工具 |
 | **AppError.js** | 自定义错误类 |
 | **errorCodes.js** | 错误码定义 |
 

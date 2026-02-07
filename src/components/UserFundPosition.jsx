@@ -184,26 +184,50 @@ const UserFundPosition = () => {
     });
 
     try {
-      const result = await syncPriceData();
+      // 获取当前页面显示的非空持仓标的
+      const nonEmptyAssets = consolidatedPositions
+        .filter(pos => pos.quantity !== 0) // 过滤持仓数量不为0的标的
+        .map(pos => ({
+          code: pos.code,
+          assetType: pos.asset_type || pos.assetType,
+        }));
+
+      let result;
+      if (nonEmptyAssets.length > 0) {
+        // 只同步非空持仓的标的
+        result = await syncPriceData(nonEmptyAssets);
+      } else {
+        // 如果没有非空持仓，提示用户
+        Toast.show({
+          icon: 'success',
+          content: '当前没有持仓标的需要同步价格',
+          duration: 2000,
+        });
+        return;
+      }
 
       // 根据同步结果显示不同的提示
       const details = result?.details || {};
       const successCount = details.success || 0;
       const failedCount = details.failed || 0;
+      const skippedCount = details.skipped || 0;
       const total = details.total || 0;
 
-      if (successCount > 0 && failedCount === 0) {
+      if (successCount > 0 && failedCount === 0 && skippedCount === 0) {
         // 全部成功
         Toast.show({
           icon: 'success',
           content: `价格同步成功：${successCount} 个`,
           duration: 2000,
         });
-      } else if (successCount > 0 && failedCount > 0) {
+      } else if (successCount > 0) {
         // 部分成功
+        const parts = [`成功 ${successCount} 个`];
+        if (skippedCount > 0) parts.push(`跳过 ${skippedCount} 个`);
+        if (failedCount > 0) parts.push(`失败 ${failedCount} 个`);
         Toast.show({
           icon: 'success',
-          content: `价格同步完成：成功 ${successCount} 个，失败 ${failedCount} 个`,
+          content: `价格同步完成：${parts.join('，')}`,
           duration: 3000,
         });
       } else if (failedCount > 0) {

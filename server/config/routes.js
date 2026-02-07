@@ -159,7 +159,24 @@ router.delete('/positions/:userId', authenticateToken, checkResourceOwnership, (
   positionController.deletePositions(req, res, next)
 );
 
+// 更新持仓代码路由（需要管理员权限）
+router.put('/positions/update-code', authenticateToken, adminOnly, (req, res, next) =>
+  positionController.updatePositionCode(req, res, next)
+);
+
 // 价格同步路由（需要认证）
+router.post('/syncPriceData', authenticateToken, async (req, res, next) => {
+  try {
+    // 支持传递特定资产列表进行同步
+    const { assets } = req.body;
+    const result = await priceService.syncPriceData(assets);
+    res.json(result);
+  } catch (error) {
+    next(error);
+  }
+});
+
+// 保持向后兼容的GET接口
 router.get('/syncPriceData', authenticateToken, async (req, res, next) => {
   try {
     const result = await priceService.syncPriceData();

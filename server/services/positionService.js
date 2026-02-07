@@ -219,6 +219,38 @@ class PositionService {
       throw new AppError('删除持仓失败', 'DELETE_POSITIONS_FAILED', 500);
     }
   }
+
+  // 添加更新code的业务逻辑
+  async updatePositionCode(originalCode, newCode) {
+    try {
+      // 参数验证
+      if (!originalCode || !newCode) {
+        throw new AppError('原始代码和新代码不能为空', 'INVALID_CODE', 400);
+      }
+
+      if (originalCode === newCode) {
+        throw new AppError('原始代码和新代码不能相同', 'SAME_CODE', 400);
+      }
+
+      // 执行更新操作
+      const affectedRows = await this.positionDao.updateCodeByOriginalCode(originalCode, newCode);
+
+      if (affectedRows === 0) {
+        throw new AppError(`未找到代码为 ${originalCode} 的持仓记录`, 'POSITION_NOT_FOUND', 404);
+      }
+
+      return {
+        success: true,
+        affectedRows,
+        message: `成功将 ${affectedRows} 条持仓记录的代码从 ${originalCode} 更新为 ${newCode}`,
+      };
+    } catch (error) {
+      if (error instanceof AppError) {
+        throw error;
+      }
+      throw new AppError('更新持仓代码失败', 'UPDATE_POSITION_CODE_FAILED', 500);
+    }
+  }
 }
 
 // 导出实例

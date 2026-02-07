@@ -54,6 +54,22 @@ class PositionController {
       next(error);
     }
   }
+
+  // 更新持仓代码
+  async updatePositionCode(req, res, next) {
+    try {
+      const { originalCode, newCode } = req.body;
+
+      const result = await this.positionService.updatePositionCode(originalCode, newCode);
+
+      res.json({
+        success: true,
+        ...result,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
 }
 
 // 导出类本身以便测试使用

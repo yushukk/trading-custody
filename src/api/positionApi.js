@@ -77,9 +77,16 @@ export const deletePositions = async (userId, options = {}) => {
 
 /**
  * 同步价格数据
+ * @param {Array} assets - 可选，要同步的特定资产列表 [{code, assetType}]
  * @param {Object} options - 请求选项
  * @returns {Promise} 同步结果Promise
  */
-export const syncPriceData = async (options = {}) => {
-  return apiClient.get('/api/syncPriceData', options);
+export const syncPriceData = async (assets = null, options = {}) => {
+  if (assets && Array.isArray(assets) && assets.length > 0) {
+    // 传递特定资产列表进行同步
+    return apiClient.post('/api/syncPriceData', { assets }, options);
+  } else {
+    // 同步所有资产（向后兼容）
+    return apiClient.get('/api/syncPriceData', options);
+  }
 };
